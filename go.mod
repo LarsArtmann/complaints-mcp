@@ -8,4 +8,8 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
+	github.com/rs/zerolog v1.33.0
+	github.com/go-playground/validator/v10 v10.19.0
+	github.com/stretchr/testify v1.9.0
+	github.com/spf13/cobra v1.8.0
 )
