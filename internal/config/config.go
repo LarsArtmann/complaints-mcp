@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/adrg/xdg"
 	"github.com/charmbracelet/log"

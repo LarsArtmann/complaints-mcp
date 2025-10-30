@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
-	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
@@ -35,11 +35,6 @@ func init() {
 	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "log level (trace, debug, info, warn, error)")
 	rootCmd.PersistentFlags().BoolP("dev", "d", false, "development mode")
 	rootCmd.PersistentFlags().Bool("version", false, "show version information")
-	
-	if err := cobra.MarkFlagFilename(rootCmd.PersistentFlags().Lookup("config")); err != nil {
-		fmt.Fprintf(os.Stderr, "Error marking flag: %v\n", err)
-		os.Exit(1)
-	}
 }
 
 func main() {
@@ -68,18 +63,18 @@ func runServer(cmd *cobra.Command, args []string) error {
 	
 	var logger *log.Logger
 	if devMode {
+		level, _ := log.ParseLevel(logLevel)
 		logger = log.NewWithOptions(os.Stderr, log.Options{
-			Level:      log.ParseLevel(logLevel),
+			Level:           level,
 			ReportTimestamp: true,
-			ReportCaller:  true,
-			Format:     log.TextFormatter,
+			ReportCaller:    true,
 		})
 	} else {
+		level, _ := log.ParseLevel(logLevel)
 		logger = log.NewWithOptions(os.Stderr, log.Options{
-			Level:      log.ParseLevel(logLevel),
+			Level:           level,
 			ReportTimestamp: true,
-			ReportCaller:  false,
-			Format:     log.TextFormatter,
+			ReportCaller:    false,
 		})
 	}
 	
@@ -98,9 +93,10 @@ func runServer(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize dependencies
-	fileRepo := repo.NewFileRepository(cfg.Storage.BaseDir)
-	complaintService := service.NewComplaintService(fileRepo, logger)
-	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger)
+	tracer := tracing.NewMockTracer("main")
+	fileRepo := repo.NewFileRepository(cfg.Storage.BaseDir, tracer)
+	complaintService := service.NewComplaintService(fileRepo, tracer, logger)
+	mcpServer := mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Setup graceful shutdown
 	sigChan := make(chan os.Signal, 1)
@@ -109,6 +105,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Start server in goroutine
 	serverErrChan := make(chan error, 1)
 	go func() {
+		// Set config for MCP server
+		mcpServer.SetConfig(cfg)
 		if err := mcpServer.Start(ctx); err != nil {
 			serverErrChan <- fmt.Errorf("server error: %w", err)
 		}

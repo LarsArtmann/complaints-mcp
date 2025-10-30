@@ -2,11 +2,11 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -27,7 +27,7 @@ type Repository interface {
 type FileRepository struct {
 	baseDir string
 	logger   *log.Logger
-	tracer   tracey.Tracer
+	tracer   tracing.Tracer
 }
 
 // NewFileRepository creates a new file-based repository
@@ -35,7 +35,7 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 	return &FileRepository{
 		baseDir: baseDir,
 		logger:   log.Default(),
-		tracer:   tracey.NewTracer("file-repository"),
+		tracer:   tracer,
 	}
 }
 

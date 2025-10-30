@@ -3,27 +3,26 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
-	"github.com/ilyakaz/tracey"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
 // ComplaintService provides business logic for managing complaints
 type ComplaintService struct {
 	repo   repo.Repository
 	logger *log.Logger
-	tracer tracey.Tracer
+	tracer tracing.Tracer
 }
 
 // NewComplaintService creates a new complaint service
-func NewComplaintService(repo repo.Repository, logger *log.Logger, tracer tracing.Tracer) *ComplaintService {
+func NewComplaintService(repo repo.Repository, tracer tracing.Tracer, logger *log.Logger) *ComplaintService {
 	return &ComplaintService{
 		repo:   repo,
 		logger: logger,
-		tracer: tracey.NewTracer("complaint-service"),
+		tracer: tracing.NewMockTracer("complaint-service"),
 	}
 }
 
@@ -38,7 +37,7 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 		"severity", string(severity),
 		"session_name", sessionName)
 
-	complaint, err := domain.NewComplaint(ctx, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, severity, projectName)
+	complaint, err := domain.NewComplaint(ctx, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes, severity, projectName)
 	if err != nil {
 		logger.Error("Failed to create complaint", "error", err)
 		return nil, err

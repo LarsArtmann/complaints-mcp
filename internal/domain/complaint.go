@@ -77,11 +77,11 @@ type Complaint struct {
 
 // NewComplaint creates a new complaint with the given parameters
 func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity Severity, projectName string) (*Complaint, error) {
-	logger := zerolog.Ctx(ctx)
+	logger := log.FromContext(ctx)
 	
 	id, err := NewComplaintID()
 	if err != nil {
-		logger.Error().Err(err).Msg("Failed to generate complaint ID")
+		logger.Error("failed to generate complaint ID", "error", err)
 		return nil, fmt.Errorf("failed to generate complaint ID: %w", err)
 	}
 	
@@ -107,26 +107,23 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 	
 	// Validate the complaint
 	if err := complaint.Validate(); err != nil {
-		logger.Error().Err(err).Interface("complaint", complaint).Msg("Invalid complaint data")
+		logger.Error("invalid complaint data", "error", err, "complaint", complaint)
 		return nil, err
 	}
 	
-	logger.Info().
-		Str("complaint_id", id.String()).
-		Str("agent_name", agentName).
-		Str("severity", string(severity)).
-		Msg("Created new complaint")
+	logger.Info("created new complaint", 
+		"complaint_id", id.String(),
+		"agent_name", agentName,
+		"severity", string(severity))
 	
 	return complaint, nil
 }
 
 // Resolve marks a complaint as resolved
 func (c *Complaint) Resolve(ctx context.Context) {
-	logger := zerolog.Ctx(ctx)
+	logger := log.FromContext(ctx)
 	c.Resolved = true
-	logger.Info().
-		Str("complaint_id", c.ID.String()).
-		Msg("Marked complaint as resolved")
+	logger.Info("marked complaint as resolved", "complaint_id", c.ID.String())
 }
 
 // IsResolved checks if the complaint is resolved

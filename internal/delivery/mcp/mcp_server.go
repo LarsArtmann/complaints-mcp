@@ -2,64 +2,60 @@ package delivery
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
+	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/charmbracelet/log"
-	"github.com/ilyakaz/tracey"
-	"github.com/modelcontextprotocol/go-sdk/server"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// MCPServer represents the MCP server implementation
+// MCPServer represents MCP server implementation
 type MCPServer struct {
-	config       *config.Config
-	service      *service.ComplaintService
-	logger       *log.Logger
-	tracer       tracey.Tracer
-	server       *server.Server
+	config  *config.Config
+	service *service.ComplaintService
+	logger  *log.Logger
+	tracer  tracing.Tracer
+	server  *mcp.Server
 }
 
 // NewServer creates a new MCP server
 func NewServer(name, version string, complaintService *service.ComplaintService, logger *log.Logger, tracer tracing.Tracer) *MCPServer {
+	server := mcp.NewServer(&mcp.Implementation{
+		Name:    name,
+		Version: version,
+	}, nil)
+	
 	return &MCPServer{
 		config:  nil, // Will be set during initialization
 		service: complaintService,
-		logger:   logger,
-		tracer:   tracey.NewTracer("mcp-server"),
+		logger:  logger,
+		tracer:  tracer,
+		server:  server,
 	}
 }
 
-// Start starts the MCP server
+// SetConfig sets the configuration for the MCP server
+func (m *MCPServer) SetConfig(cfg *config.Config) {
+	m.config = cfg
+}
+
+// Start starts the MCP server using stdio transport
 func (m *MCPServer) Start(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
-	
-	// Initialize server
-	m.server = server.New(
-		server.WithName(m.config.Server.Name),
-		server.WithVersion(version),
-		server.WithLogger(logger),
-	)
 	
 	// Register tools
 	if err := m.registerTools(); err != nil {
 		return fmt.Errorf("failed to register tools: %w", err)
 	}
 	
-	// Register capabilities
-	m.server.AddCapabilities(server.Capability{
-		Tools: map[string]interface{}{},
-	})
+	// Start server with stdio transport
+	logger.Info("Starting MCP server over stdio")
 	
-	// Start server
-	logger.Info("Starting MCP server", 
-		"address", m.config.Server.Address(),
-		"name", m.config.Server.Name)
-	
-	if err := m.server.Serve(ctx); err != nil {
+	if err := m.server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		return fmt.Errorf("server failed: %w", err)
 	}
 	
@@ -71,17 +67,14 @@ func (m *MCPServer) Shutdown(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
 	logger.Info("Shutting down MCP server")
 	
-	if m.server != nil {
-		return m.server.Shutdown(ctx)
-	}
-	
+	// MCP server with stdio transport handles shutdown automatically
 	return nil
 }
 
 // registerTools registers all available MCP tools
 func (m *MCPServer) registerTools() error {
 	// File complaint tool
-	fileComplaintTool := server.Tool{
+	fileComplaintTool := &mcp.Tool{
 		Name:        "file_complaint",
 		Description: "File a structured complaint about missing or confusing information",
 		InputSchema: map[string]interface{}{
@@ -140,7 +133,7 @@ func (m *MCPServer) registerTools() error {
 	}
 	
 	// List complaints tool
-	listComplaintsTool := server.Tool{
+	listComplaintsTool := &mcp.Tool{
 		Name:        "list_complaints",
 		Description: "List all filed complaints with optional filtering",
 		InputSchema: map[string]interface{}{
@@ -166,7 +159,7 @@ func (m *MCPServer) registerTools() error {
 	}
 	
 	// Resolve complaint tool
-	resolveComplaintTool := server.Tool{
+	resolveComplaintTool := &mcp.Tool{
 		Name:        "resolve_complaint",
 		Description: "Mark a complaint as resolved",
 		InputSchema: map[string]interface{}{
@@ -183,7 +176,7 @@ func (m *MCPServer) registerTools() error {
 	}
 	
 	// Search complaints tool
-	searchComplaintsTool := server.Tool{
+	searchComplaintsTool := &mcp.Tool{
 		Name:        "search_complaints",
 		Description: "Search complaints by content",
 		InputSchema: map[string]interface{}{
@@ -207,36 +200,76 @@ func (m *MCPServer) registerTools() error {
 	}
 	
 	// Register tools with handlers
-	m.server.AddTool(fileComplaintTool, m.handleFileComplaint)
-	m.server.AddTool(listComplaintsTool, m.handleListComplaints)
-	m.server.AddTool(resolveComplaintTool, m.handleResolveComplaint)
-	m.server.AddTool(searchComplaintsTool, m.handleSearchComplaints)
+	mcp.AddTool(m.server, fileComplaintTool, m.handleFileComplaint)
+	mcp.AddTool(m.server, listComplaintsTool, m.handleListComplaints)
+	mcp.AddTool(m.server, resolveComplaintTool, m.handleResolveComplaint)
+	mcp.AddTool(m.server, searchComplaintsTool, m.handleSearchComplaints)
 	
 	return nil
 }
 
+// Input types for tool handlers
+type FileComplaintInput struct {
+	AgentName       string `json:"agent_name"`
+	SessionName     string `json:"session_name"`
+	TaskDescription string `json:"task_description"`
+	ContextInfo     string `json:"context_info"`
+	MissingInfo     string `json:"missing_info"`
+	ConfusedBy      string `json:"confused_by"`
+	FutureWishes    string `json:"future_wishes"`
+	Severity        string `json:"severity"`
+	ProjectName     string `json:"project_name"`
+}
+
+type ListComplaintsInput struct {
+	Limit    int    `json:"limit"`
+	Severity string `json:"severity"`
+	Resolved bool   `json:"resolved"`
+}
+
+type ResolveComplaintInput struct {
+	ComplaintID string `json:"complaint_id"`
+}
+
+type SearchComplaintsInput struct {
+	Query string `json:"query"`
+	Limit int    `json:"limit"`
+}
+
+// Output types for tool handlers
+type FileComplaintOutput struct {
+	ComplaintID string `json:"complaint_id"`
+	Message     string `json:"message"`
+	Timestamp   string `json:"timestamp"`
+}
+
+type ListComplaintsOutput struct {
+	Complaints []map[string]interface{} `json:"complaints"`
+	Count      int                     `json:"count"`
+}
+
+type ResolveComplaintOutput struct {
+	Message      string `json:"message"`
+	ComplaintID string `json:"complaint_id"`
+}
+
+type SearchComplaintsOutput struct {
+	Complaints []map[string]interface{} `json:"complaints"`
+	Query      string                   `json:"query"`
+	Count      int                      `json:"count"`
+}
+
 // handleFileComplaint handles the file_complaint tool
-func (m *MCPServer) handleFileComplaint(ctx context.Context, arguments map[string]interface{}) (interface{}, error) {
+func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleFileComplaint")
 	defer span.End()
 
 	logger := m.logger.With("component", "mcp-server", "tool", "file_complaint")
 	logger.Info("Handling file complaint request")
 
-	// Extract arguments
-	agentName, _ := arguments["agent_name"].(string)
-	sessionName, _ := arguments["session_name"].(string)
-	taskDescription, _ := arguments["task_description"].(string)
-	contextInfo, _ := arguments["context_info"].(string)
-	missingInfo, _ := arguments["missing_info"].(string)
-	confusedBy, _ := arguments["confused_by"].(string)
-	futureWishes, _ := arguments["future_wishes"].(string)
-	severity, _ := arguments["severity"].(string)
-	projectName, _ := arguments["project_name"].(string)
-
 	// Convert severity string to domain type
 	var domainSeverity domain.Severity
-	switch severity {
+	switch input.Severity {
 	case "low":
 		domainSeverity = domain.SeverityLow
 	case "medium":
@@ -246,52 +279,54 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, arguments map[strin
 	case "critical":
 		domainSeverity = domain.SeverityCritical
 	default:
-		return nil, fmt.Errorf("invalid severity: %s", severity)
+		return nil, FileComplaintOutput{}, fmt.Errorf("invalid severity: %s", input.Severity)
 	}
 
 	complaint, err := m.service.CreateComplaint(
 		ctx,
-		agentName,
-		sessionName,
-		taskDescription,
-		contextInfo,
-		missingInfo,
-		confusedBy,
-		futureWishes,
+		input.AgentName,
+		input.SessionName,
+		input.TaskDescription,
+		input.ContextInfo,
+		input.MissingInfo,
+		input.ConfusedBy,
+		input.FutureWishes,
 		domainSeverity,
-		projectName,
+		input.ProjectName,
 	)
 	if err != nil {
 		logger.Error("Failed to create complaint", "error", err)
-		return nil, err
+		return nil, FileComplaintOutput{}, err
 	}
 
 	logger.Info("Complaint filed successfully", "complaint_id", complaint.ID.String())
 	
-	return map[string]interface{}{
-		"complaint_id": complaint.ID.String(),
-		"message":      "Complaint filed successfully",
-		"timestamp":    complaint.Timestamp.Format(time.RFC3339),
-	}, nil
+	output := FileComplaintOutput{
+		ComplaintID: complaint.ID.String(),
+		Message:     "Complaint filed successfully",
+		Timestamp:   complaint.Timestamp.Format(time.RFC3339),
+	}
+	
+	return nil, output, nil
 }
 
 // handleListComplaints handles the list_complaints tool
-func (m *MCPServer) handleListComplaints(ctx context.Context, arguments map[string]interface{}) (interface{}, error) {
+func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolRequest, input ListComplaintsInput) (*mcp.CallToolResult, ListComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleListComplaints")
 	defer span.End()
 
 	logger := m.logger.With("component", "mcp-server", "tool", "list_complaints")
 	logger.Info("Handling list complaints request")
 
-	// Extract arguments
-	limit := 50 // default limit
-	if l, ok := arguments["limit"].(float64); ok {
-		limit = int(l)
+	// Set defaults
+	limit := input.Limit
+	if limit == 0 {
+		limit = 50
 	}
 	
 	var severityFilter domain.Severity
-	if severity, ok := arguments["severity"].(string); ok {
-		switch severity {
+	if input.Severity != "" {
+		switch input.Severity {
 		case "low":
 			severityFilter = domain.SeverityLow
 		case "medium":
@@ -301,11 +336,6 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, arguments map[stri
 		case "critical":
 			severityFilter = domain.SeverityCritical
 		}
-	}
-	
-	resolvedFilter := false // default to show all
-	if resolved, ok := arguments["resolved"].(bool); ok {
-		resolvedFilter = resolved
 	}
 
 	var complaints []*domain.Complaint
@@ -319,12 +349,20 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, arguments map[stri
 	
 	if err != nil {
 		logger.Error("Failed to list complaints", "error", err)
-		return nil, err
+		return nil, ListComplaintsOutput{}, err
 	}
 
 	// Convert to response format
 	var results []map[string]interface{}
 	for _, complaint := range complaints {
+		// Apply resolved filter if set
+		if input.Resolved && !complaint.IsResolved() {
+			continue
+		}
+		if !input.Resolved && complaint.IsResolved() {
+			continue
+		}
+		
 		result := map[string]interface{}{
 			"complaint_id":    complaint.ID.String(),
 			"agent_name":      complaint.AgentName,
@@ -335,62 +373,61 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, arguments map[stri
 			"resolved":        complaint.IsResolved(),
 			"project_name":    complaint.ProjectName,
 		}
-		
-		if resolvedFilter == complaint.IsResolved() {
-			results = append(results, result)
-		}
+		results = append(results, result)
 	}
 
 	logger.Info("Complaints listed successfully", "count", len(results))
 	
-	return map[string]interface{}{
-		"complaints": results,
-		"count":      len(results),
-	}, nil
+	output := ListComplaintsOutput{
+		Complaints: results,
+		Count:      len(results),
+	}
+	
+	return nil, output, nil
 }
 
 // handleResolveComplaint handles the resolve_complaint tool
-func (m *MCPServer) handleResolveComplaint(ctx context.Context, arguments map[string]interface{}) (interface{}, error) {
+func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToolRequest, input ResolveComplaintInput) (*mcp.CallToolResult, ResolveComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleResolveComplaint")
 	defer span.End()
 
 	logger := m.logger.With("component", "mcp-server", "tool", "resolve_complaint")
 	logger.Info("Handling resolve complaint request")
 
-	complaintIDStr, _ := arguments["complaint_id"].(string)
-	complaintID := domain.ComplaintID{Value: complaintIDStr}
+	complaintID := domain.ComplaintID{Value: input.ComplaintID}
 
 	if err := m.service.ResolveComplaint(ctx, complaintID); err != nil {
-		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", complaintIDStr)
-		return nil, err
+		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", input.ComplaintID)
+		return nil, ResolveComplaintOutput{}, err
 	}
 
-	logger.Info("Complaint resolved successfully", "complaint_id", complaintIDStr)
+	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID)
 	
-	return map[string]interface{}{
-		"message": "Complaint resolved successfully",
-		"complaint_id": complaintIDStr,
-	}, nil
+	output := ResolveComplaintOutput{
+		Message:      "Complaint resolved successfully",
+		ComplaintID: input.ComplaintID,
+	}
+	
+	return nil, output, nil
 }
 
 // handleSearchComplaints handles the search_complaints tool
-func (m *MCPServer) handleSearchComplaints(ctx context.Context, arguments map[string]interface{}) (interface{}, error) {
+func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToolRequest, input SearchComplaintsInput) (*mcp.CallToolResult, SearchComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleSearchComplaints")
 	defer span.End()
 
 	logger := m.logger.With("component", "mcp-server", "tool", "search_complaints")
 	logger.Info("Handling search complaints request")
 
-	query, _ := arguments["query"].(string)
-	limit := 50 // default limit
-	if l, ok := arguments["limit"].(float64); ok {
-		limit = int(l)
+	limit := input.Limit
+	if limit == 0 {
+		limit = 50
 	}
 
-	complaints, err := m.service.SearchComplaints(ctx, query, limit)
+	complaints, err := m.service.SearchComplaints(ctx, input.Query, limit)
 	if err != nil {
 		logger.Error("Failed to search complaints", "error", err)
-		return nil, err
+		return nil, SearchComplaintsOutput{}, err
 	}
 
 	// Convert to response format
@@ -409,11 +446,13 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, arguments map[st
 		results = append(results, result)
 	}
 
-	logger.Info("Complaints searched successfully", "query", query, "count", len(results))
+	logger.Info("Complaints searched successfully", "query", input.Query, "count", len(results))
 	
-	return map[string]interface{}{
-		"complaints": results,
-		"query":      query,
-		"count":      len(results),
-	}, nil
+	output := SearchComplaintsOutput{
+		Complaints: results,
+		Query:      input.Query,
+		Count:      len(results),
+	}
+	
+	return nil, output, nil
 }
