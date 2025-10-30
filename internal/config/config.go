@@ -1,271 +1,227 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/adrg/xdg"
+	"github.com/charmbracelet/log"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-// Severity levels for complaints
-type Severity string
-
-const (
-	SeverityLow      Severity = "low"
-	SeverityMedium   Severity = "medium"
-	SeverityHigh     Severity = "high"
-	SeverityCritical Severity = "critical"
-)
-
-// StorageLocation represents where complaints are stored
-type StorageLocation string
-
-const (
-	StorageLocal    StorageLocation = "local"
-	StorageGlobal   StorageLocation = "global"
-	StorageBoth     StorageLocation = "both"
-)
-
-// Config represents the complete application configuration
+// Config represents the application configuration
 type Config struct {
-	Server struct {
-		Host         string        `mapstructure:"host" validate:"required,hostname" json:"host"`
-		Port         int           `mapstructure:"port" validate:"required,min=1024,max=65535" json:"port"`
-		ReadTimeout  time.Duration `mapstructure:"read_timeout" validate:"required,min=1s" json:"read_timeout"`
-		WriteTimeout time.Duration `mapstructure:"write_timeout" validate:"required,min=1s" json:"write_timeout"`
-	}
-	
-	Database struct {
-		URL             string        `mapstructure:"url" validate:"required,url" json:"url"`
-		MaxConnections  int           `mapstructure:"max_connections" validate:"required,min=1,max=100" json:"max_connections"`
-		Timeout         time.Duration `mapstructure:"timeout" validate:"required,min=1s" json:"timeout"`
-		SSLMode         string        `mapstructure:"ssl_mode" validate:"required,oneof=disable require" json:"ssl_mode"`
-	}
-	
-	Logging struct {
-		Level      string `mapstructure:"level" validate:"required,oneof=debug info warn error" json:"level"`
-		Format     string `mapstructure:"format" validate:"required,oneof=json console" json:"format"`
-		OutputPath string `mapstructure:"output_path" validate:"required" json:"output_path"`
-		Enable     *bool  `mapstructure:"enable" json:"enable"`
-	}
-	
-	Complaints struct {
-		StorageLocation  StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-		RetentionDays   int             `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-		ProjectName      string          `mapstructure:"project_name" json:"project_name"`
-		AutoResolve     *bool           `mapstructure:"auto_resolve" json:"auto_resolve"`
-		MaxFileSize     int64           `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-	}
-	
-	Security struct {
-		EnableAuth   bool   `mapstructure:"enable_auth" json:"enable_auth"`
-		JWTSecret   string `mapstructure:"jwt_secret" json:"jwt_secret"`
-		TokenExpiry int    `mapstructure:"token_expiry" validate:"min=60" json:"token_expiry"`
-		BasicAuth struct {
-			Username string `mapstructure:"username" json:"username"`
-			Password string `mapstructure:"password" json:"password"`
-		} `mapstructure:"basic_auth" json:"basic_auth"`
-	}
-	
-	Observability struct {
-		EnableTracing  bool `mapstructure:"enable_tracing" json:"enable_tracing"`
-		EnableMetrics  bool `mapstructure:"enable_metrics" json:"enable_metrics"`
-		ServiceName  string `mapstructure:"service_name" json:"service_name"`
-		EnableHealthChecks bool `mapstructure:"enable_health_checks" json:"enable_health_checks"`
-	}
+	Server  ServerConfig  `mapstructure:"server"`
+	Storage StorageConfig `mapstructure:"storage"`
+	Log     LogConfig     `mapstructure:"log"`
 }
 
-// Load loads configuration from multiple sources with proper validation
-func Load() (*Config, error) {
+// ServerConfig represents server configuration
+type ServerConfig struct {
+	Name string `mapstructure:"name" validate:"required"`
+	Host string `mapstructure:"host"`
+	Port int    `mapstructure:"port" validate:"min=1,max=65535"`
+}
+
+// Address returns the full server address
+func (s ServerConfig) Address() string {
+	if s.Host == "" {
+		return fmt.Sprintf(":%d", s.Port)
+	}
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+}
+
+// StorageConfig represents storage configuration
+type StorageConfig struct {
+	BaseDir    string `mapstructure:"base_dir" validate:"required"`
+	GlobalDir  string `mapstructure:"global_dir"`
+	MaxSize    int64  `mapstructure:"max_size" validate:"min=1024"`
+	Retention  int    `mapstructure:"retention_days" validate:"min=1"`
+	AutoBackup bool   `mapstructure:"auto_backup"`
+}
+
+// LogConfig represents logging configuration
+type LogConfig struct {
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
+	Output string `mapstructure:"output"`
+}
+
+// Load loads configuration from various sources
+func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
+	logger := log.FromContext(ctx)
+	
+	// Initialize viper
 	v := viper.New()
 	
-	// Set configuration name and type
-	v.SetConfigName("complaints-mcp")
+	// Set configuration file path
+	if configFile, _ := cmd.Flags().GetString("config"); configFile != "" {
+		v.SetConfigFile(configFile)
+	} else {
+		// Search for config in XDG locations
+		configFile, err := xdg.SearchConfigFile("complaints-mcp/config.yaml")
+		if err == nil {
+			v.SetConfigFile(configFile)
+			logger.Info("Using XDG config file", "config_file", configFile)
+		} else {
+			logger.Debug("No XDG config file found, using defaults", "error", err)
+		}
+	}
+	
 	v.SetConfigType("yaml")
+	v.AddConfigPath(".")
+	v.AddConfigPath("$HOME/.complaints-mcp")
+	v.AddConfigPath("/etc/complaints-mcp")
 	
-	// Add configuration search paths with priority order
-	v.AddConfigPath("./config")        // Highest priority: local config
-	v.AddConfigPath("$HOME/.config/complaints-mcp") // Medium priority: user home
-	v.AddConfigPath("/etc/complaints-mcp")     // Low priority: system-wide
-	
-	// Enable environment variable support
+	// Environment variables
+	v.SetEnvPrefix("COMPLAINTS_MCP")
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 	
-	// Set environment variable prefix
-	v.SetEnvPrefix("COMPLAINTS_MCP")
-	
-	// Set all defaults with comprehensive configuration
+	// Set defaults
 	setDefaults(v)
 	
-	// Read configuration with error handling
+	// Bind command-line flags
+	if err := v.BindPFlags(cmd.PersistentFlags()); err != nil {
+		return nil, fmt.Errorf("failed to bind flags: %w", err)
+	}
+	
+	// Read configuration
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found is acceptable
-			return &Config{}, nil
+			logger.Info("Config file not found, using defaults")
+		} else {
+			logger.Warn("Failed to read config file", "error", err, "config_file", v.ConfigFileUsed())
 		}
-		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 	
-	var config Config
-	if err := v.Unmarshal(&config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	// Unmarshal configuration
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 	
-	return &config, nil
+	// Post-processing
+	if err := postProcessConfig(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to post-process configuration: %w", err)
+	}
+	
+	// Validate configuration
+	if err := validateConfig(&cfg); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+	
+	logger.Info("Configuration loaded successfully", "config_file", v.ConfigFileUsed())
+	
+	return &cfg, nil
 }
 
-// Validate validates the entire configuration
-func (c *Config) Validate() error {
-	// Validate server configuration
-	if c.Server.Port < 1024 || c.Server.Port > 65535 {
-		return fmt.Errorf("server port must be between 1024 and 65535")
+func setDefaults(v *viper.Viper) {
+	// Server defaults
+	v.SetDefault("server.name", "complaints-mcp")
+	v.SetDefault("server.host", "localhost")
+	v.SetDefault("server.port", 8080)
+	
+	// Storage defaults using XDG
+	v.SetDefault("storage.base_dir", filepath.Join(xdg.DataHome, "complaints"))
+	v.SetDefault("storage.global_dir", filepath.Join(xdg.DataHome, "complaints"))
+	v.SetDefault("storage.max_size", 10485760) // 10MB
+	v.SetDefault("storage.retention_days", 30)
+	v.SetDefault("storage.auto_backup", true)
+	
+	// Log defaults
+	v.SetDefault("log.level", "info")
+	v.SetDefault("log.format", "text") // text, json, logfmt
+	v.SetDefault("log.output", "stdout")
+}
+
+func postProcessConfig(cfg *Config) error {
+	// Expand home directory in paths
+	if strings.HasPrefix(cfg.Storage.BaseDir, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		cfg.Storage.BaseDir = filepath.Join(home, cfg.Storage.BaseDir[2:])
 	}
 	
-	if c.Server.ReadTimeout < time.Second || c.Server.WriteTimeout < time.Second {
-		return fmt.Errorf("timeouts must be at least 1 second")
+	if strings.HasPrefix(cfg.Storage.GlobalDir, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		cfg.Storage.GlobalDir = filepath.Join(home, cfg.Storage.GlobalDir[2:])
 	}
 	
-	// Validate database configuration
-	if c.Database.MaxConnections < 1 || c.Database.MaxConnections > 100 {
-		return fmt.Errorf("database max connections must be between 1 and 100")
-	}
-	
-	if c.Database.Timeout < time.Second {
-		return fmt.Errorf("database timeout must be at least 1 second")
-	}
-	
-	validSSLModes := map[string]bool{
-		"disable":  true,
-		"require": true,
-		"prefer":  true,
-	}
-	
-	if !validSSLModes[c.Database.SSLMode] {
-		return fmt.Errorf("invalid SSL mode: %s", c.Database.SSLMode)
-	}
-	
-	// Validate logging configuration
-	validLogLevels := map[string]bool{
-		"debug":  true,
-		"info":   true,
-		"warn":   true,
-		"error":  true,
-	}
-	
-	if !validLogLevels[c.Logging.Level] {
-		return fmt.Errorf("invalid log level: %s", c.Logging.Level)
-	}
-	
-	validLogFormats := map[string]bool{
-		"json":    true,
-		"console": true,
-	}
-	
-	if !validLogFormats[c.Logging.Format] {
-		return fmt.Errorf("invalid log format: %s", c.Logging.Format)
-	}
-	
-	// Validate complaints configuration
-	validStorageLocations := map[StorageLocation]bool{
-		StorageLocal:   true,
-		StorageGlobal:  true,
-		StorageBoth:    true,
-	}
-	
-	if !validStorageLocations[c.Complaints.StorageLocation] {
-		return fmt.Errorf("invalid storage location: %s", c.Complaints.StorageLocation)
-	}
-	
-	if c.Complaints.RetentionDays < 1 || c.Complaints.RetentionDays > 365 {
-		return fmt.Errorf("retention days must be between 1 and 365")
-	}
-	
-	if c.Complaints.MaxFileSize < 1024 {
-		return fmt.Errorf("max file size must be at least 1024 bytes")
-	}
-	
-	if c.Complaints.ProjectName == "" {
-		c.Complaints.ProjectName = detectProjectName()
-	}
-	
-	// Validate security configuration
-	if c.Security.EnableAuth && c.Security.JWTSecret == "" {
-		return fmt.Errorf("JWT secret is required when auth is enabled")
-	}
-	
-	if c.Security.JWTSecret != "" && len(c.Security.JWTSecret) < 32 {
-		return fmt.Errorf("JWT secret must be at least 32 characters")
-	}
-	
-	if c.Security.TokenExpiry < 60 {
-		return fmt.Errorf("token expiry must be at least 60 seconds")
+	// Ensure directories exist
+	for _, dir := range []string{cfg.Storage.BaseDir, cfg.Storage.GlobalDir} {
+		if dir == "" {
+			continue
+		}
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+		}
 	}
 	
 	return nil
 }
 
-// setDefaults sets all default configuration values
-func setDefaults(v *viper.Viper) {
-	// Server defaults
-	v.SetDefault("server.host", "localhost")
-	v.SetDefault("server.port", 8080)
-	v.SetDefault("server.read_timeout", "30s")
-	v.SetDefault("server.write_timeout", "30s")
-	
-	// Database defaults
-	v.SetDefault("database.url", "file:complaints.db")
-	v.SetDefault("database.max_connections", 10)
-	v.SetDefault("database.timeout", "30s")
-	v.SetDefault("database.ssl_mode", "disable")
-	
-	// Logging defaults
-	v.SetDefault("logging.level", "info")
-	v.SetDefault("logging.format", "json")
-	v.SetDefault("logging.output_path", "/var/log/complaints-mcp.log")
-	v.SetDefault("logging.enable", true)
-	
-	// Complaints defaults
-	v.SetDefault("complaints.storage_location", "local")
-	v.SetDefault("complaints.retention_days", 90)
-	v.SetDefault("complaints.project_name", "")
-	v.SetDefault("complaints.auto_resolve", false)
-	v.SetDefault("complaints.max_file_size", 1048576) // 1MB
-	
-	// Security defaults
-	v.SetDefault("security.enable_auth", false)
-	v.SetDefault("security.jwt_secret", "")
-	v.SetDefault("security.token_expiry", 86400) // 24 hours
-	
-	// Observability defaults
-	v.SetDefault("observability.enable_tracing", false)
-	v.SetDefault("observability.enable_metrics", false)
-	v.SetDefault("observability.service_name", "complaints-mcp")
-	v.SetDefault("observability.enable_health_checks", false)
-}
-
-// detectProjectName attempts to detect the project name from git or environment
-func detectProjectName() string {
-	// Try to get from environment
-	if name := os.Getenv("COMPLAINTS_MCP_PROJECT_NAME"); name != "" {
-		return name
+func validateConfig(cfg *Config) error {
+	// Basic validation
+	if cfg.Server.Name == "" {
+		return fmt.Errorf("server.name is required")
 	}
 	
-	// Try to get from git remote (simplified)
-	return "complaints-mcp"
-}
-
-// GetServerAddress returns the formatted server address
-func (c *Config) GetServerAddress() string {
-	return fmt.Sprintf("%s:%d", c.Server.Host, c.Server.Port)
-}
-
-// IsProduction returns true if the environment is production
-func (c *Config) IsProduction() bool {
-	return c.Logging.Level == "info" && c.Database.SSLMode == "require"
-}
-
-// IsDebug returns true if debug mode is enabled
-func (c *Config) IsDebug() bool {
-	return c.Logging.Level == "debug"
+	if cfg.Server.Port <= 0 || cfg.Server.Port > 65535 {
+		return fmt.Errorf("server.port must be between 1 and 65535")
+	}
+	
+	if cfg.Storage.BaseDir == "" {
+		return fmt.Errorf("storage.base_dir is required")
+	}
+	
+	if cfg.Storage.MaxSize <= 0 {
+		return fmt.Errorf("storage.max_size must be positive")
+	}
+	
+	if cfg.Storage.Retention <= 0 {
+		return fmt.Errorf("storage.retention_days must be positive")
+	}
+	
+	// Log level validation
+	validLogLevels := []string{"trace", "debug", "info", "warn", "error"}
+	if cfg.Log.Level != "" {
+		valid := false
+		for _, level := range validLogLevels {
+			if cfg.Log.Level == level {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid log level: %s", cfg.Log.Level)
+		}
+	}
+	
+	// Log format validation
+	validLogFormats := []string{"text", "json", "logfmt"}
+	if cfg.Log.Format != "" {
+		valid := false
+		for _, format := range validLogFormats {
+			if cfg.Log.Format == format {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid log format: %s", cfg.Log.Format)
+		}
+	}
+	
+	return nil
 }

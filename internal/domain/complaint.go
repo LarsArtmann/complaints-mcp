@@ -7,7 +7,7 @@ import (
 	
 	"github.com/gofrs/uuid"
 	"github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
+	"github.com/charmbracelet/log"
 )
 
 // Severity represents the severity level of a complaint
