@@ -3,6 +3,7 @@ package complaint
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -77,6 +78,35 @@ Best regards,
 		agentName)
 }
 
+// getProjectName determines the project name from git remote or folder structure
+func getProjectName(projectDir string) string {
+	// Try to get project name from git remote
+	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd.Dir = projectDir
+	output, err := cmd.Output()
+	if err == nil {
+		remoteURL := strings.TrimSpace(string(output))
+		// Extract repo name from URL (e.g., https://github.com/user/repo.git -> repo)
+		parts := strings.Split(remoteURL, "/")
+		if len(parts) > 0 {
+			repoName := parts[len(parts)-1]
+			repoName = strings.TrimSuffix(repoName, ".git")
+			if repoName != "" {
+				return repoName
+			}
+		}
+	}
+	
+	// Fallback to folder name
+	folderName := filepath.Base(projectDir)
+	if folderName != "" && folderName != "." && folderName != "/" {
+		return folderName
+	}
+	
+	// Ultimate fallback
+	return "unknown-project"
+}
+
 // Save stores the complaint to both project-local and global locations
 func (c *Complaint) Save(projectDir string) (string, error) {
 	filename := c.GenerateFilename()
@@ -92,13 +122,14 @@ func (c *Complaint) Save(projectDir string) (string, error) {
 		return "", fmt.Errorf("failed to write local complaint file: %w", err)
 	}
 	
-	// Save to global location
+	// Save to global location with project name
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return localPath, nil // Return local path even if global fails
 	}
 	
-	globalPath := filepath.Join(homeDir, ".complaints-mcp", filename)
+	projectName := getProjectName(projectDir)
+	globalPath := filepath.Join(homeDir, ".complaints-mcp", projectName, filename)
 	if err := os.MkdirAll(filepath.Dir(globalPath), 0755); err != nil {
 		return localPath, nil // Return local path even if global fails
 	}

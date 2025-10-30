@@ -42,7 +42,12 @@ Best regards,
 
 Complaints are stored in:
 - **Project-local**: `docs/complaints/<YYYY-MM-DD_HH_MM-SESSION_NAME>.md`
-- **Global location**: `~/.complaints-mcp/<YYYY-MM-DD_HH_MM-SESSION_NAME>.md`
+- **Global location**: `~/.complaints-mcp/<PROJECT_NAME>/<YYYY-MM-DD_HH_MM-SESSION_NAME>.md`
+
+The global location includes the project name, which is determined by:
+1. First checking the git remote repository name
+2. Falling back to the folder name if no git remote exists
+3. Using "unknown-project" as a last resort
 
 ## Installation
 
