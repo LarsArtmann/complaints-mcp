@@ -2,82 +2,137 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/modelcontextprotocol/go-sdk/server"
-	"github.com/spf13/viper"
+	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/service"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
+	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	"github.com/charmbracelet/log"
+	"github.com/spf13/cobra"
 )
 
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "complaints-mcp",
+	Short: "MCP server for filing structured complaints",
+	Long:  `A Model Context Protocol server that allows AI agents to file structured complaints about missing or confusing information they encounter during development tasks.`,
+	RunE: runServer,
+}
+
+func init() {
+	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
+	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "log level (trace, debug, info, warn, error)")
+	rootCmd.PersistentFlags().BoolP("dev", "d", false, "development mode")
+	rootCmd.PersistentFlags().Bool("version", false, "show version information")
+	
+	if err := cobra.MarkFlagFilename(rootCmd.PersistentFlags().Lookup("config")); err != nil {
+		fmt.Fprintf(os.Stderr, "Error marking flag: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 func main() {
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing command: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runServer(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Check version flag
+	showVersion, _ := cmd.Flags().GetBool("version")
+	if showVersion {
+		fmt.Printf("complaints-mcp version %s\n", version)
+		fmt.Printf("commit: %s\n", commit)
+		fmt.Printf("built: %s\n", date)
+		return nil
+	}
+
+	// Initialize logging
+	logLevel, _ := cmd.Flags().GetString("log-level")
+	devMode, _ := cmd.Flags().GetBool("dev")
+	
+	var logger *log.Logger
+	if devMode {
+		logger = log.NewWithOptions(os.Stderr, log.Options{
+			Level:      log.ParseLevel(logLevel),
+			ReportTimestamp: true,
+			ReportCaller:  true,
+			Format:     log.TextFormatter,
+		})
+	} else {
+		logger = log.NewWithOptions(os.Stderr, log.Options{
+			Level:      log.ParseLevel(logLevel),
+			ReportTimestamp: true,
+			ReportCaller:  false,
+			Format:     log.TextFormatter,
+		})
+	}
+	
+	ctx = log.WithContext(ctx, logger)
+	
+	logger.Info("Starting complaints-mcp server", 
+		"version", version,
+		"commit", commit,
+		"log_level", logLevel,
+		"dev_mode", devMode)
+
+	// Load configuration
+	cfg, err := config.Load(ctx, cmd)
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	// Initialize dependencies
+	fileRepo := repo.NewFileRepository(cfg.Storage.BaseDir)
+	complaintService := service.NewComplaintService(fileRepo, logger)
+	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger)
 
 	// Setup graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Initialize configuration
-	initConfig()
-
-	// Create MCP server
-	srv := server.New()
-
-	// TODO: Register tools and handlers
-	// tools := []server.Tool{
-	// 	{
-	// 		Name:        "file_complaint",
-	// 		Description: "File a structured complaint about missing or confusing information",
-	// 		InputSchema: map[string]interface{}{
-	// 			"type": "object",
-	// 			"properties": map[string]interface{}{
-	// 				"agent_name":        {"type": "string"},
-	// 				"task_description": {"type": "string"},
-	// 				"severity":          {"type": "string", "enum": []string{"low", "medium", "high", "critical"}},
-	// 			},
-	// 			"required": []string{"agent_name", "task_description", "severity"},
-	// 		},
-	// 	},
-	// }
-
 	// Start server in goroutine
+	serverErrChan := make(chan error, 1)
 	go func() {
-		if err := srv.Serve(ctx); err != nil {
-			log.Fatalf("Server failed: %v", err)
+		if err := mcpServer.Start(ctx); err != nil {
+			serverErrChan <- fmt.Errorf("server error: %w", err)
 		}
 	}()
 
-	// Wait for shutdown signal
-	<-sigChan
-	log.Println("Shutting down server...")
+	// Wait for shutdown signal or server error
+	select {
+	case sig := <-sigChan:
+		logger.Info("Received shutdown signal", "signal", sig.String())
+		
+	case err := <-serverErrChan:
+		logger.Error("Server error occurred", "error", err)
+	}
 
-	// Graceful shutdown
-	cancel()
+	// Graceful shutdown with timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
+	defer shutdownCancel()
 	
-	log.Println("Server stopped")
-}
-
-func initConfig() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	viper.AddConfigPath("$HOME/.complaints-mcp")
-	
-	// Set defaults
-	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("log.level", "info")
-	
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Println("Config file not found, using defaults")
-		} else {
-			log.Printf("Error reading config file: %v", err)
-		}
+	logger.Info("Initiating graceful shutdown")
+	if err := mcpServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Error during shutdown", "error", err)
+	} else {
+		logger.Info("Server stopped gracefully")
 	}
 	
-	flag.Parse()
+	return nil
 }

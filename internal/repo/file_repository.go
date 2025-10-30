@@ -9,271 +9,277 @@ import (
 	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
-	"github.com/larsartmann/complaints-mcp/internal/errors"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/charmbracelet/log"
 )
 
-// Repository interface for complaint storage
+// Repository defines the interface for complaint storage
 type Repository interface {
-	Store(ctx context.Context, complaint *domain.Complaint) error
+	Save(ctx context.Context, complaint *domain.Complaint) error
 	FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error)
-	FindByProject(ctx context.Context, projectName string, limit int, offset int) ([]*domain.Complaint, error)
-	FindUnresolved(ctx context.Context, limit int, offset int) ([]*domain.Complaint, error)
-	MarkResolved(ctx context.Context, id domain.ComplaintID) error
+	FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error)
+	FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error)
+	Update(ctx context.Context, complaint *domain.Complaint) error
+	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
 }
 
-// FileRepository handles file-based complaint storage
+// FileRepository implements Repository using file system storage
 type FileRepository struct {
-	basePath string
+	baseDir string
+	logger   *log.Logger
+	tracer   tracey.Tracer
 }
 
 // NewFileRepository creates a new file-based repository
-func NewFileRepository(basePath string) Repository {
+func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 	return &FileRepository{
-		basePath: basePath,
+		baseDir: baseDir,
+		logger:   log.Default(),
+		tracer:   tracey.NewTracer("file-repository"),
 	}
 }
 
-// Store saves a complaint to a file
-func (r *FileRepository) Store(ctx context.Context, complaint *domain.Complaint) error {
-	// Create directory if it doesn't exist
-	dir := filepath.Join(r.basePath, "complaints")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return errors.NewStorageError(fmt.Sprintf("failed to create directory: %v", err))
+// Save saves a complaint to the file system
+func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
+	ctx, span := r.tracer.Start(ctx, "Save")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "complaint_id", complaint.ID.String())
+	logger.Info("Saving complaint")
+
+	// Create filename with timestamp and session info
+	timestamp := complaint.Timestamp.Format("2006-01-02_15-04-05")
+	filename := fmt.Sprintf("%s-%s.json", timestamp, complaint.SessionName)
+	if complaint.SessionName == "" {
+		filename = fmt.Sprintf("%s.json", timestamp)
 	}
 	
-	// Generate filename
-	filename := r.generateFilename(complaint)
-	filePath := filepath.Join(dir, filename)
+	filePath := filepath.Join(r.baseDir, filename)
 	
-	// Write complaint to file
-	content := r.generateComplaintContent(complaint)
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		return errors.NewStorageError(fmt.Sprintf("failed to write file: %v", err))
+	// Ensure directory exists
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		logger.Error("Failed to create directory", "error", err, "path", filepath.Dir(filePath))
+		return fmt.Errorf("failed to create directory: %w", err)
 	}
 	
+	// Write complaint as JSON
+	data, err := json.MarshalIndent(complaint, "", "  ")
+	if err != nil {
+		logger.Error("Failed to marshal complaint", "error", err)
+		return fmt.Errorf("failed to marshal complaint: %w", err)
+	}
+	
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		logger.Error("Failed to write complaint file", "error", err, "path", filePath)
+		return fmt.Errorf("failed to write complaint file: %w", err)
+	}
+	
+	logger.Info("Complaint saved successfully", "path", filePath)
 	return nil
 }
 
-// generateFilename creates a unique filename for a complaint
-func (r *FileRepository) generateFilename(complaint *domain.Complaint) string {
-	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
-	sessionName := complaint.SessionName
-	if sessionName == "" {
-		sessionName = "session"
-	}
-	
-	// Sanitize session name
-	sanitized := sanitizeFilename(sessionName)
-	
-	return fmt.Sprintf("%s-%s.md", timestamp, sanitized)
-}
-
-// generateComplaintContent generates markdown content for a complaint
-func (r *FileRepository) generateComplaintContent(complaint *domain.Complaint) string {
-	return fmt.Sprintf(`# %s
-
-**Filed:** %s  
-**Timestamp:** %s  
-**Project:** %s  
-**Agent:** %s  
-**Session:** %s  
-**Severity:** %s  
-
-## Task Description
-
-%s
-
-## Context Information
-
-%s
-
-## Missing Information
-
-%s
-
-## Confusing Points
-
-%s
-
-## Future Wishes
-
-%s
-
-## Status
-
-%s
-
----
-
-*This complaint was automatically filed by an AI agent using the complaints-mcp server.*
-
-**File:** %s  
-**Stored:** %s
-
----
-`,
-		complaint.ID.Value,
-		complaint.Timestamp.Format("2006-01-02 15:04:05"),
-		complaint.Timestamp.Format("2006-01-02 15:04:05"),
-		complaint.ProjectName,
-		complaint.AgentName,
-		complaint.SessionName,
-		complaint.Severity,
-		complaint.TaskDescription,
-		complaint.ContextInfo,
-		complaint.MissingInfo,
-		complaint.ConfusedBy,
-		complaint.FutureWishes,
-		fmt.Sprintf("Status: %t", complaint.Resolved),
-		complaint.ID.Value,
-		time.Now().Format("2006-01-02 15:04:05"),
-	)
-}
-
-// sanitizeFilename sanitizes a string for use in filenames
-func sanitizeFilename(name string) string {
-	// Replace spaces and special characters with dashes
-	result := ""
-	for _, r := range name {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
-			result += string(r)
-		} else {
-			result += "-"
-		}
-	}
-	return result
-}
-
-// FindByID retrieves a complaint by its ID
+// FindByID retrieves a complaint by ID from the file system
 func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
-	complaints, err := r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return c.ID.Value == id.Value
-	})
+	ctx, span := r.tracer.Start(ctx, "FindByID")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "complaint_id", id.String())
+	logger.Debug("Finding complaint by ID")
+
+	// Search through files
+	complaints, err := r.loadAllComplaints(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(complaints) == 0 {
-		return nil, nil
-	}
-	return complaints[0], nil
-}
-
-// FindByProject retrieves complaints for a specific project
-func (r *FileRepository) FindByProject(ctx context.Context, projectName string, limit int, offset int) ([]*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return c.ProjectName == projectName
-	})
-}
-
-// FindUnresolved retrieves unresolved complaints
-func (r *FileRepository) FindUnresolved(ctx context.Context, limit int, offset int) ([]*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return !c.Resolved
-	})
-}
-
-// findByPredicate finds complaints matching a predicate
-func (r *FileRepository) findByPredicate(ctx context.Context, predicate func(*domain.Complaint) bool) ([]*domain.Complaint, error) {
-	dir := filepath.Join(r.basePath, "complaints")
 	
-	files, err := os.ReadDir(dir)
+	for _, complaint := range complaints {
+		if complaint.ID.String() == id.String() {
+			logger.Info("Complaint found by ID")
+			return complaint, nil
+		}
+	}
+	
+	logger.Warn("Complaint not found", "complaint_id", id.String())
+	return nil, fmt.Errorf("complaint not found: %s", id.String())
+}
+
+// FindAll retrieves all complaints with pagination
+func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "FindAll")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "limit", limit, "offset", offset)
+	logger.Debug("Finding all complaints")
+
+	complaints, err := r.loadAllComplaints(ctx)
 	if err != nil {
-		return nil, errors.NewStorageError(fmt.Sprintf("failed to read directory: %v", err))
+		return nil, err
+	}
+	
+	// Apply pagination
+	total := len(complaints)
+	if offset >= total {
+		return []*domain.Complaint{}, nil
+	}
+	
+	start := offset
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	
+	result := complaints[start:end]
+	logger.Info("Complaints retrieved", "count", len(result))
+	return result, nil
+}
+
+// FindBySeverity retrieves complaints by severity level
+func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "FindBySeverity")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "severity", string(severity), "limit", limit)
+	logger.Debug("Finding complaints by severity")
+
+	complaints, err := r.loadAllComplaints(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	var filtered []*domain.Complaint
+	count := 0
+	for _, complaint := range complaints {
+		if complaint.Severity == severity {
+			filtered = append(filtered, complaint)
+			count++
+			if limit > 0 && count >= limit {
+				break
+			}
+		}
+	}
+	
+	logger.Info("Complaints filtered by severity", "severity", string(severity), "count", len(filtered))
+	return filtered, nil
+}
+
+// Update updates an existing complaint
+func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
+	ctx, span := r.tracer.Start(ctx, "Update")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "complaint_id", complaint.ID.String())
+	logger.Info("Updating complaint")
+
+	// Find existing complaint
+	existing, err := r.FindByID(ctx, complaint.ID)
+	if err != nil {
+		return fmt.Errorf("failed to find existing complaint: %w", err)
+	}
+	
+	// Update fields
+	existing.Resolved = complaint.Resolved
+	existing.TaskDescription = complaint.TaskDescription
+	existing.ContextInfo = complaint.ContextInfo
+	existing.MissingInfo = complaint.MissingInfo
+	existing.ConfusedBy = complaint.ConfusedBy
+	existing.FutureWishes = complaint.FutureWishes
+	
+	// Save updated complaint
+	return r.Save(ctx, existing)
+}
+
+// Search searches complaints by text content
+func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "Search")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "query", query, "limit", limit)
+	logger.Debug("Searching complaints")
+
+	complaints, err := r.loadAllComplaints(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	queryLower := strings.ToLower(query)
+	var results []*domain.Complaint
+	count := 0
+	
+	for _, complaint := range complaints {
+		// Simple text search in relevant fields
+		if strings.Contains(strings.ToLower(complaint.TaskDescription), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.ContextInfo), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.MissingInfo), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.ConfusedBy), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.FutureWishes), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.AgentName), queryLower) ||
+			strings.Contains(strings.ToLower(complaint.ProjectName), queryLower) {
+			
+			results = append(results, complaint)
+			count++
+			if limit > 0 && count >= limit {
+				break
+			}
+		}
+	}
+	
+	logger.Info("Complaints searched", "query", query, "count", len(results))
+	return results, nil
+}
+
+// loadAllComplaints loads all complaints from the file system
+func (r *FileRepository) loadAllComplaints(ctx context.Context) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "loadAllComplaints")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository")
+	logger.Debug("Loading all complaints")
+
+	entries, err := os.ReadDir(r.baseDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			logger.Info("Base directory does not exist, returning empty list")
+			return []*domain.Complaint{}, nil
+		}
+		logger.Error("Failed to read base directory", "error", err, "path", r.baseDir)
+		return nil, fmt.Errorf("failed to read base directory: %w", err)
 	}
 	
 	var complaints []*domain.Complaint
-	for _, file := range files {
-		if filepath.Ext(file.Name()) != ".md" {
+	for _, entry := range entries {
+		if entry.IsDir() {
 			continue
 		}
 		
-		// Read and parse complaint file
-		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
-		if err != nil {
-			return nil, errors.NewStorageError(fmt.Sprintf("failed to read file: %v", err))
+		if !strings.HasSuffix(entry.Name(), ".json") {
+			continue
 		}
 		
-		// Create complaint from file content (simplified)
-		complaint := r.parseComplaintFromFile(content)
-		if complaint != nil && predicate(complaint) {
-			complaints = append(complaints, complaint)
+		filePath := filepath.Join(r.baseDir, entry.Name())
+		complaint, err := r.loadComplaintFromFile(filePath)
+		if err != nil {
+			logger.Warn("Failed to load complaint file", "error", err, "path", filePath)
+			continue
 		}
+		
+		complaints = append(complaints, complaint)
 	}
 	
+	logger.Info("Complaints loaded successfully", "count", len(complaints))
 	return complaints, nil
 }
 
-// parseComplaintFromFile parses a complaint from markdown content
-func (r *FileRepository) parseComplaintFromFile(content []byte) *domain.Complaint {
-	// This is a simplified parser - in a real implementation, we'd use a proper markdown parser
-	lines := strings.Split(string(content), "\n")
-	
-	if len(lines) < 10 {
-		return nil
-	}
-	
-	// Extract basic information from filename line
-	titleLine := lines[0]
-	if !strings.Contains(titleLine, "# ") {
-		return nil
-	}
-	
-	// Extract metadata from second line
-	metaLine := lines[1]
-	if !strings.Contains(metaLine, "**") {
-		return nil
-	}
-	
-	return &domain.Complaint{
-		// Simplified parsing - in real implementation, extract all fields properly
-		TaskDescription: metaLine,
-		Timestamp:      time.Now(), // Would extract from filename
-		ProjectName:    "unknown", // Would extract from config
-		// Add other fields as needed
-	}
-}
-
-// MarkResolved marks a complaint as resolved
-func (r *FileRepository) MarkResolved(ctx context.Context, id domain.ComplaintID) error {
-	return r.updateComplaintStatus(ctx, id, func(c *domain.Complaint) bool {
-		c.Resolve()
-		return true
-	})
-}
-
-// updateComplaintStatus updates the status of a complaint
-func (r *FileRepository) updateComplaintStatus(ctx context.Context, id domain.ComplaintID, updateFunc func(*domain.Complaint) bool) error {
-	dir := filepath.Join(r.basePath, "complaints")
-	
-	files, err := os.ReadDir(dir)
+// loadComplaintFromFile loads a single complaint from a JSON file
+func (r *FileRepository) loadComplaintFromFile(filePath string) (*domain.Complaint, error) {
+	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return errors.NewStorageError(fmt.Sprintf("failed to read directory: %v", err))
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 	
-	for _, file := range files {
-		if filepath.Ext(file.Name()) != ".md" {
-			continue
-		}
-		
-		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
-		if err != nil {
-			return errors.NewStorageError(fmt.Sprintf("failed to read file: %v", err))
-		}
-		
-		complaint := r.parseComplaintFromFile(content)
-		if complaint != nil && complaint.ID.Value == id.Value {
-			if updateFunc(complaint) {
-				complaint.Resolve()
-			}
-			
-			// Write updated content back to file
-			updatedContent := r.generateComplaintContent(complaint)
-			if err := os.WriteFile(filepath.Join(dir, file.Name()), []byte(updatedContent), 0644); err != nil {
-				return errors.NewStorageError(fmt.Sprintf("failed to write file: %v", err))
-			}
-			break
-		}
+	var complaint domain.Complaint
+	if err := json.Unmarshal(data, &complaint); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal complaint: %w", err)
 	}
 	
-	return nil
+	return &complaint, nil
 }

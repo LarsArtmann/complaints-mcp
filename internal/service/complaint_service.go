@@ -5,158 +5,157 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
-	"github.com/larsartmann/complaints-mcp/internal/errors"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
+	"github.com/ilyakaz/tracey"
 )
 
-// ComplaintService handles business logic for complaints
+// ComplaintService provides business logic for managing complaints
 type ComplaintService struct {
 	repo   repo.Repository
-	config *config.Config
+	logger *log.Logger
+	tracer tracey.Tracer
 }
 
 // NewComplaintService creates a new complaint service
-func NewComplaintService(repository repo.Repository, cfg *config.Config) *ComplaintService {
+func NewComplaintService(repo repo.Repository, logger *log.Logger, tracer tracing.Tracer) *ComplaintService {
 	return &ComplaintService{
-		repo:   repository,
-		config: cfg,
+		repo:   repo,
+		logger: logger,
+		tracer: tracey.NewTracer("complaint-service"),
 	}
 }
 
 // CreateComplaint creates a new complaint
-func (s *ComplaintService) CreateComplaint(ctx context.Context, req *CreateComplaintRequest) (*domain.Complaint, error) {
-	// Validate request
-	if err := req.Validate(); err != nil {
-		return nil, errors.NewValidationError(err.Error(), "")
-	}
+func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity domain.Severity, projectName string) (*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "CreateComplaint")
+	defer span.End()
 
-	// Generate complaint ID
-	id, err := domain.NewComplaintID()
+	logger := s.logger.With("operation", "create_complaint")
+	logger.Info("Creating new complaint", 
+		"agent_name", agentName,
+		"severity", string(severity),
+		"session_name", sessionName)
+
+	complaint, err := domain.NewComplaint(ctx, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, severity, projectName)
 	if err != nil {
-		return nil, errors.NewStorageError("failed to generate complaint ID", err)
+		logger.Error("Failed to create complaint", "error", err)
+		return nil, err
 	}
 
-	// Use project name from request or fall back to config
-	projectName := req.ProjectName
-	if projectName == "" {
-		projectName = s.config.Complaints.ProjectName
+	if err := s.repo.Save(ctx, complaint); err != nil {
+		logger.Error("Failed to save complaint", "error", err, "complaint_id", complaint.ID.String())
+		return nil, fmt.Errorf("failed to save complaint: %w", err)
 	}
 
-	// Create complaint
-	complaint := &domain.Complaint{
-		ID:              id,
-		AgentName:       req.AgentName,
-		SessionName:     req.SessionName,
-		TaskDescription: req.TaskDescription,
-		ContextInfo:     req.ContextInfo,
-		MissingInfo:     req.MissingInfo,
-		ConfusedBy:      req.ConfusedBy,
-		FutureWishes:    req.FutureWishes,
-		Severity:        req.Severity,
-		ProjectName:     projectName,
-		Timestamp:       time.Now(),
-		Resolved:        false,
-	}
-
-	// Validate complaint
-	if err := complaint.Validate(); err != nil {
-		return nil, errors.NewValidationError(err.Error(), "")
-	}
-
-	// Store complaint
-	if err := s.repo.Store(ctx, complaint); err != nil {
-		return nil, fmt.Errorf("failed to store complaint: %w", err)
-	}
-
+	logger.Info("Complaint created successfully", "complaint_id", complaint.ID.String())
 	return complaint, nil
 }
 
 // GetComplaint retrieves a complaint by ID
 func (s *ComplaintService) GetComplaint(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "GetComplaint")
+	defer span.End()
+
+	logger := s.logger.With("operation", "get_complaint", "complaint_id", id.String())
+	logger.Debug("Retrieving complaint")
+
 	complaint, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find complaint: %w", err)
+		logger.Error("Failed to retrieve complaint", "error", err)
+		return nil, fmt.Errorf("failed to retrieve complaint: %w", err)
 	}
+
 	if complaint == nil {
-		return nil, errors.NewNotFoundError(fmt.Sprintf("complaint with ID %s not found", id.Value))
+		logger.Warn("Complaint not found", "complaint_id", id.String())
+		return nil, fmt.Errorf("complaint not found: %s", id.String())
 	}
+
+	logger.Info("Complaint retrieved successfully")
 	return complaint, nil
 }
 
-// ListComplaintsByProject retrieves complaints for a project
-func (s *ComplaintService) ListComplaintsByProject(ctx context.Context, projectName string, limit, offset int) ([]*domain.Complaint, error) {
-	if limit <= 0 {
-		limit = 50 // default limit
-	}
-	if limit > 100 {
-		limit = 100 // max limit
-	}
+// ListComplaints retrieves all complaints
+func (s *ComplaintService) ListComplaints(ctx context.Context, limit int, offset int) ([]*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "ListComplaints")
+	defer span.End()
 
-	complaints, err := s.repo.FindByProject(ctx, projectName, limit, offset)
+	logger := s.logger.With("operation", "list_complaints", "limit", limit, "offset", offset)
+	logger.Debug("Retrieving complaints list")
+
+	complaints, err := s.repo.FindAll(ctx, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list complaints for project %s: %w", projectName, err)
-	}
-	return complaints, nil
-}
-
-// ListUnresolvedComplaints retrieves unresolved complaints
-func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
-	if limit <= 0 {
-		limit = 50 // default limit
-	}
-	if limit > 100 {
-		limit = 100 // max limit
+		logger.Error("Failed to list complaints", "error", err)
+		return nil, fmt.Errorf("failed to list complaints: %w", err)
 	}
 
-	complaints, err := s.repo.FindUnresolved(ctx, limit, offset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list unresolved complaints: %w", err)
-	}
+	logger.Info("Complaints listed successfully", "count", len(complaints))
 	return complaints, nil
 }
 
 // ResolveComplaint marks a complaint as resolved
 func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID) error {
-	if err := s.repo.MarkResolved(ctx, id); err != nil {
-		return fmt.Errorf("failed to resolve complaint %s: %w", id.Value, err)
+	ctx, span := s.tracer.Start(ctx, "ResolveComplaint")
+	defer span.End()
+
+	logger := s.logger.With("operation", "resolve_complaint", "complaint_id", id.String())
+	logger.Info("Resolving complaint")
+
+	complaint, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		logger.Error("Failed to retrieve complaint for resolution", "error", err)
+		return fmt.Errorf("failed to retrieve complaint: %w", err)
 	}
+
+	if complaint == nil {
+		logger.Warn("Complaint not found for resolution", "complaint_id", id.String())
+		return fmt.Errorf("complaint not found: %s", id.String())
+	}
+
+	complaint.Resolve(ctx)
+
+	if err := s.repo.Update(ctx, complaint); err != nil {
+		logger.Error("Failed to update complaint", "error", err)
+		return fmt.Errorf("failed to update complaint: %w", err)
+	}
+
+	logger.Info("Complaint resolved successfully", "complaint_id", id.String())
 	return nil
 }
 
-// CreateComplaintRequest represents a request to create a complaint
-type CreateComplaintRequest struct {
-	AgentName       string `json:"agent_name" validate:"required"`
-	SessionName     string `json:"session_name"`
-	TaskDescription string `json:"task_description" validate:"required"`
-	ContextInfo     string `json:"context_info"`
-	MissingInfo     string `json:"missing_info"`
-	ConfusedBy      string `json:"confused_by"`
-	FutureWishes    string `json:"future_wishes"`
-	Severity        string `json:"severity" validate:"required,oneof=low medium high critical"`
-	ProjectName     string `json:"project_name"`
+// GetComplaintsBySeverity retrieves complaints by severity level
+func (s *ComplaintService) GetComplaintsBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "GetComplaintsBySeverity")
+	defer span.End()
+
+	logger := s.logger.With("operation", "get_complaints_by_severity", "severity", string(severity), "limit", limit)
+	logger.Debug("Retrieving complaints by severity")
+
+	complaints, err := s.repo.FindBySeverity(ctx, severity, limit)
+	if err != nil {
+		logger.Error("Failed to retrieve complaints by severity", "error", err)
+		return nil, fmt.Errorf("failed to retrieve complaints by severity: %w", err)
+	}
+
+	logger.Info("Complaints retrieved by severity successfully", "severity", string(severity), "count", len(complaints))
+	return complaints, nil
 }
 
-// Validate validates the request
-func (r *CreateComplaintRequest) Validate() error {
-	if r.AgentName == "" {
-		return fmt.Errorf("agent name is required")
+// SearchComplaints searches complaints by text content
+func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "SearchComplaints")
+	defer span.End()
+
+	logger := s.logger.With("operation", "search_complaints", "query", query, "limit", limit)
+	logger.Debug("Searching complaints")
+
+	complaints, err := s.repo.Search(ctx, query, limit)
+	if err != nil {
+		logger.Error("Failed to search complaints", "error", err)
+		return nil, fmt.Errorf("failed to search complaints: %w", err)
 	}
-	if r.TaskDescription == "" {
-		return fmt.Errorf("task description is required")
-	}
-	if r.Severity == "" {
-		return fmt.Errorf("severity is required")
-	}
-	validSeverities := map[string]bool{
-		"low":      true,
-		"medium":   true,
-		"high":     true,
-		"critical": true,
-	}
-	if !validSeverities[r.Severity] {
-		return fmt.Errorf("invalid severity: %s", r.Severity)
-	}
-	return nil
+
+	logger.Info("Complaints searched successfully", "query", query, "count", len(complaints))
+	return complaints, nil
 }
