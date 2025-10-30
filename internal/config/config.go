@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -166,10 +167,10 @@ func (c *Config) Validate() error {
 	}
 	
 	// Validate complaints configuration
-	validStorageLocations := map[string]bool{
-		"local":   true,
-		"global":   true,
-		"both":    true,
+	validStorageLocations := map[StorageLocation]bool{
+		StorageLocal:   true,
+		StorageGlobal:  true,
+		StorageBoth:    true,
 	}
 	
 	if !validStorageLocations[c.Complaints.StorageLocation] {

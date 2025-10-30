@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
@@ -46,7 +47,7 @@ func (r *FileRepository) Store(ctx context.Context, complaint *domain.Complaint)
 	
 	// Write complaint to file
 	content := r.generateComplaintContent(complaint)
-	if err := os.WriteFile(filePath, 0644, []byte(content)); err != nil {
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
 		return errors.NewStorageError(fmt.Sprintf("failed to write file: %v", err))
 	}
 	
@@ -64,7 +65,7 @@ func (r *FileRepository) generateFilename(complaint *domain.Complaint) string {
 	// Sanitize session name
 	sanitized := sanitizeFilename(sessionName)
 	
-	return fmt.Sprintf("%s-%s-%s.md", timestamp, sanitized)
+	return fmt.Sprintf("%s-%s.md", timestamp, sanitized)
 }
 
 // generateComplaintContent generates markdown content for a complaint
@@ -113,6 +114,7 @@ func (r *FileRepository) generateComplaintContent(complaint *domain.Complaint) s
 `,
 		complaint.ID.Value,
 		complaint.Timestamp.Format("2006-01-02 15:04:05"),
+		complaint.Timestamp.Format("2006-01-02 15:04:05"),
 		complaint.ProjectName,
 		complaint.AgentName,
 		complaint.SessionName,
@@ -122,7 +124,9 @@ func (r *FileRepository) generateComplaintContent(complaint *domain.Complaint) s
 		complaint.MissingInfo,
 		complaint.ConfusedBy,
 		complaint.FutureWishes,
-		map[bool]bool{complaint.Resolved}: false,
+		fmt.Sprintf("Status: %t", complaint.Resolved),
+		complaint.ID.Value,
+		time.Now().Format("2006-01-02 15:04:05"),
 	)
 }
 
@@ -142,9 +146,16 @@ func sanitizeFilename(name string) string {
 
 // FindByID retrieves a complaint by its ID
 func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
+	complaints, err := r.findByPredicate(ctx, func(c *domain.Complaint) bool {
 		return c.ID.Value == id.Value
 	})
+	if err != nil {
+		return nil, err
+	}
+	if len(complaints) == 0 {
+		return nil, nil
+	}
+	return complaints[0], nil
 }
 
 // FindByProject retrieves complaints for a specific project
@@ -172,12 +183,12 @@ func (r *FileRepository) findByPredicate(ctx context.Context, predicate func(*do
 	
 	var complaints []*domain.Complaint
 	for _, file := range files {
-		if filepath.Ext(file) != ".md" {
+		if filepath.Ext(file.Name()) != ".md" {
 			continue
 		}
 		
 		// Read and parse complaint file
-		content, err := os.ReadFile(filepath.Join(dir, file))
+		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return nil, errors.NewStorageError(fmt.Sprintf("failed to read file: %v", err))
 		}
@@ -224,7 +235,7 @@ func (r *FileRepository) parseComplaintFromFile(content []byte) *domain.Complain
 
 // MarkResolved marks a complaint as resolved
 func (r *FileRepository) MarkResolved(ctx context.Context, id domain.ComplaintID) error {
-	return r.updateComplaintStatus(ctx, id, func(c *domain.Complaint) {
+	return r.updateComplaintStatus(ctx, id, func(c *domain.Complaint) bool {
 		c.Resolve()
 		return true
 	})
@@ -240,11 +251,11 @@ func (r *FileRepository) updateComplaintStatus(ctx context.Context, id domain.Co
 	}
 	
 	for _, file := range files {
-		if filepath.Ext(file) != ".md" {
+		if filepath.Ext(file.Name()) != ".md" {
 			continue
 		}
 		
-		content, err := os.ReadFile(filepath.Join(dir, file))
+		content, err := os.ReadFile(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return errors.NewStorageError(fmt.Sprintf("failed to read file: %v", err))
 		}
@@ -257,7 +268,7 @@ func (r *FileRepository) updateComplaintStatus(ctx context.Context, id domain.Co
 			
 			// Write updated content back to file
 			updatedContent := r.generateComplaintContent(complaint)
-			if err := os.WriteFile(filepath.Join(dir, file), 0644, []byte(updatedContent)); err != nil {
+			if err := os.WriteFile(filepath.Join(dir, file.Name()), []byte(updatedContent), 0644); err != nil {
 				return errors.NewStorageError(fmt.Sprintf("failed to write file: %v", err))
 			}
 			break

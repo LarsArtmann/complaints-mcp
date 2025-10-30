@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 	"github.com/gofrs/uuid"
 )
@@ -11,8 +12,12 @@ type ComplaintID struct {
 }
 
 // NewComplaintID creates a new complaint ID
-func NewComplaintID() ComplaintID {
-	return ComplaintID{Value: uuid.Must(uuid.NewV4()).String()}
+func NewComplaintID() (ComplaintID, error) {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return ComplaintID{}, fmt.Errorf("failed to generate UUID: %w", err)
+	}
+	return ComplaintID{Value: id.String()}, nil
 }
 
 // String returns the string representation of the complaint ID
@@ -42,10 +47,15 @@ type Complaint struct {
 }
 
 // NewComplaint creates a new complaint with the given parameters
-func NewComplaint(agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes, severity, projectName string) *Complaint {
+func NewComplaint(agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes, severity, projectName string) (*Complaint, error) {
+	id, err := NewComplaintID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate complaint ID: %w", err)
+	}
+	
 	now := time.Now()
 	return &Complaint{
-		ID:              NewComplaintID(),
+		ID:              id,
 		AgentName:       agentName,
 		SessionName:     sessionName,
 		TaskDescription:  taskDescription,
@@ -57,7 +67,7 @@ func NewComplaint(agentName, sessionName, taskDescription, contextInfo, missingI
 		Timestamp:       now,
 		ProjectName:     projectName,
 		Resolved:        false,
-	}
+	}, nil
 }
 
 // Resolve marks a complaint as resolved

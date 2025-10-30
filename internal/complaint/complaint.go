@@ -28,7 +28,11 @@ type Complaint struct {
 func (c *Complaint) Save(workingDir string) (string, error) {
 	// Generate unique ID and timestamp if not set
 	if c.ID == "" {
-		c.ID = uuid.Must(uuid.NewV4()).String()
+		id, err := uuid.NewV4()
+		if err != nil {
+			return "", fmt.Errorf("failed to generate UUID: %w", err)
+		}
+		c.ID = id.String()
 	}
 	if c.Timestamp.IsZero() {
 		c.Timestamp = time.Now()
