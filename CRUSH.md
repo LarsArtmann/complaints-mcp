@@ -111,6 +111,48 @@ ls -la ~/.complaints-mcp/
 
 ## Development Commands
 
+### Using Just (Recommended)
+```bash
+# Build the server
+just build
+
+# Build optimized release version
+just build-release
+
+# Run tests
+just test
+
+# Run BDD tests (when implemented)
+just test-bdd
+
+# Lint and format code
+just lint
+just fmt
+
+# Find code duplicates
+just fd          # Standard threshold (15 tokens)
+just fd-strict   # Strict threshold (50 tokens)
+
+# Install development tools
+just install-tools
+
+# Run full CI pipeline
+just ci
+
+# Clean build artifacts
+just clean
+
+# Development server
+just dev
+
+# Update dependencies
+just update
+
+# Show all available commands
+just help
+```
+
+### Using Go directly
 ```bash
 # Run tests (if any)
 go test ./...
