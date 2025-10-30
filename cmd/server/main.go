@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/larsartmann/complaints-mcp/internal/complaint"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
