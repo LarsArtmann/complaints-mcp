@@ -59,12 +59,76 @@ The global location includes the project name, which is determined by:
 
 ## Usage
 
+### Running the Server
+
 Run the MCP server:
 ```bash
 ./complaints-mcp
 ```
 
 The server will start and listen for MCP client connections over stdio transport.
+
+## How to Use with Crush
+
+[Crush](https://github.com/charmbracelet/crush) is an AI coding assistant that supports MCP servers out of the box. To use complaints-mcp with Crush:
+
+### 1. Add to Crush Configuration
+
+Add the following to your Crush configuration file (`.crush.json`, `crush.json`, or `$HOME/.config/crush/crush.json`):
+
+```json
+{
+  "$schema": "https://charm.land/crush.json",
+  "mcp": {
+    "complaints": {
+      "type": "stdio",
+      "command": "/path/to/your/complaints-mcp",
+      "args": [],
+      "timeout": 120,
+      "disabled": false
+    }
+  }
+}
+```
+
+### 2. Build and Install
+
+First, build the complaints-mcp binary:
+
+```bash
+git clone https://github.com/LarsArtmann/complaints-mcp.git
+cd complaints-mcp
+go build -o complaints-mcp ./cmd/server
+```
+
+Then update the `command` path in your Crush configuration to point to the built binary.
+
+### 3. Restart Crush
+
+Restart Crush or reload the configuration. The `file_complaint` tool will now be available to AI agents working through Crush.
+
+### 4. Example Usage
+
+When working with Crush, an AI agent can now file complaints whenever it encounters issues:
+
+```
+Agent: I notice there are missing environment variables in the setup instructions.
+Agent: Let me file a complaint about this.
+[Agent calls file_complaint tool]
+```
+
+The complaint will be saved to both:
+- Project-local: `docs/complaints/<timestamp>-session.md`
+- Global: `~/.complaints-mcp/<project-name>/<timestamp>-session.md`
+
+### 5. Benefits
+
+- **Better AI Experience**: Helps identify areas where documentation or instructions are unclear
+- **Continuous Improvement**: Collects structured feedback about project pain points
+- **Multi-project Organization**: Global storage is organized by project name
+- **Historical Tracking**: Maintains a record of issues encountered over time
+
+This integration ensures that AI agents can provide valuable feedback about project documentation, setup processes, and other areas that need improvement.
 
 ## MCP Tool
 
