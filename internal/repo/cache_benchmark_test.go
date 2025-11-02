@@ -234,28 +234,34 @@ func TestCacheMetricsAccuracy(t *testing.T) {
 	expectedHits := 0
 	expectedMisses := 0
 
-	// First access should be a miss (cache empty for new repo)
+	// First access should be a HIT because Save() already populated the cache
 	_, err := repo.FindByID(ctx, complaints[0].ID)
 	require.NoError(t, err)
-	expectedMisses++
+	expectedHits++
 
-	// Second access should be a hit
+	// Second access should also be a hit
 	_, err = repo.FindByID(ctx, complaints[0].ID)
 	require.NoError(t, err)
 	expectedHits++
 
-	// Access other complaints
+	// Access other complaints (all should be hits since Save populated cache)
 	for i := 1; i < numComplaints; i++ {
-		// First access - miss
+		// First access - hit (already in cache from Save)
 		_, err = repo.FindByID(ctx, complaints[i].ID)
 		require.NoError(t, err)
-		expectedMisses++
+		expectedHits++
 
-		// Second access - hit
+		// Second access - also hit
 		_, err = repo.FindByID(ctx, complaints[i].ID)
 		require.NoError(t, err)
 		expectedHits++
 	}
+
+	// Test cache miss with non-existent ID
+	nonExistentID, _ := domain.NewComplaintID()
+	_, err = repo.FindByID(ctx, nonExistentID)
+	require.Error(t, err) // Should error because it doesn't exist
+	expectedMisses++
 
 	// Get cache statistics
 	stats := cachedRepo.GetCacheStats()

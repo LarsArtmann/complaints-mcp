@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
@@ -26,18 +25,14 @@ type Repository interface {
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
 }
 
-// CachedRepository implements Repository with in-memory caching for O(1) lookups
+// CachedRepository implements Repository with in-memory LRU caching for O(1) lookups
 type CachedRepository struct {
 	baseDir string
 	logger  *log.Logger
 	tracer  tracing.Tracer
 
-	// Performance cache - O(1) lookups instead of O(n) file scans
-	cache   map[string]*domain.Complaint // key: complaint ID string
-	cacheMu sync.RWMutex                 // Thread-safe cache access
-
-	// Metrics and monitoring
-	metrics *CacheMetrics
+	// LRU cache for automatic memory management
+	cache *LRUCache
 }
 
 // FileRepository implements Repository using file system storage (legacy)
@@ -56,17 +51,16 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 	}
 }
 
-// NewCachedRepository creates a new high-performance cached repository
+// NewCachedRepository creates a new high-performance cached repository with LRU eviction
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
-	// Initialize metrics with default cache size
-	maxCacheSize := int64(1000) // TODO: make configurable
+	// Initialize LRU cache with default max size
+	maxCacheSize := 1000 // TODO: make configurable via config
 
 	repo := &CachedRepository{
 		baseDir: baseDir,
-		cache:   make(map[string]*domain.Complaint),
+		cache:   NewLRUCache(maxCacheSize),
 		logger:  log.Default(),
 		tracer:  tracer,
-		metrics: NewCacheMetrics(maxCacheSize),
 	}
 
 	// Initialize cache with existing data
@@ -107,10 +101,8 @@ func (r *CachedRepository) Save(ctx context.Context, complaint *domain.Complaint
 		return fmt.Errorf("failed to write complaint file: %w", err)
 	}
 
-	// Update cache atomically
-	r.cacheMu.Lock()
-	r.cache[complaint.ID.String()] = complaint
-	r.cacheMu.Unlock()
+	// Update LRU cache (thread-safe, automatic eviction)
+	r.cache.Put(complaint.ID.String(), complaint)
 
 	logger.Info("Complaint saved and cached", "path", filePath)
 	return nil
@@ -153,21 +145,18 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 	return nil
 }
 
-// FindByID retrieves a complaint by ID from cache (O(1) lookup)
+// FindByID retrieves a complaint by ID from LRU cache (O(1) lookup)
 func (r *CachedRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "FindByID")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "complaint_id", id.String())
-	logger.Debug("Finding complaint by ID in cache")
+	logger.Debug("Finding complaint by ID in LRU cache")
 
-	// O(1) cache lookup instead of O(n) file scan
-	r.cacheMu.RLock()
-	complaint, exists := r.cache[id.String()]
-	r.cacheMu.RUnlock()
-
+	// O(1) LRU cache lookup (also updates access order)
+	complaint, exists := r.cache.Get(id.String())
 	if exists {
-		logger.Info("Complaint found in cache (O(1) lookup)")
+		logger.Info("Complaint found in LRU cache (O(1) lookup)")
 		return complaint, nil
 	}
 
@@ -200,21 +189,16 @@ func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
 	return nil, fmt.Errorf("complaint not found: %s", id.String())
 }
 
-// FindAll retrieves all complaints with pagination from cache
+// FindAll retrieves all complaints with pagination from LRU cache
 func (r *CachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "FindAll")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "limit", limit, "offset", offset)
-	logger.Debug("Finding all complaints from cache")
+	logger.Debug("Finding all complaints from LRU cache")
 
-	// Get all complaints from cache (O(1) access)
-	r.cacheMu.RLock()
-	complaints := make([]*domain.Complaint, 0, len(r.cache))
-	for _, complaint := range r.cache {
-		complaints = append(complaints, complaint)
-	}
-	r.cacheMu.RUnlock()
+	// Get all complaints from LRU cache
+	complaints := r.cache.GetAll()
 
 	// Apply pagination
 	total := len(complaints)
@@ -229,7 +213,7 @@ func (r *CachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*d
 	}
 
 	result := complaints[start:end]
-	logger.Info("Complaints retrieved from cache", "count", len(result))
+	logger.Info("Complaints retrieved from LRU cache", "count", len(result))
 	return result, nil
 }
 
@@ -263,19 +247,19 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	return result, nil
 }
 
-// FindBySeverity retrieves complaints by severity level from cache
+// FindBySeverity retrieves complaints by severity level from LRU cache
 func (r *CachedRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "FindBySeverity")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "severity", string(severity), "limit", limit)
-	logger.Debug("Finding complaints by severity from cache")
+	logger.Debug("Finding complaints by severity from LRU cache")
 
-	// Filter from cache (O(n) but on cached data, no file I/O)
-	r.cacheMu.RLock()
+	// Filter from LRU cache (O(n) but on cached data, no file I/O)
+	allComplaints := r.cache.GetAll()
 	var filtered []*domain.Complaint
 	count := 0
-	for _, complaint := range r.cache {
+	for _, complaint := range allComplaints {
 		if complaint.Severity == severity {
 			filtered = append(filtered, complaint)
 			count++
@@ -284,9 +268,8 @@ func (r *CachedRepository) FindBySeverity(ctx context.Context, severity domain.S
 			}
 		}
 	}
-	r.cacheMu.RUnlock()
 
-	logger.Info("Complaints filtered by severity from cache", "severity", string(severity), "count", len(filtered))
+	logger.Info("Complaints filtered by severity from LRU cache", "severity", string(severity), "count", len(filtered))
 	return filtered, nil
 }
 
@@ -319,19 +302,16 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 	return filtered, nil
 }
 
-// Update updates an existing complaint in-place with cache invalidation
+// Update updates an existing complaint in-place with LRU cache update
 func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
 	ctx, span := r.tracer.Start(ctx, "Update")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "complaint_id", complaint.ID.String())
-	logger.Info("Updating complaint in cache")
+	logger.Info("Updating complaint in LRU cache")
 
-	// Find existing complaint from cache
-	r.cacheMu.RLock()
-	existing, exists := r.cache[complaint.ID.String()]
-	r.cacheMu.RUnlock()
-
+	// Find existing complaint from LRU cache
+	existing, exists := r.cache.Get(complaint.ID.String())
 	if !exists {
 		return fmt.Errorf("complaint not found: %s", complaint.ID.String())
 	}
@@ -346,7 +326,7 @@ func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complai
 	existing.ResolvedAt = complaint.ResolvedAt
 	existing.ResolvedBy = complaint.ResolvedBy
 
-	// Save updated complaint (updates existing file in-place)
+	// Save updated complaint (updates existing file and LRU cache)
 	return r.Save(ctx, existing)
 }
 
@@ -378,21 +358,21 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	return r.Save(ctx, existing)
 }
 
-// Search searches complaints by text content from cache
+// Search searches complaints by text content from LRU cache
 func (r *CachedRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "Search")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "query", query, "limit", limit)
-	logger.Debug("Searching complaints from cache")
+	logger.Debug("Searching complaints from LRU cache")
 
-	// Search from cache (O(n) but on cached data, no file I/O)
-	r.cacheMu.RLock()
+	// Search from LRU cache (O(n) but on cached data, no file I/O)
+	allComplaints := r.cache.GetAll()
 	queryLower := strings.ToLower(query)
 	var results []*domain.Complaint
 	count := 0
 
-	for _, complaint := range r.cache {
+	for _, complaint := range allComplaints {
 		// Simple text search in relevant fields
 		if strings.Contains(strings.ToLower(complaint.TaskDescription), queryLower) ||
 			strings.Contains(strings.ToLower(complaint.ContextInfo), queryLower) ||
@@ -409,9 +389,8 @@ func (r *CachedRepository) Search(ctx context.Context, query string, limit int) 
 			}
 		}
 	}
-	r.cacheMu.RUnlock()
 
-	logger.Info("Complaints searched from cache", "query", query, "count", len(results))
+	logger.Info("Complaints searched from LRU cache", "query", query, "count", len(results))
 	return results, nil
 }
 
@@ -454,25 +433,23 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 	return results, nil
 }
 
-// warmCache initializes the cache with existing complaint data
+// warmCache initializes the LRU cache with existing complaint data
 func (r *CachedRepository) warmCache(ctx context.Context) {
 	logger := r.logger.With("component", "cached-repository")
-	logger.Info("Warming cache with existing complaint data")
+	logger.Info("Warming LRU cache with existing complaint data")
 
-	// Load all existing complaints into cache
+	// Load all existing complaints into LRU cache
 	complaints, err := r.loadAllComplaintsFromDisk(ctx)
 	if err != nil {
-		logger.Error("Failed to warm cache", "error", err)
+		logger.Error("Failed to warm LRU cache", "error", err)
 		return
 	}
 
-	r.cacheMu.Lock()
 	for _, complaint := range complaints {
-		r.cache[complaint.ID.String()] = complaint
+		r.cache.Put(complaint.ID.String(), complaint)
 	}
-	r.cacheMu.Unlock()
 
-	logger.Info("Cache warmed successfully", "complaints_loaded", len(complaints))
+	logger.Info("LRU cache warmed successfully", "complaints_loaded", len(complaints))
 }
 
 // loadAllComplaintsFromDisk loads all complaints from disk (cache warm-up only)
@@ -586,19 +563,19 @@ func (r *FileRepository) loadComplaintFromFile(filePath string) (*domain.Complai
 	return &complaint, nil
 }
 
-// FindByProject retrieves complaints by project name from cache
+// FindByProject retrieves complaints by project name from LRU cache
 func (r *CachedRepository) FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "FindByProject")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "project_name", projectName, "limit", limit)
-	logger.Debug("Finding complaints by project from cache")
+	logger.Debug("Finding complaints by project from LRU cache")
 
-	// Filter from cache (O(n) but on cached data, no file I/O)
-	r.cacheMu.RLock()
+	// Filter from LRU cache (O(n) but on cached data, no file I/O)
+	allComplaints := r.cache.GetAll()
 	var filtered []*domain.Complaint
 	count := 0
-	for _, complaint := range r.cache {
+	for _, complaint := range allComplaints {
 		if complaint.ProjectName == projectName {
 			filtered = append(filtered, complaint)
 			count++
@@ -607,9 +584,8 @@ func (r *CachedRepository) FindByProject(ctx context.Context, projectName string
 			}
 		}
 	}
-	r.cacheMu.RUnlock()
 
-	logger.Info("Complaints filtered by project from cache", "project_name", projectName, "count", len(filtered))
+	logger.Info("Complaints filtered by project from LRU cache", "project_name", projectName, "count", len(filtered))
 	return filtered, nil
 }
 
@@ -642,19 +618,19 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectName string, 
 	return filtered, nil
 }
 
-// FindUnresolved retrieves unresolved complaints from cache
+// FindUnresolved retrieves unresolved complaints from LRU cache
 func (r *CachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	ctx, span := r.tracer.Start(ctx, "FindUnresolved")
 	defer span.End()
 
 	logger := r.logger.With("component", "cached-repository", "limit", limit)
-	logger.Debug("Finding unresolved complaints from cache")
+	logger.Debug("Finding unresolved complaints from LRU cache")
 
-	// Filter from cache (O(n) but on cached data, no file I/O)
-	r.cacheMu.RLock()
+	// Filter from LRU cache (O(n) but on cached data, no file I/O)
+	allComplaints := r.cache.GetAll()
 	var filtered []*domain.Complaint
 	count := 0
-	for _, complaint := range r.cache {
+	for _, complaint := range allComplaints {
 		if !complaint.Resolved {
 			filtered = append(filtered, complaint)
 			count++
@@ -663,9 +639,8 @@ func (r *CachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*do
 			}
 		}
 	}
-	r.cacheMu.RUnlock()
 
-	logger.Info("Unresolved complaints filtered from cache", "count", len(filtered))
+	logger.Info("Unresolved complaints filtered from LRU cache", "count", len(filtered))
 	return filtered, nil
 }
 
@@ -698,17 +673,7 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 	return filtered, nil
 }
 
-// GetCacheStats returns current cache performance statistics
+// GetCacheStats returns current LRU cache performance statistics
 func (r *CachedRepository) GetCacheStats() CacheStats {
-	if r.metrics == nil {
-		return CacheStats{
-			Hits:        0,
-			Misses:      0,
-			Evictions:   0,
-			CurrentSize: int64(len(r.cache)),
-			MaxSize:     0,
-			HitRate:     0.0,
-		}
-	}
-	return r.metrics.GetStats()
+	return r.cache.GetStats()
 }
