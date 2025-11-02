@@ -1,8 +1,8 @@
-package repo
+package repo_test
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"time"
@@ -11,17 +11,22 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
 var _ = Describe("FileRepository", func() {
 	var (
-		tempDir string
-		repo    *FileRepository
-		ctx     context.Context
+		tempDir    string
+		repository repo.Repository
+		tracer     tracing.Tracer
+		ctx        context.Context
 	)
 
 	BeforeEach(func() {
 		tempDir = GinkgoT().TempDir()
+		tracer = tracing.NewMockTracer("test")
+		repository = repo.NewFileRepository(tempDir, tracer)
 		ctx = context.Background()
 	})
 
@@ -29,403 +34,343 @@ var _ = Describe("FileRepository", func() {
 		os.RemoveAll(tempDir)
 	})
 
-	Context("File Storage Operations", func() {
-		It("should create directory structure when storing complaint", func() {
-			repo = NewFileRepository(tempDir)
-
+	Context("Complaint Creation", func() {
+		It("should save a new complaint successfully", func() {
 			complaintID, err := domain.NewComplaintID()
 			Expect(err).NotTo(HaveOccurred())
 
 			complaint := &domain.Complaint{
 				ID:              complaintID,
 				AgentName:       "Test Agent",
+				SessionName:     "test-session",
 				TaskDescription: "Test task",
-				Severity:        "medium",
+				ContextInfo:     "Test context",
+				MissingInfo:     "Test missing info",
+				ConfusedBy:      "Test confusion",
+				FutureWishes:    "Test wishes",
+				Severity:        domain.SeverityHigh,
 				ProjectName:     "test-project",
 				Resolved:        false,
 			}
 
-			err = repo.Store(ctx, complaint)
+			// Test saving complaint
+			err = repository.Save(ctx, complaint)
 			Expect(err).NotTo(HaveOccurred())
 
-			// Verify directory exists
-			dirPath := filepath.Join(tempDir, "complaints")
-			info, err := os.Stat(dirPath)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(info.IsDir()).To(BeTrue())
-		})
-
-		It("should generate unique filename with timestamp", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "test-id"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Timestamp test",
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			filename := repo.generateFilename(complaint)
-			Expect(filename).To(ContainSubstring("2025"))
-			Expect(filename).To(ContainSubstring("test-session"))
-		})
-
-		It("should handle large content generation correctly", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "large-content"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Large content test",
-				ContextInfo:     string(make([]byte, 5000)), // 5KB content
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			content := repo.generateComplaintContent(complaint)
-			Expect(content).To(ContainSubstring("Large content test"))
-			Expect(content).To(ContainSubstring(complaint.ContextInfo))
-		})
-
-		It("should properly sanitize filenames", func() {
-			testCases := []struct {
-				input    string
-				expected string
-			}{
-				{"normal filename", "test-session-2025.md"},
-				{"with spaces", "test session 2025.md"},
-				{"with special chars", "test-session!@#$%.md"},
-				{"very long name", "a-very-long-session-name-that-should-be-truncated-because-filenames-have-limits-and-we-should-handle-this-gracefully.md"},
-			}
-
-			repo = NewFileRepository(tempDir)
-
-			for _, testCase := range testCases {
-				filename := repo.generateFilename(&domain.Complaint{
-					SessionName: testCase.input,
-					Resolved:    false,
-				})
-				Expect(filename).To(Equal(testCase.expected))
-			}
-		})
-
-		It("should handle invalid write permissions gracefully", func() {
-			repo = NewFileRepository(tempDir)
-
-			// Create directory with no write permissions (simulate error)
-			noWriteDir := filepath.Join(tempDir, "no-permission")
-			err := os.Mkdir(noWriteDir, 0000)
-			Expect(err).NotTo(HaveOccurred())
-			// Try to write to read-only directory
-			complaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "test-id"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Permission test",
-				Severity:        "low",
-				Resolved:        false,
-			}
-
-			err = repo.Store(ctx, complaint)
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("permission denied"))
-		})
-
-		It("should store complaint with metadata file", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "meta-test"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Metadata test",
-				Severity:        "medium",
-				ProjectName:     "test-project",
-				Resolved:        false,
-				Timestamp:       time.Now(),
-			}
-
-			err := repo.Store(ctx, complaint)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Check for metadata file creation
-			metadataPath := filepath.Join(tempDir, "complaints", complaint.ID.Value+".json")
-			_, err = os.Stat(metadataPath)
+			// Verify file was created
+			filename := filepath.Join(tempDir, complaintID.String()+".json")
+			_, err = os.Stat(filename)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should handle concurrent file operations", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaints := make([]*domain.Complaint, 10)
-			ids := make([]domain.ComplaintID, 10)
-
-			// Create multiple complaints
-			for i := 0; i < 10; i++ {
-				id, _ := domain.NewComplaintID()
-				ids[i] = id
-				complaints[i] = &domain.Complaint{
-					ID:              id,
-					AgentName:       "Concurrent Agent",
-					TaskDescription: fmt.Sprintf("Concurrent task %d", i),
-					Severity:        "low",
-					Resolved:        false,
-				}
-				repo.Store(ctx, complaints[i])
-			}
-
-			// Verify all were stored
-			stored, err := repo.FindByID(ctx, ids[5])
+		It("should store complaint with all fields", func() {
+			complaintID, err := domain.NewComplaintID()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(stored).NotTo(BeNil())
-			Expect(stored.ID.Value).To(Equal(ids[5].Value))
-		})
-	})
 
-	Context("File Retrieval Operations", func() {
-		It("should find complaint by ID", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaintID, _ := domain.NewComplaintID()
+			now := time.Now()
 			complaint := &domain.Complaint{
 				ID:              complaintID,
 				AgentName:       "Test Agent",
-				TaskDescription: "Find test",
-				Severity:        "low",
+				SessionName:     "test-session",
+				TaskDescription: "Test task description",
+				ContextInfo:     "Test context information",
+				MissingInfo:     "Missing information",
+				ConfusedBy:      "Confused by this",
+				FutureWishes:    "Future improvements",
+				Severity:        domain.SeverityMedium,
+				Timestamp:       now,
 				ProjectName:     "test-project",
 				Resolved:        false,
 			}
 
-			// Store complaint
-			err := repo.Store(ctx, complaint)
+			err = repository.Save(ctx, complaint)
 			Expect(err).NotTo(HaveOccurred())
 
-			// Find it
-			found, err := repo.FindByID(ctx, complaintID)
+			// Read back and verify
+			filename := filepath.Join(tempDir, complaintID.String()+".json")
+			data, err := os.ReadFile(filename)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(found).NotTo(BeNil())
-			Expect(found.ID.Value).To(Equal(complaintID.Value))
+
+			var stored domain.Complaint
+			err = json.Unmarshal(data, &stored)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(stored.ID.Value).To(Equal(complaint.ID.Value))
+			Expect(stored.AgentName).To(Equal(complaint.AgentName))
+			Expect(stored.TaskDescription).To(Equal(complaint.TaskDescription))
+			Expect(stored.Severity).To(Equal(complaint.Severity))
+			Expect(stored.ProjectName).To(Equal(complaint.ProjectName))
+			Expect(stored.Resolved).To(BeFalse())
 		})
+	})
 
-		It("should return nil for non-existent complaint", func() {
-			repo = NewFileRepository(tempDir)
+	Context("Complaint Retrieval", func() {
+		var savedComplaint *domain.Complaint
 
-			nonExistentID := domain.ComplaintID{Value: "non-existent"}
-
-			found, err := repo.FindByID(ctx, nonExistentID)
+		BeforeEach(func() {
+			complaintID, err := domain.NewComplaintID()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(found).To(BeNil())
-		})
 
-		It("should find complaints by project", func() {
-			repo = NewFileRepository(tempDir)
-
-			// Store complaints for different projects
-			projectAComplaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "proj-a"},
+			savedComplaint = &domain.Complaint{
+				ID:              complaintID,
 				AgentName:       "Test Agent",
-				TaskDescription: "Project A task",
-				Severity:        "low",
-				ProjectName:     "project-a",
+				SessionName:     "test-session",
+				TaskDescription: "Test task",
+				ContextInfo:     "Test context",
+				MissingInfo:     "Test missing info",
+				ConfusedBy:      "Test confusion",
+				FutureWishes:    "Test wishes",
+				Severity:        domain.SeverityLow,
+				ProjectName:     "test-project",
 				Resolved:        false,
 			}
 
-			projectBComplaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "proj-b"},
+			err = repository.Save(ctx, savedComplaint)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should find complaint by ID", func() {
+			found, err := repository.FindByID(ctx, savedComplaint.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found).NotTo(BeNil())
+			Expect(found.ID.Value).To(Equal(savedComplaint.ID.Value))
+			Expect(found.AgentName).To(Equal(savedComplaint.AgentName))
+			Expect(found.TaskDescription).To(Equal(savedComplaint.TaskDescription))
+		})
+
+		It("should return not found for non-existent ID", func() {
+			nonExistentID, err := domain.NewComplaintID()
+			Expect(err).NotTo(HaveOccurred())
+
+			found, err := repository.FindByID(ctx, nonExistentID)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("not found"))
+			Expect(found).To(BeNil())
+		})
+	})
+
+	Context("Complaint Listing", func() {
+		BeforeEach(func() {
+			// Create multiple complaints
+			for i := 0; i < 5; i++ {
+				complaintID, err := domain.NewComplaintID()
+				Expect(err).NotTo(HaveOccurred())
+
+				complaint := &domain.Complaint{
+					ID:              complaintID,
+					AgentName:       "Test Agent",
+					SessionName:     "test-session",
+					TaskDescription: "Test task",
+					ContextInfo:     "Test context",
+					MissingInfo:     "Test missing info",
+					ConfusedBy:      "Test confusion",
+					FutureWishes:    "Test wishes",
+					Severity:        domain.SeverityMedium,
+					ProjectName:     "test-project",
+					Resolved:        false,
+				}
+
+				err = repository.Save(ctx, complaint)
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		It("should list all complaints with pagination", func() {
+			complaints, err := repository.FindAll(ctx, 10, 0)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints)).To(Equal(5))
+
+			// Test pagination
+			complaints2, err := repository.FindAll(ctx, 3, 0)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints2)).To(Equal(3))
+
+			complaints3, err := repository.FindAll(ctx, 3, 2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints3)).To(Equal(3))
+		})
+	})
+
+	Context("Complaint Updates", func() {
+		var savedComplaint *domain.Complaint
+
+		BeforeEach(func() {
+			complaintID, err := domain.NewComplaintID()
+			Expect(err).NotTo(HaveOccurred())
+
+			savedComplaint = &domain.Complaint{
+				ID:              complaintID,
 				AgentName:       "Test Agent",
-				TaskDescription: "Project B task",
-				Severity:        "medium",
-				ProjectName:     "project-b",
-				Resolved:        true,
+				SessionName:     "test-session",
+				TaskDescription: "Test task",
+				ContextInfo:     "Test context",
+				MissingInfo:     "Test missing info",
+				ConfusedBy:      "Test confusion",
+				FutureWishes:    "Test wishes",
+				Severity:        domain.SeverityLow,
+				ProjectName:     "test-project",
+				Resolved:        false,
 			}
 
-			repo.Store(ctx, projectAComplaint)
-			repo.Store(ctx, projectBComplaint)
-
-			// Find only project A complaints
-			projectAComplaints, err := repo.FindByProject(ctx, "project-a", 50, 0)
+			err = repository.Save(ctx, savedComplaint)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(projectAComplaints)).To(Equal(1))
-			Expect(projectAComplaints[0].ID.Value).To(Equal("proj-a"))
+		})
+
+		It("should update an existing complaint", func() {
+			// Modify complaint
+			savedComplaint.Resolved = true
+			resolveTime := time.Now()
+			savedComplaint.ResolvedAt = &resolveTime
+
+			err := repository.Update(ctx, savedComplaint)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Verify update
+			found, err := repository.FindByID(ctx, savedComplaint.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found.Resolved).To(BeTrue())
+			Expect(found.ResolvedAt).NotTo(BeNil())
+			Expect(found.ResolvedAt.Format(time.RFC3339)).To(Equal(resolveTime.Format(time.RFC3339)))
+		})
+
+		It("should return error when updating non-existent complaint", func() {
+			nonExistentID, err := domain.NewComplaintID()
+			Expect(err).NotTo(HaveOccurred())
+
+			nonExistentComplaint := &domain.Complaint{
+				ID:              nonExistentID,
+				AgentName:       "Test Agent",
+				TaskDescription: "Non-existent",
+				Severity:        domain.SeverityLow,
+				Resolved:        false,
+			}
+
+			err = repository.Update(ctx, nonExistentComplaint)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("not found"))
+		})
+	})
+
+	Context("Complaint Search", func() {
+		BeforeEach(func() {
+			// Create complaints with different content
+			contents := []struct {
+				task  string
+				proj   string
+				severity domain.Severity
+			}{
+				{"Database connection issue", "project-alpha", domain.SeverityHigh},
+				{"API response parsing", "project-beta", domain.SeverityMedium},
+				{"Authentication problems", "project-alpha", domain.SeverityCritical},
+				{"Database schema changes", "project-gamma", domain.SeverityLow},
+				{"API endpoint changes", "project-beta", domain.SeverityHigh},
+			}
+
+			for _, content := range contents {
+				complaintID, err := domain.NewComplaintID()
+				Expect(err).NotTo(HaveOccurred())
+
+				complaint := &domain.Complaint{
+					ID:              complaintID,
+					AgentName:       "Test Agent",
+					SessionName:     "test-session",
+					TaskDescription: content.task,
+					ContextInfo:     "Test context",
+					MissingInfo:     "Test missing info",
+					ConfusedBy:      "Test confusion",
+					FutureWishes:    "Test wishes",
+					Severity:        content.severity,
+					ProjectName:     content.proj,
+					Resolved:        false,
+				}
+
+				err = repository.Save(ctx, complaint)
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		It("should search complaints by text", func() {
+			results, err := repository.Search(ctx, "database", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(2))
+
+			for _, result := range results {
+				Expect(result.TaskDescription).To(ContainSubstring("Database"))
+			}
+		})
+
+		It("should search with case-insensitive matching", func() {
+			results, err := repository.Search(ctx, "API", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(2))
+
+			for _, result := range results {
+				Expect(result.TaskDescription).To(ContainSubstring("API"))
+			}
+		})
+
+		It("should find by severity", func() {
+			results, err := repository.FindBySeverity(ctx, domain.SeverityHigh, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(2))
+
+			for _, result := range results {
+				Expect(result.Severity).To(Equal(domain.SeverityHigh))
+			}
+		})
+
+		It("should find by project name", func() {
+			results, err := repository.FindByProject(ctx, "project-alpha", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(2))
+
+			for _, result := range results {
+				Expect(result.ProjectName).To(Equal("project-alpha"))
+			}
 		})
 
 		It("should find unresolved complaints", func() {
-			repo = NewFileRepository(tempDir)
+			results, err := repository.FindUnresolved(ctx, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(5)) // All are unresolved
 
-			// Store mix of resolved and unresolved complaints
-			resolvedComplaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "resolved"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Resolved task",
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        true,
+			for _, result := range results {
+				Expect(result.Resolved).To(BeFalse())
 			}
-
-			unresolvedComplaint := &domain.Complaint{
-				ID:              domain.ComplaintID{Value: "unresolved"},
-				AgentName:       "Test Agent",
-				TaskDescription: "Unresolved task",
-				Severity:        "medium",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			repo.Store(ctx, resolvedComplaint)
-			repo.Store(ctx, unresolvedComplaint)
-
-			// Find only unresolved complaints
-			unresolvedComplaints, err := repo.FindUnresolved(ctx, 50, 0)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(unresolvedComplaints)).To(Equal(1))
-			Expect(unresolvedComplaints[0].ID.Value).To(Equal("unresolved"))
-		})
-	})
-
-	Context("File Resolution Operations", func() {
-		It("should mark complaint as resolved", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaintID, _ := domain.NewComplaintID()
-			complaint := &domain.Complaint{
-				ID:              complaintID,
-				AgentName:       "Test Agent",
-				TaskDescription: "Resolution test",
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			// Store complaint
-			err := repo.Store(ctx, complaint)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Mark as resolved
-			err = repo.MarkResolved(ctx, complaintID)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Verify it's resolved
-			resolved, err := repo.FindByID(ctx, complaintID)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(resolved).NotTo(BeNil())
-			Expect(resolved.Resolved).To(BeTrue())
-		})
-
-		It("should handle resolve operations concurrently", func() {
-			repo = NewFileRepository(tempDir)
-
-			complaintID, _ := domain.NewComplaintID()
-			complaint := &domain.Complaint{
-				ID:              complaintID,
-				AgentName:       "Test Agent",
-				TaskDescription: "Concurrent resolution test",
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			// Store complaint
-			err := repo.Store(ctx, complaint)
-			Expect(err).NotTo(HaveOccurred())
-
-			// Concurrent resolve attempts
-			done := make(chan error, 2)
-
-			go func() {
-				err := repo.MarkResolved(ctx, complaintID)
-				done <- err
-			}()
-
-			go func() {
-				err := repo.MarkResolved(ctx, complaintID)
-				done <- err
-			}()
-
-			// Wait for both to complete
-			err1 := <-done
-			err2 := <-done
-
-			Expect(err1).NotTo(HaveOccurred())
-			Expect(err2).NotTo(HaveOccurred())
 		})
 	})
 
 	Context("Error Handling", func() {
-		It("should handle missing directory errors", func() {
-			repo := NewFileRepository("/non/existent/path")
-
-			// Try to store complaint
+		It("should handle invalid directory gracefully", func() {
+			invalidDir := "/invalid/nonexistent/path"
+			testRepo := repo.NewFileRepository(invalidDir, tracer)
 			complaintID, _ := domain.NewComplaintID()
+
 			complaint := &domain.Complaint{
 				ID:              complaintID,
 				AgentName:       "Test Agent",
-				TaskDescription: "Error handling test",
-				Severity:        "low",
-				ProjectName:     "test-project",
+				TaskDescription: "Test task",
+				Severity:        domain.SeverityLow,
 				Resolved:        false,
 			}
 
-			err := repo.Store(ctx, complaint)
+			err := testRepo.Save(ctx, complaint)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("directory"))
 		})
 
-		It("should handle file write permission errors", func() {
-			repo := NewFileRepository(tempDir)
-
-			// Create a file with content that won't allow writing
-			unwritableFile := filepath.Join(tempDir, "readonly.txt")
-			err := os.WriteFile(unwritableFile, 0644, []byte("test content"))
-			if err != nil {
-				// On some systems, this might not be a permissions error
-				// Continue with other tests
-				Skip("Cannot create unwritable file for permission test")
-			}
-
-			complaintID, _ := domain.NewComplaintID()
-			complaint := &domain.Complaint{
-				ID:              complaintID,
-				AgentName:       "Test Agent",
-				TaskDescription: "Permission error test",
-				Severity:        "low",
-				ProjectName:     "test-project",
-				Resolved:        false,
-			}
-
-			err := repo.Store(ctx, complaint)
-			if err == nil {
-				Expect(err).NotTo(HaveOccurred())
-			}
-		})
-	})
-
-	Context("Content Parsing", func() {
-		It("should parse complaint from markdown file", func() {
-			repo := NewFileRepository(tempDir)
-
-			// Create a markdown file
-			filename := filepath.Join(tempDir, "complaint.md")
-			markdownContent := `# Test Complaint
-
-**Task:** Test parsing from markdown
-
-**Context:** This is a test complaint created from markdown.
-
-**Missing Information:** Need better error messages.
-
----
-
-*This complaint was automatically filed by an AI agent.*`
-
-			err := os.WriteFile(filename, 0644, []byte(markdownContent))
+		It("should handle corrupted JSON files", func() {
+			complaintID, err := domain.NewComplaintID()
 			Expect(err).NotTo(HaveOccurred())
 
-			// Parse the file
-			complaint := repo.parseComplaintFromFile([]byte(markdownContent))
-			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.TaskDescription).To(Equal("Test parsing from markdown"))
-			Expect(complaint.MissingInfo).To(ContainSubstring("Need better error messages"))
+			// Create a corrupted JSON file
+			filename := filepath.Join(tempDir, complaintID.String()+".json")
+			err = os.WriteFile(filename, []byte("invalid json content"), 0644)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Try to read it
+			found, err := repository.FindByID(ctx, complaintID)
+			Expect(err).To(HaveOccurred())
+			Expect(found).To(BeNil())
 		})
 	})
 })

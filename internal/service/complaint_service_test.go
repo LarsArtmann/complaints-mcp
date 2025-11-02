@@ -1,19 +1,27 @@
-package service
+package service_test
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/charmbracelet/log"
+
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/errors"
+	"github.com/larsartmann/complaints-mcp/internal/service"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
-// mockRepository is a simple in-memory repository for testing
+// mockRepository implements service.Repository for testing
 type mockRepository struct {
 	complaints []*domain.Complaint
 }
 
-func (m *mockRepository) Store(ctx context.Context, complaint *domain.Complaint) error {
+func (m *mockRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
 	m.complaints = append(m.complaints, complaint)
 	return nil
 }
@@ -24,303 +32,409 @@ func (m *mockRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
 			return c, nil
 		}
 	}
-	return nil, nil
+	return nil, errors.NewNotFoundError("complaint not found")
 }
 
-func (m *mockRepository) FindByProject(ctx context.Context, projectName string, limit, offset int) ([]*domain.Complaint, error) {
+func (m *mockRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+	if offset >= len(m.complaints) {
+		return []*domain.Complaint{}, nil
+	}
+	
+	end := offset + limit
+	if end > len(m.complaints) {
+		end = len(m.complaints)
+	}
+	
+	result := make([]*domain.Complaint, 0, end-offset)
+	for i := offset; i < end; i++ {
+		result = append(result, m.complaints[i])
+	}
+	
+	return result, nil
+}
+
+func (m *mockRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	var result []*domain.Complaint
+	for _, c := range m.complaints {
+		if c.Severity == severity {
+			result = append(result, c)
+			if len(result) >= limit {
+				break
+			}
+		}
+	}
+	return result, nil
+}
+
+func (m *mockRepository) FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	for _, c := range m.complaints {
 		if c.ProjectName == projectName {
 			result = append(result, c)
+			if len(result) >= limit {
+				break
+			}
 		}
 	}
 	return result, nil
 }
 
-func (m *mockRepository) FindUnresolved(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+func (m *mockRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	for _, c := range m.complaints {
 		if !c.Resolved {
 			result = append(result, c)
+			if len(result) >= limit {
+				break
+			}
 		}
 	}
 	return result, nil
 }
 
-func (m *mockRepository) MarkResolved(ctx context.Context, id domain.ComplaintID) error {
+func (m *mockRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+	var result []*domain.Complaint
+	queryLower := strings.ToLower(query)
+	
 	for _, c := range m.complaints {
-		if c.ID.Value == id.Value {
-			c.Resolve()
-			break
+		// Simple case-insensitive search in task description and context
+		if strings.Contains(strings.ToLower(c.TaskDescription), queryLower) || 
+		   strings.Contains(strings.ToLower(c.ContextInfo), queryLower) {
+			result = append(result, c)
+			if len(result) >= limit {
+				break
+			}
 		}
 	}
-	return nil
+	return result, nil
+}
+
+func (m *mockRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
+	for i, c := range m.complaints {
+		if c.ID.Value == complaint.ID.Value {
+			m.complaints[i] = complaint
+			return nil
+		}
+	}
+	return errors.NewNotFoundError("complaint not found")
+}
+
+func (m *mockRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
+	for i, c := range m.complaints {
+		if c.ID.Value == id.Value {
+			m.complaints = append(m.complaints[:i], m.complaints[i+1:]...)
+			return nil
+		}
+	}
+	return errors.NewNotFoundError("complaint not found")
 }
 
 func TestNewComplaintService(t *testing.T) {
+	// ✅ Test with correct constructor signature
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
-		Complaints: struct {
-			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-		}{
-			ProjectName: "test-project",
-		},
-	}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
 
-	service := NewComplaintService(mockRepo, cfg)
+	// ✅ Use correct NewComplaintService signature
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
 
-	if service == nil {
-		t.Error("NewComplaintService() returned nil")
-	}
-
-	if service.repo != mockRepo {
-		t.Error("NewComplaintService() did not set repository correctly")
-	}
-
-	if service.config != cfg {
-		t.Error("NewComplaintService() did not set config correctly")
-	}
-}
-
-func TestCreateComplaintRequest_Validate(t *testing.T) {
-	tests := []struct {
-		name    string
-		req     CreateComplaintRequest
-		wantErr bool
-	}{
-		{
-			name: "valid request",
-			req: CreateComplaintRequest{
-				AgentName:       "test-agent",
-				TaskDescription: "test task",
-				Severity:        "high",
-			},
-			wantErr: false,
-		},
-		{
-			name: "missing agent name",
-			req: CreateComplaintRequest{
-				TaskDescription: "test task",
-				Severity:        "high",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing task description",
-			req: CreateComplaintRequest{
-				AgentName: "test-agent",
-				Severity:  "high",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing severity",
-			req: CreateComplaintRequest{
-				AgentName:       "test-agent",
-				TaskDescription: "test task",
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid severity",
-			req: CreateComplaintRequest{
-				AgentName:       "test-agent",
-				TaskDescription: "test task",
-				Severity:        "invalid",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.req.Validate()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateComplaintRequest.Validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	if svc == nil {
+		t.Error("NewComplaintService() should not return nil")
 	}
 }
 
 func TestComplaintService_CreateComplaint(t *testing.T) {
+	// Setup
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
-		Complaints: struct {
-			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-		}{
-			ProjectName: "test-project",
-		},
-	}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
 
-	service := NewComplaintService(mockRepo, cfg)
+	// Test
+	complaint, err := svc.CreateComplaint(ctx,
+		"test-agent",
+		"test-session",
+		"test task",
+		"test context",
+		"missing info",
+		"confused by",
+		"future wishes",
+		domain.SeverityHigh,
+		"test-project")
 
-	req := &CreateComplaintRequest{
-		AgentName:       "test-agent",
-		TaskDescription: "test task",
-		Severity:        "high",
-		ContextInfo:     "some context",
-		ProjectName:     "custom-project",
-	}
-
-	complaint, err := service.CreateComplaint(context.Background(), req)
-
+	// Verify
 	if err != nil {
-		t.Errorf("ComplaintService.CreateComplaint() error = %v", err)
+		t.Errorf("CreateComplaint error = %v, want nil", err)
 		return
 	}
 
 	if complaint == nil {
-		t.Error("ComplaintService.CreateComplaint() returned nil")
+		t.Error("CreateComplaint should return complaint")
 		return
 	}
 
-	if complaint.AgentName != req.AgentName {
-		t.Errorf("ComplaintService.CreateComplaint().AgentName = %v, want %v", complaint.AgentName, req.AgentName)
+	if complaint.AgentName != "test-agent" {
+		t.Errorf("AgentName = %v, want %v", complaint.AgentName, "test-agent")
 	}
 
-	if complaint.ProjectName != req.ProjectName {
-		t.Errorf("ComplaintService.CreateComplaint().ProjectName = %v, want %v", complaint.ProjectName, req.ProjectName)
+	if complaint.ProjectName != "test-project" {
+		t.Errorf("ProjectName = %v, want %v", complaint.ProjectName, "test-project")
 	}
 
-	if len(mockRepo.complaints) != 1 {
-		t.Errorf("Repository should have 1 complaint, got %d", len(mockRepo.complaints))
+	if complaint.Severity != domain.SeverityHigh {
+		t.Errorf("Severity = %v, want %v", complaint.Severity, domain.SeverityHigh)
+	}
+
+	if complaint.Resolved != false {
+		t.Errorf("Resolved = %v, want %v", complaint.Resolved, false)
+	}
+
+	if complaint.Timestamp.IsZero() {
+		t.Error("Timestamp should be set")
 	}
 }
 
-func TestComplaintService_CreateComplaint_UsesDefaultProjectName(t *testing.T) {
+func TestComplaintService_CreateComplaint_ValidationError(t *testing.T) {
+	// Setup
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
-		Complaints: struct {
-			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-		}{
-			ProjectName: "default-project",
-		},
-	}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
 
-	service := NewComplaintService(mockRepo, cfg)
+	// Test with empty agent name (should fail validation)
+	complaint, err := svc.CreateComplaint(ctx,
+		"", // invalid: empty agent name
+		"test-session",
+		"test task",
+		"test context",
+		"missing info",
+		"confused by",
+		"future wishes",
+		domain.SeverityHigh,
+		"test-project")
 
-	req := &CreateComplaintRequest{
-		AgentName:       "test-agent",
-		TaskDescription: "test task",
-		Severity:        "high",
-		// No project name provided - should use default
-	}
-
-	complaint, err := service.CreateComplaint(context.Background(), req)
-
-	if err != nil {
-		t.Errorf("ComplaintService.CreateComplaint() error = %v", err)
+	// Verify
+	if err == nil {
+		t.Error("CreateComplaint should return error for invalid data")
 		return
 	}
 
-	if complaint.ProjectName != cfg.Complaints.ProjectName {
-		t.Errorf("ComplaintService.CreateComplaint().ProjectName = %v, want %v", complaint.ProjectName, cfg.Complaints.ProjectName)
+	if complaint != nil {
+		t.Error("CreateComplaint should return nil complaint on error")
+		return
+	}
+
+	if !strings.Contains(err.Error(), "AgentName") && !strings.Contains(err.Error(), "required") {
+		t.Errorf("Error should mention AgentName or required, got: %v", err)
 	}
 }
 
 func TestComplaintService_GetComplaint(t *testing.T) {
+	// Setup
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
-		Complaints: struct {
-			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-		}{},
-	}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
 
-	service := NewComplaintService(mockRepo, cfg)
-
-	// Create a test complaint
-	id, _ := domain.NewComplaintID()
-	testComplaint := &domain.Complaint{
-		ID:              id,
-		AgentName:       "test-agent",
-		TaskDescription: "test task",
-		Severity:        "high",
-		ProjectName:     "test-project",
-	}
-
-	mockRepo.complaints = append(mockRepo.complaints, testComplaint)
-
-	// Test getting the complaint
-	found, err := service.GetComplaint(context.Background(), id)
-
+	// Create a complaint first
+	created, err := svc.CreateComplaint(ctx,
+		"test-agent",
+		"test-session",
+		"test task",
+		"test context",
+		"missing info",
+		"confused by",
+		"future wishes",
+		domain.SeverityHigh,
+		"test-project")
 	if err != nil {
-		t.Errorf("ComplaintService.GetComplaint() error = %v", err)
+		t.Fatalf("Failed to create complaint: %v", err)
+	}
+
+	// Test retrieving it
+	retrieved, err := svc.GetComplaint(ctx, created.ID)
+
+	// Verify
+	if err != nil {
+		t.Errorf("GetComplaint error = %v, want nil", err)
 		return
 	}
 
-	if found == nil {
-		t.Error("ComplaintService.GetComplaint() returned nil")
+	if retrieved == nil {
+		t.Error("GetComplaint should return complaint")
 		return
 	}
 
-	if found.ID.Value != id.Value {
-		t.Errorf("ComplaintService.GetComplaint().ID = %v, want %v", found.ID.Value, id.Value)
+	if retrieved.ID.Value != created.ID.Value {
+		t.Errorf("ID = %v, want %v", retrieved.ID.Value, created.ID.Value)
 	}
 
-	// Test getting non-existent complaint
-	nonExistentID, _ := domain.NewComplaintID()
-	notFound, err := service.GetComplaint(context.Background(), nonExistentID)
+	if retrieved.AgentName != created.AgentName {
+		t.Errorf("AgentName = %v, want %v", retrieved.AgentName, created.AgentName)
+	}
+}
 
+func TestComplaintService_GetComplaint_NotFound(t *testing.T) {
+	// Setup
+	mockRepo := &mockRepository{}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
+
+	// Create a non-existent ID
+	nonExistentID, err := domain.NewComplaintID()
+	if err != nil {
+		t.Fatalf("Failed to create ID: %v", err)
+	}
+
+	// Test retrieving non-existent complaint
+	retrieved, err := svc.GetComplaint(ctx, nonExistentID)
+
+	// Verify
 	if err == nil {
-		t.Error("ComplaintService.GetComplaint() should return error for non-existent complaint")
+		t.Error("GetComplaint should return error for non-existent complaint")
+		return
 	}
 
-	if notFound != nil {
-		t.Error("ComplaintService.GetComplaint() should return nil for non-existent complaint")
+	if retrieved != nil {
+		t.Error("GetComplaint should return nil for non-existent complaint")
+		return
+	}
+
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("Error should mention not found, got: %v", err)
 	}
 }
 
 func TestComplaintService_ResolveComplaint(t *testing.T) {
+	// Setup
 	mockRepo := &mockRepository{}
-	cfg := &config.Config{
-		Complaints: struct {
-			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
-		}{},
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
+
+	// Create a complaint first
+	created, err := svc.CreateComplaint(ctx,
+		"test-agent",
+		"test-session",
+		"test task",
+		"test context",
+		"missing info",
+		"confused by",
+		"future wishes",
+		domain.SeverityHigh,
+		"test-project")
+	if err != nil {
+		t.Fatalf("Failed to create complaint: %v", err)
 	}
 
-	service := NewComplaintService(mockRepo, cfg)
-
-	// Create a test complaint
-	id, _ := domain.NewComplaintID()
-	testComplaint := &domain.Complaint{
-		ID:              id,
-		AgentName:       "test-agent",
-		TaskDescription: "test task",
-		Severity:        "high",
-		ProjectName:     "test-project",
-		Resolved:        false,
+	if created.Resolved {
+		t.Fatal("Complaint should start as unresolved")
 	}
 
-	mockRepo.complaints = append(mockRepo.complaints, testComplaint)
+	// Wait a bit to ensure different timestamp
+	time.Sleep(10 * time.Millisecond)
 
 	// Resolve the complaint
-	err := service.ResolveComplaint(context.Background(), id)
-
+	err = svc.ResolveComplaint(ctx, created.ID)
 	if err != nil {
-		t.Errorf("ComplaintService.ResolveComplaint() error = %v", err)
+		t.Errorf("ResolveComplaint error = %v, want nil", err)
+		return
 	}
 
-	if !testComplaint.Resolved {
-		t.Error("ComplaintService.ResolveComplaint() did not resolve the complaint")
+	// Verify resolution
+	resolved, err := svc.GetComplaint(ctx, created.ID)
+	if err != nil {
+		t.Errorf("GetComplaint error = %v, want nil", err)
+		return
+	}
+
+	if !resolved.Resolved {
+		t.Error("Complaint should be marked as resolved")
+	}
+
+	if resolved.ResolvedAt == nil {
+		t.Error("Complaint should have ResolvedAt timestamp set")
+	}
+}
+
+func TestComplaintService_ResolveComplaint_NotFound(t *testing.T) {
+	// Setup
+	mockRepo := &mockRepository{}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
+
+	// Create a non-existent ID
+	nonExistentID, err := domain.NewComplaintID()
+	if err != nil {
+		t.Fatalf("Failed to create ID: %v", err)
+	}
+
+	// Try to resolve non-existent complaint
+	err = svc.ResolveComplaint(ctx, nonExistentID)
+
+	// Verify
+	if err == nil {
+		t.Error("ResolveComplaint should return error for non-existent complaint")
+		return
+	}
+
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("Error should mention not found, got: %v", err)
+	}
+}
+
+func TestComplaintService_ListComplaints(t *testing.T) {
+	// Setup
+	mockRepo := &mockRepository{}
+	mockTracer := tracing.NewMockTracer("test")
+	mockLogger := log.New(io.Discard)
+	svc := service.NewComplaintService(mockRepo, mockTracer, mockLogger)
+	ctx := context.Background()
+
+	// Create multiple complaints
+	for i := 0; i < 5; i++ {
+		_, err := svc.CreateComplaint(ctx,
+			"test-agent",
+			"test-session",
+			fmt.Sprintf("test task %d", i),
+			"test context",
+			"missing info",
+			"confused by",
+			"future wishes",
+			domain.SeverityLow,
+			"test-project")
+		if err != nil {
+			t.Fatalf("Failed to create complaint %d: %v", i, err)
+		}
+	}
+
+	// Test listing complaints
+	complaints, err := svc.ListComplaints(ctx, 10, 0)
+	if err != nil {
+		t.Errorf("ListComplaints error = %v, want nil", err)
+		return
+	}
+
+	if len(complaints) != 5 {
+		t.Errorf("ListComplaints returned %d complaints, want 5", len(complaints))
+	}
+
+	// Verify all complaints are returned as pointers
+	for i, complaint := range complaints {
+		if complaint == nil {
+			t.Errorf("Complaint %d should not be nil", i)
+		}
+		
+		if !strings.Contains(complaint.TaskDescription, "test task") {
+			t.Errorf("Complaint %d should contain 'test task', got: %s", i, complaint.TaskDescription)
+		}
 	}
 }
