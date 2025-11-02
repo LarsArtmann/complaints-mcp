@@ -49,26 +49,26 @@ func TestConfig_Validate(t *testing.T) {
 				},
 				Complaints: struct {
 					StorageLocation StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-					RetentionDays  int             `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-					ProjectName    string          `mapstructure:"project_name" json:"project_name"`
-					AutoResolve    *bool           `mapstructure:"auto_resolve" json:"auto_resolve"`
-					MaxFileSize    int64           `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+					RetentionDays   int             `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+					ProjectName     string          `mapstructure:"project_name" json:"project_name"`
+					AutoResolve     *bool           `mapstructure:"auto_resolve" json:"auto_resolve"`
+					MaxFileSize     int64           `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 				}{
 					StorageLocation: StorageLocal,
-					RetentionDays:  90,
-					ProjectName:    "test-project",
-					MaxFileSize:    1048576,
+					RetentionDays:   90,
+					ProjectName:     "test-project",
+					MaxFileSize:     1048576,
 				},
 				Security: struct {
-					EnableAuth bool   `mapstructure:"enable_auth" json:"enable_auth"`
-					JWTSecret  string `mapstructure:"jwt_secret" json:"jwt_secret"`
+					EnableAuth  bool   `mapstructure:"enable_auth" json:"enable_auth"`
+					JWTSecret   string `mapstructure:"jwt_secret" json:"jwt_secret"`
 					TokenExpiry int    `mapstructure:"token_expiry" validate:"min=60" json:"token_expiry"`
-					BasicAuth struct {
+					BasicAuth   struct {
 						Username string `mapstructure:"username" json:"username"`
 						Password string `mapstructure:"password" json:"password"`
 					} `mapstructure:"basic_auth" json:"basic_auth"`
 				}{
-					EnableAuth: false,
+					EnableAuth:  false,
 					TokenExpiry: 86400,
 				},
 			},
@@ -96,10 +96,10 @@ func TestConfig_Validate(t *testing.T) {
 			config: Config{
 				Complaints: struct {
 					StorageLocation StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-					RetentionDays  int             `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-					ProjectName    string          `mapstructure:"project_name" json:"project_name"`
-					AutoResolve    *bool           `mapstructure:"auto_resolve" json:"auto_resolve"`
-					MaxFileSize    int64           `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+					RetentionDays   int             `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+					ProjectName     string          `mapstructure:"project_name" json:"project_name"`
+					AutoResolve     *bool           `mapstructure:"auto_resolve" json:"auto_resolve"`
+					MaxFileSize     int64           `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 				}{
 					StorageLocation: StorageLocation("invalid"), // Invalid location
 					RetentionDays:   90,
@@ -155,8 +155,8 @@ func TestConfig_IsProduction(t *testing.T) {
 					OutputPath string `mapstructure:"output_path" validate:"required" json:"output_path"`
 					Enable     *bool  `mapstructure:"enable" json:"enable"`
 				}{
-					Level:   "info",
-					Format:  "json",
+					Level:  "info",
+					Format: "json",
 				},
 				Database: struct {
 					URL            string        `mapstructure:"url" validate:"required,url" json:"url"`
@@ -178,8 +178,8 @@ func TestConfig_IsProduction(t *testing.T) {
 					OutputPath string `mapstructure:"output_path" validate:"required" json:"output_path"`
 					Enable     *bool  `mapstructure:"enable" json:"enable"`
 				}{
-					Level:   "debug",
-					Format:  "json",
+					Level:  "debug",
+					Format: "json",
 				},
 			},
 			want: false,

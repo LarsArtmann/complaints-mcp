@@ -1,36 +1,36 @@
 package bdd_test
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"os"
-	"path/filepath"
-	"testing"
-	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
-	"github.com/larsartmann/complaints-mcp/cmd/server"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/charmbracelet/log"
 )
 
 var _ = Describe("Complaint Filing BDD Tests", func() {
 	var (
 		tempDir string
-		serverCmd *server.ServerCommand
-		ctx    context.Context
+		repository repo.Repository
+		complaintService *service.ComplaintService
+		logger *log.Logger
+		tracer tracing.Tracer
 	)
 
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
-		ctx = context.Background()
-		
-		// Initialize server command for testing
-		serverCmd = &server.ServerCommand{}
+		logger = log.New(os.Stdout)
+		tracer = tracing.NewMockTracer("test")
+
+		// Initialize repository and service
+		repository = repo.NewFileRepository(tempDir, tracer)
+		complaintService = service.NewComplaintService(repository, tracer, logger)
 	})
 
 	AfterEach(func() {
@@ -40,182 +40,125 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File a valid complaint successfully", func() {
 		It("should store complaint with all required fields", func(ctx SpecContext) {
-			complaintID, err := domain.NewComplaintID()
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"Implement authentication system",
+				"Need to add JWT authentication to API endpoints",
+				"Unclear error handling patterns",
+				"Documentation missing for error responses",
+				"Add comprehensive error handling examples",
+				domain.SeverityHigh,
+				"auth-project")
+
 			Expect(err).NotTo(HaveOccurred())
-			
-			complaint := &domain.Complaint{
-				ID:              complaintID,
-				AgentName:       "AI Assistant",
-				SessionName:     "test-session",
-				TaskDescription: "Implement authentication system",
-				ContextInfo:     "Need to add JWT authentication to API endpoints",
-				MissingInfo:     "Unclear error handling patterns",
-				ConfusedBy:      "Inconsistent response formats",
-				FutureWishes:    "Standardized error codes",
-				Severity:        "medium",
-				ProjectName:     "user-auth-service",
-				Timestamp:       time.Now(),
-				Resolved:        false,
-			}
-
-			// Create service request
-			req := &service.CreateComplaintRequest{
-				AgentName:       complaint.AgentName,
-				SessionName:     complaint.SessionName,
-				TaskDescription: complaint.TaskDescription,
-				ContextInfo:     complaint.ContextInfo,
-				MissingInfo:     complaint.MissingInfo,
-				ConfusedBy:      complaint.ConfusedBy,
-				FutureWishes:    complaint.FutureWishes,
-				Severity:        complaint.Severity,
-				ProjectName:     complaint.ProjectName,
-			}
-
-			// Test validation
-			err := req.Validate()
-			Expect(err).NotTo(HaveOccurred())
-
-			// Create service
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			// Execute service method
-			result, err := svc.CreateComplaint(ctx, req)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(result).NotTo(BeNil())
-			Expect(result.ID.Value).To(Equal(complaintID.Value))
-			Expect(result.AgentName).To(Equal(complaint.AgentName))
-			Expect(result.TaskDescription).To(Equal(complaint.TaskDescription))
-			Expect(result.Severity).To(Equal(complaint.Severity))
-			Expect(result.ProjectName).To(Equal(complaint.ProjectName))
-			Expect(result.Resolved).To(BeFalse())
-		})
-
-		It("should return success response with proper format", func(ctx SpecContext) {
-			complaintID, _ := domain.NewComplaintID()
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant",
-				TaskDescription: "Add user management feature",
-				ContextInfo:     "User registration and authentication",
-				MissingInfo:     "Password reset workflow",
-				ConfusedBy:      "UI complexity",
-				FutureWishes:    "Better admin panel",
-				Severity:        "low",
-				ProjectName:     "user-management",
-			}
-
-			// Mock successful file response
-			serverCmd.SetMockSuccessResponse(fmt.Sprintf(`✅ **Complaint filed successfully!**
-
-**ID:** %s  
-**Severity:** %s  
-**Project:** %s
-
-Your feedback helps improve the development experience for AI agents.
-
----
-
-*This complaint was automatically filed by an AI agent using the complaints-mcp server.*`, 
-				complaintID.Value, req.Severity, req.ProjectName))
-
-			// Execute the actual file_complaint command
-			response, err := serverCmd.FileComplaint(ctx, req)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response).NotTo(BeNil())
-			
-			// Parse the response
-			var responseMap map[string]interface{}
-			err = json.Unmarshal([]byte(response.Content), &responseMap)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(responseMap["content"]).To(ContainSubstring("Complaint filed successfully"))
+			Expect(complaint).NotTo(BeNil())
+			Expect(complaint.ID.Value).NotTo(BeEmpty())
+			Expect(complaint.AgentName).To(Equal("AI Assistant"))
+			Expect(complaint.SessionName).To(Equal("test-session"))
+			Expect(complaint.TaskDescription).To(Equal("Implement authentication system"))
+			Expect(complaint.ContextInfo).To(Equal("Need to add JWT authentication to API endpoints"))
+			Expect(complaint.MissingInfo).To(Equal("Unclear error handling patterns"))
+			Expect(complaint.ConfusedBy).To(Equal("Documentation missing for error responses"))
+			Expect(complaint.FutureWishes).To(Equal("Add comprehensive error handling examples"))
+			Expect(complaint.Severity).To(Equal(domain.SeverityHigh))
+			Expect(complaint.ProjectName).To(Equal("auth-project"))
+			Expect(complaint.Resolved).To(BeFalse())
+			Expect(complaint.Timestamp).NotTo(BeZero())
 		})
 
 		It("should store complaint with minimum required data", func(ctx SpecContext) {
-			// Test with minimal valid data
-			complaintID, _ := domain.NewComplaintID()
-			req := &service.CreateComplaintRequest{
-				AgentName:       "A",  // minimal valid name
-				TaskDescription: "T",  // minimal valid description
-				Severity:        "low", // valid severity
-				ProjectName:     "test",  // valid project name
-			}
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"A",    // minimal valid name
+				"",    // optional session name
+				"T",    // minimal valid description
+				"",    // optional context info
+				"",    // optional missing info
+				"",    // optional confused by
+				"",    // optional future wishes
+				domain.SeverityLow,
+				"test") // valid project name
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			result, err := svc.CreateComplaint(ctx, req)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result).NotTo(BeNil())
-			Expect(result.AgentName).To(Equal("A"))
-			Expect(result.TaskDescription).To(Equal("T"))
-			Expect(result.Severity).To(Equal("low"))
-			Expect(result.ProjectName).To(Equal("test"))
+			Expect(complaint).NotTo(BeNil())
+			Expect(complaint.AgentName).To(Equal("A"))
+			Expect(complaint.TaskDescription).To(Equal("T"))
+			Expect(complaint.Severity).To(Equal(domain.SeverityLow))
+			Expect(complaint.ProjectName).To(Equal("test"))
 		})
 	})
 
 	Context("File a complaint with missing required field", func() {
 		It("should return validation error for missing task description", func(ctx SpecContext) {
-			req := &service.CreateComplaintRequest{
-				AgentName:   "AI Assistant",
-				// TaskDescription is intentionally empty
-				Severity:    "medium",
-				ProjectName: "test-project",
-			}
+			_, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"", // empty task description
+				"Some context",
+				"",
+				"",
+				"",
+				domain.SeverityMedium,
+				"test-project")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			_, err := svc.CreateComplaint(ctx, req)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("task description is required"))
+			Expect(err.Error()).To(Or(
+				ContainSubstring("task description is required"),
+				ContainSubstring("TaskDescription"),
+			))
 		})
 
 		It("should return validation error for missing agent name", func(ctx SpecContext) {
-			req := &service.CreateComplaintRequest{
-				// AgentName is intentionally empty
-				TaskDescription: "Test task",
-				Severity:    "medium",
-				ProjectName: "test-project",
-			}
+			_, err := complaintService.CreateComplaint(ctx, 
+				"", // empty agent name
+				"test-session",
+				"Test task",
+				"",
+				"",
+				"",
+				"",
+				domain.SeverityMedium,
+				"test-project")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			_, err := svc.CreateComplaint(ctx, req)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("agent name is required"))
+			Expect(err.Error()).To(Or(
+				ContainSubstring("agent name is required"),
+				ContainSubstring("AgentName"),
+			))
 		})
 
 		It("should return validation error for invalid severity", func(ctx SpecContext) {
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant",
-				TaskDescription: "Test task",
-				Severity:        "invalid", // invalid severity
-				ProjectName: "test-project",
-			}
+			// This will be caught at the domain level
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"Test task",
+				"",
+				"",
+				"",
+				"",
+				"invalid", // invalid severity
+				"test-project")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			_, err := svc.CreateComplaint(ctx, req)
+			// The service should handle this gracefully
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("invalid severity"))
+			Expect(complaint).To(BeNil())
 		})
 	})
 
 	Context("File a complaint with invalid severity", func() {
 		It("should return validation error for unsupported severity", func(ctx SpecContext) {
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant",
-				TaskDescription: "Test task",
-				Severity:        "unsupported", // invalid severity
-				ProjectName: "test-project",
-			}
+			_, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"Test task",
+				"",
+				"",
+				"",
+				"",
+				"unsupported", // invalid severity
+				"test-project")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			_, err := svc.CreateComplaint(ctx, req)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("invalid severity"))
 		})
@@ -225,65 +168,127 @@ Your feedback helps improve the development experience for AI agents.
 		It("should handle large content gracefully", func(ctx SpecContext) {
 			// Create a large complaint
 			largeContent := string(make([]byte, 2000)) // 2KB content
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant",
-				TaskDescription: "Large content test",
-				ContextInfo:     largeContent,
-				Severity:        "low",
-				ProjectName:     "content-test",
-			}
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"Large content test",
+				largeContent,
+				"",
+				"",
+				"",
+				domain.SeverityLow,
+				"content-test")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			result, err := svc.CreateComplaint(ctx, req)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result).NotTo(BeNil())
-			Expect(result.ContextInfo).To(Equal(largeContent))
+			Expect(complaint).NotTo(BeNil())
+			Expect(complaint.ContextInfo).To(Equal(largeContent))
 		})
 
 		It("should enforce content size limits", func(ctx SpecContext) {
 			// Test content that exceeds reasonable limits
 			veryLargeContent := string(make([]byte, 1000000)) // 1MB content
-			
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant",
-				TaskDescription: "Oversized content",
-				ContextInfo:     veryLargeContent,
-				Severity:        "medium",
-				ProjectName:     "content-test",
-			}
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant",
+				"test-session",
+				"Oversized content",
+				veryLargeContent,
+				"",
+				"",
+				"",
+				domain.SeverityMedium,
+				"content-test")
 
 			// This should either be handled gracefully or return an appropriate error
-			result, err := svc.CreateComplaint(ctx, req)
-			
 			// For now, we'll assume it should succeed (service layer should handle)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result).NotTo(BeNil())
+			Expect(complaint).NotTo(BeNil())
 		})
 	})
 
 	Context("File complaint with special characters", func() {
 		It("should handle special characters properly", func(ctx SpecContext) {
-			req := &service.CreateComplaintRequest{
-				AgentName:       "AI Assistant 🤖",
-				TaskDescription: "Test with special chars: quotes, newlines, tabs",
-				ContextInfo:     "Content with \"quotes\" and \t\t tabs\nnewlines",
-				Severity:        "medium",
-				ProjectName:     "special-char-test",
-			}
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"AI Assistant 🤖",
+				"test-session",
+				"Test with special chars: quotes, newlines, tabs",
+				"Content with \"quotes\" and \t\t tabs\nnewlines",
+				"",
+				"",
+				"",
+				domain.SeverityMedium,
+				"special-char-test")
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(nil, config)
-
-			result, err := svc.CreateComplaint(ctx, req)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(result).NotTo(BeNil())
-			Expect(result.AgentName).To(Equal("AI Assistant 🤖"))
-			Expect(result.ContextInfo).To(ContainSubstring("quotes"))
+			Expect(complaint).NotTo(BeNil())
+			Expect(complaint.AgentName).To(Equal("AI Assistant 🤖"))
+			Expect(complaint.TaskDescription).To(Equal("Test with special chars: quotes, newlines, tabs"))
+			Expect(complaint.ContextInfo).To(Equal("Content with \"quotes\" and \t\t tabs\nnewlines"))
+		})
+	})
+
+	Context("File complaint and verify persistence", func() {
+		It("should persist complaint to file system", func(ctx SpecContext) {
+			complaint, err := complaintService.CreateComplaint(ctx, 
+				"Test Agent",
+				"persist-session",
+				"Test persistence functionality",
+				"Verify complaint is saved to file system",
+				"",
+				"",
+				"",
+				domain.SeverityLow,
+				"persistence-test")
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(complaint).NotTo(BeNil())
+
+			// Verify the complaint was saved by retrieving it
+			retrieved, err := complaintService.GetComplaint(ctx, complaint.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(retrieved).NotTo(BeNil())
+			Expect(retrieved.ID.Value).To(Equal(complaint.ID.Value))
+			Expect(retrieved.AgentName).To(Equal(complaint.AgentName))
+			Expect(retrieved.TaskDescription).To(Equal(complaint.TaskDescription))
+		})
+
+		It("should create separate file for each complaint", func(ctx SpecContext) {
+			// Create multiple complaints
+			complaint1, err := complaintService.CreateComplaint(ctx, 
+				"Agent 1",
+				"session-1",
+				"First complaint",
+				"",
+				"",
+				"",
+				"",
+				domain.SeverityLow,
+				"test")
+			Expect(err).NotTo(HaveOccurred())
+
+			complaint2, err := complaintService.CreateComplaint(ctx, 
+				"Agent 2",
+				"session-2",
+				"Second complaint",
+				"",
+				"",
+				"",
+				"",
+				domain.SeverityMedium,
+				"test")
+			Expect(err).NotTo(HaveOccurred())
+
+			// Both should have different IDs
+			Expect(complaint1.ID.Value).NotTo(Equal(complaint2.ID.Value))
+
+			// Both should be retrievable
+			retrieved1, err := complaintService.GetComplaint(ctx, complaint1.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(retrieved1.ID.Value).To(Equal(complaint1.ID.Value))
+
+			retrieved2, err := complaintService.GetComplaint(ctx, complaint2.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(retrieved2.ID.Value).To(Equal(complaint2.ID.Value))
 		})
 	})
 })

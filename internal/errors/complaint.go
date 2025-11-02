@@ -28,10 +28,10 @@ func (e *ComplaintError) Unwrap() error {
 const (
 	ErrCodeValidationFailed = "VALIDATION_FAILED"
 	ErrCodeNotFound         = "NOT_FOUND"
-	ErrCodeDuplicate       = "DUPLICATE"
-	ErrCodeStorageError    = "STORAGE_ERROR"
-	ErrCodeUnauthorized    = "UNAUTHORIZED"
-	ErrCodeInvalidFormat   = "INVALID_FORMAT"
+	ErrCodeDuplicate        = "DUPLICATE"
+	ErrCodeStorageError     = "STORAGE_ERROR"
+	ErrCodeUnauthorized     = "UNAUTHORIZED"
+	ErrCodeInvalidFormat    = "INVALID_FORMAT"
 )
 
 // NewComplaintError creates a new complaint error

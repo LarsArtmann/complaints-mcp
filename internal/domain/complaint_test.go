@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"testing"
 )
 
@@ -56,7 +57,9 @@ func TestComplaintID_IsEmpty(t *testing.T) {
 }
 
 func TestNewComplaint(t *testing.T) {
+	ctx := context.Background()
 	complaint, err := NewComplaint(
+		ctx, // ✅ Added context parameter
 		"test-agent",
 		"test-session",
 		"test task",
@@ -64,7 +67,7 @@ func TestNewComplaint(t *testing.T) {
 		"missing info",
 		"confused by",
 		"future wishes",
-		"high",
+		SeverityHigh, // ✅ Use domain.Severity type instead of string
 		"test-project",
 	)
 
@@ -94,12 +97,22 @@ func TestNewComplaint(t *testing.T) {
 }
 
 func TestComplaint_Resolve(t *testing.T) {
-	complaint := &Complaint{Resolved: false}
+	ctx := context.Background() // ✅ Added context
+	id, _ := NewComplaintID()
+	complaint := &Complaint{
+		ID:       id,
+		Resolved: false,
+	}
 
-	complaint.Resolve()
+	complaint.Resolve(ctx) // ✅ Pass context
 
 	if !complaint.Resolved {
 		t.Error("Complaint.Resolve() did not set Resolved to true")
+	}
+
+	// ✅ Verify ResolvedAt timestamp is set (prevents split-brain)
+	if complaint.ResolvedAt == nil {
+		t.Error("Complaint.Resolve() did not set ResolvedAt timestamp")
 	}
 }
 

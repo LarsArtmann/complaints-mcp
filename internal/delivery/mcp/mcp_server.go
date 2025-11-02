@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/charmbracelet/log"
+	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/service"
-	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -28,7 +28,7 @@ func NewServer(name, version string, complaintService *service.ComplaintService,
 		Name:    name,
 		Version: version,
 	}, nil)
-	
+
 	return &MCPServer{
 		config:  nil, // Will be set during initialization
 		service: complaintService,
@@ -46,19 +46,19 @@ func (m *MCPServer) SetConfig(cfg *config.Config) {
 // Start starts the MCP server using stdio transport
 func (m *MCPServer) Start(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
-	
+
 	// Register tools
 	if err := m.registerTools(); err != nil {
 		return fmt.Errorf("failed to register tools: %w", err)
 	}
-	
+
 	// Start server with stdio transport
 	logger.Info("Starting MCP server over stdio")
-	
+
 	if err := m.server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		return fmt.Errorf("server failed: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (m *MCPServer) Start(ctx context.Context) error {
 func (m *MCPServer) Shutdown(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
 	logger.Info("Shutting down MCP server")
-	
+
 	// MCP server with stdio transport handles shutdown automatically
 	return nil
 }
@@ -131,7 +131,7 @@ func (m *MCPServer) registerTools() error {
 			"required": []string{"agent_name", "task_description", "severity"},
 		},
 	}
-	
+
 	// List complaints tool
 	listComplaintsTool := &mcp.Tool{
 		Name:        "list_complaints",
@@ -157,7 +157,7 @@ func (m *MCPServer) registerTools() error {
 			},
 		},
 	}
-	
+
 	// Resolve complaint tool
 	resolveComplaintTool := &mcp.Tool{
 		Name:        "resolve_complaint",
@@ -174,7 +174,7 @@ func (m *MCPServer) registerTools() error {
 			"required": []string{"complaint_id"},
 		},
 	}
-	
+
 	// Search complaints tool
 	searchComplaintsTool := &mcp.Tool{
 		Name:        "search_complaints",
@@ -198,13 +198,13 @@ func (m *MCPServer) registerTools() error {
 			"required": []string{"query"},
 		},
 	}
-	
+
 	// Register tools with handlers
 	mcp.AddTool(m.server, fileComplaintTool, m.handleFileComplaint)
 	mcp.AddTool(m.server, listComplaintsTool, m.handleListComplaints)
 	mcp.AddTool(m.server, resolveComplaintTool, m.handleResolveComplaint)
 	mcp.AddTool(m.server, searchComplaintsTool, m.handleSearchComplaints)
-	
+
 	return nil
 }
 
@@ -245,11 +245,11 @@ type FileComplaintOutput struct {
 
 type ListComplaintsOutput struct {
 	Complaints []map[string]interface{} `json:"complaints"`
-	Count      int                     `json:"count"`
+	Count      int                      `json:"count"`
 }
 
 type ResolveComplaintOutput struct {
-	Message      string `json:"message"`
+	Message     string `json:"message"`
 	ComplaintID string `json:"complaint_id"`
 }
 
@@ -300,13 +300,13 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	logger.Info("Complaint filed successfully", "complaint_id", complaint.ID.String())
-	
+
 	output := FileComplaintOutput{
 		ComplaintID: complaint.ID.String(),
 		Message:     "Complaint filed successfully",
 		Timestamp:   complaint.Timestamp.Format(time.RFC3339),
 	}
-	
+
 	return nil, output, nil
 }
 
@@ -323,7 +323,7 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 	if limit == 0 {
 		limit = 50
 	}
-	
+
 	var severityFilter domain.Severity
 	if input.Severity != "" {
 		switch input.Severity {
@@ -340,13 +340,13 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 
 	var complaints []*domain.Complaint
 	var err error
-	
+
 	if severityFilter != "" {
 		complaints, err = m.service.GetComplaintsBySeverity(ctx, severityFilter, limit)
 	} else {
 		complaints, err = m.service.ListComplaints(ctx, limit, 0)
 	}
-	
+
 	if err != nil {
 		logger.Error("Failed to list complaints", "error", err)
 		return nil, ListComplaintsOutput{}, err
@@ -362,27 +362,27 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 		if !input.Resolved && complaint.IsResolved() {
 			continue
 		}
-		
+
 		result := map[string]interface{}{
-			"complaint_id":    complaint.ID.String(),
-			"agent_name":      complaint.AgentName,
-			"session_name":    complaint.SessionName,
+			"complaint_id":     complaint.ID.String(),
+			"agent_name":       complaint.AgentName,
+			"session_name":     complaint.SessionName,
 			"task_description": complaint.TaskDescription,
-			"severity":        string(complaint.Severity),
-			"timestamp":       complaint.Timestamp.Format(time.RFC3339),
-			"resolved":        complaint.IsResolved(),
-			"project_name":    complaint.ProjectName,
+			"severity":         string(complaint.Severity),
+			"timestamp":        complaint.Timestamp.Format(time.RFC3339),
+			"resolved":         complaint.IsResolved(),
+			"project_name":     complaint.ProjectName,
 		}
 		results = append(results, result)
 	}
 
 	logger.Info("Complaints listed successfully", "count", len(results))
-	
+
 	output := ListComplaintsOutput{
 		Complaints: results,
 		Count:      len(results),
 	}
-	
+
 	return nil, output, nil
 }
 
@@ -402,12 +402,12 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 	}
 
 	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID)
-	
+
 	output := ResolveComplaintOutput{
-		Message:      "Complaint resolved successfully",
+		Message:     "Complaint resolved successfully",
 		ComplaintID: input.ComplaintID,
 	}
-	
+
 	return nil, output, nil
 }
 
@@ -434,25 +434,25 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 	var results []map[string]interface{}
 	for _, complaint := range complaints {
 		result := map[string]interface{}{
-			"complaint_id":    complaint.ID.String(),
-			"agent_name":      complaint.AgentName,
-			"session_name":    complaint.SessionName,
+			"complaint_id":     complaint.ID.String(),
+			"agent_name":       complaint.AgentName,
+			"session_name":     complaint.SessionName,
 			"task_description": complaint.TaskDescription,
-			"severity":        string(complaint.Severity),
-			"timestamp":       complaint.Timestamp.Format(time.RFC3339),
-			"resolved":        complaint.IsResolved(),
-			"project_name":    complaint.ProjectName,
+			"severity":         string(complaint.Severity),
+			"timestamp":        complaint.Timestamp.Format(time.RFC3339),
+			"resolved":         complaint.IsResolved(),
+			"project_name":     complaint.ProjectName,
 		}
 		results = append(results, result)
 	}
 
 	logger.Info("Complaints searched successfully", "query", input.Query, "count", len(results))
-	
+
 	output := SearchComplaintsOutput{
 		Complaints: results,
 		Query:      input.Query,
 		Count:      len(results),
 	}
-	
+
 	return nil, output, nil
 }

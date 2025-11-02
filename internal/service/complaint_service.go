@@ -22,7 +22,7 @@ func NewComplaintService(repo repo.Repository, tracer tracing.Tracer, logger *lo
 	return &ComplaintService{
 		repo:   repo,
 		logger: logger,
-		tracer: tracing.NewMockTracer("complaint-service"),
+		tracer: tracer,
 	}
 }
 
@@ -32,7 +32,7 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 	defer span.End()
 
 	logger := s.logger.With("operation", "create_complaint")
-	logger.Info("Creating new complaint", 
+	logger.Info("Creating new complaint",
 		"agent_name", agentName,
 		"severity", string(severity),
 		"session_name", sessionName)
@@ -156,5 +156,41 @@ func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, l
 	}
 
 	logger.Info("Complaints searched successfully", "query", query, "count", len(complaints))
+	return complaints, nil
+}
+
+// ListComplaintsByProject retrieves complaints by project name
+func (s *ComplaintService) ListComplaintsByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "ListComplaintsByProject")
+	defer span.End()
+
+	logger := s.logger.With("operation", "list_complaints_by_project", "project_name", projectName, "limit", limit)
+	logger.Debug("Retrieving complaints by project")
+
+	complaints, err := s.repo.FindByProject(ctx, projectName, limit)
+	if err != nil {
+		logger.Error("Failed to list complaints by project", "error", err)
+		return nil, fmt.Errorf("failed to list complaints by project: %w", err)
+	}
+
+	logger.Info("Complaints listed by project successfully", "project_name", projectName, "count", len(complaints))
+	return complaints, nil
+}
+
+// ListUnresolvedComplaints retrieves unresolved complaints
+func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+	ctx, span := s.tracer.Start(ctx, "ListUnresolvedComplaints")
+	defer span.End()
+
+	logger := s.logger.With("operation", "list_unresolved_complaints", "limit", limit)
+	logger.Debug("Retrieving unresolved complaints")
+
+	complaints, err := s.repo.FindUnresolved(ctx, limit)
+	if err != nil {
+		logger.Error("Failed to list unresolved complaints", "error", err)
+		return nil, fmt.Errorf("failed to list unresolved complaints: %w", err)
+	}
+
+	logger.Info("Unresolved complaints listed successfully", "count", len(complaints))
 	return complaints, nil
 }

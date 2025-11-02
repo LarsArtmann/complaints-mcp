@@ -2,23 +2,22 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
-	"testing"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
-	"github.com/larsartmann/complaints-mcp/internal/errors"
 )
 
 var _ = Describe("FileRepository", func() {
 	var (
-		tempDir  string
-		repo     *FileRepository
-		ctx      context.Context
+		tempDir string
+		repo    *FileRepository
+		ctx     context.Context
 	)
 
 	BeforeEach(func() {
@@ -213,7 +212,7 @@ var _ = Describe("FileRepository", func() {
 			repo = NewFileRepository(tempDir)
 
 			nonExistentID := domain.ComplaintID{Value: "non-existent"}
-			
+
 			found, err := repo.FindByID(ctx, nonExistentID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(found).To(BeNil())
@@ -332,12 +331,12 @@ var _ = Describe("FileRepository", func() {
 
 			// Concurrent resolve attempts
 			done := make(chan error, 2)
-			
+
 			go func() {
 				err := repo.MarkResolved(ctx, complaintID)
 				done <- err
 			}()
-			
+
 			go func() {
 				err := repo.MarkResolved(ctx, complaintID)
 				done <- err
@@ -346,7 +345,7 @@ var _ = Describe("FileRepository", func() {
 			// Wait for both to complete
 			err1 := <-done
 			err2 := <-done
-			
+
 			Expect(err1).NotTo(HaveOccurred())
 			Expect(err2).NotTo(HaveOccurred())
 		})

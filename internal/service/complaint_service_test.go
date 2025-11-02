@@ -62,10 +62,10 @@ func TestNewComplaintService(t *testing.T) {
 	cfg := &config.Config{
 		Complaints: struct {
 			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                   `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                 `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                 `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
+			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
+			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 		}{
 			ProjectName: "test-project",
 		},
@@ -151,10 +151,10 @@ func TestComplaintService_CreateComplaint(t *testing.T) {
 	cfg := &config.Config{
 		Complaints: struct {
 			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                   `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                 `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                 `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
+			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
+			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 		}{
 			ProjectName: "test-project",
 		},
@@ -200,10 +200,10 @@ func TestComplaintService_CreateComplaint_UsesDefaultProjectName(t *testing.T) {
 	cfg := &config.Config{
 		Complaints: struct {
 			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                   `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                 `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                 `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
+			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
+			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 		}{
 			ProjectName: "default-project",
 		},
@@ -235,10 +235,10 @@ func TestComplaintService_GetComplaint(t *testing.T) {
 	cfg := &config.Config{
 		Complaints: struct {
 			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                   `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                 `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                 `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
+			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
+			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 		}{},
 	}
 
@@ -291,10 +291,10 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 	cfg := &config.Config{
 		Complaints: struct {
 			StorageLocation config.StorageLocation `mapstructure:"storage_location" validate:"required,oneof=local global both" json:"storage_location"`
-			RetentionDays   int                   `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
-			ProjectName     string                `mapstructure:"project_name" json:"project_name"`
-			AutoResolve     *bool                 `mapstructure:"auto_resolve" json:"auto_resolve"`
-			MaxFileSize     int64                 `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
+			RetentionDays   int                    `mapstructure:"retention_days" validate:"min=1,max=365" json:"retention_days"`
+			ProjectName     string                 `mapstructure:"project_name" json:"project_name"`
+			AutoResolve     *bool                  `mapstructure:"auto_resolve" json:"auto_resolve"`
+			MaxFileSize     int64                  `mapstructure:"max_file_size" validate:"min=1024,max=1048576" json:"max_file_size"`
 		}{},
 	}
 

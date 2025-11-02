@@ -54,10 +54,10 @@ type LogConfig struct {
 // Load loads configuration from various sources
 func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 	logger := log.FromContext(ctx)
-	
+
 	// Initialize viper
 	v := viper.New()
-	
+
 	// Set configuration file path
 	if configFile, _ := cmd.Flags().GetString("config"); configFile != "" {
 		v.SetConfigFile(configFile)
@@ -71,25 +71,25 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 			logger.Debug("No XDG config file found, using defaults", "error", err)
 		}
 	}
-	
+
 	v.SetConfigType("yaml")
 	v.AddConfigPath(".")
 	v.AddConfigPath("$HOME/.complaints-mcp")
 	v.AddConfigPath("/etc/complaints-mcp")
-	
+
 	// Environment variables
 	v.SetEnvPrefix("COMPLAINTS_MCP")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
-	
+
 	// Set defaults
 	setDefaults(v)
-	
+
 	// Bind command-line flags
 	if err := v.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return nil, fmt.Errorf("failed to bind flags: %w", err)
 	}
-	
+
 	// Read configuration
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -98,25 +98,25 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 			logger.Warn("Failed to read config file", "error", err, "config_file", v.ConfigFileUsed())
 		}
 	}
-	
+
 	// Unmarshal configuration
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
-	
+
 	// Post-processing
 	if err := postProcessConfig(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to post-process configuration: %w", err)
 	}
-	
+
 	// Validate configuration
 	if err := validateConfig(&cfg); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
-	
+
 	logger.Info("Configuration loaded successfully", "config_file", v.ConfigFileUsed())
-	
+
 	return &cfg, nil
 }
 
@@ -125,14 +125,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.name", "complaints-mcp")
 	v.SetDefault("server.host", "localhost")
 	v.SetDefault("server.port", 8080)
-	
+
 	// Storage defaults using XDG
 	v.SetDefault("storage.base_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.global_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.max_size", 10485760) // 10MB
 	v.SetDefault("storage.retention_days", 30)
 	v.SetDefault("storage.auto_backup", true)
-	
+
 	// Log defaults
 	v.SetDefault("log.level", "info")
 	v.SetDefault("log.format", "text") // text, json, logfmt
@@ -148,7 +148,7 @@ func postProcessConfig(cfg *Config) error {
 		}
 		cfg.Storage.BaseDir = filepath.Join(home, cfg.Storage.BaseDir[2:])
 	}
-	
+
 	if strings.HasPrefix(cfg.Storage.GlobalDir, "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -156,7 +156,7 @@ func postProcessConfig(cfg *Config) error {
 		}
 		cfg.Storage.GlobalDir = filepath.Join(home, cfg.Storage.GlobalDir[2:])
 	}
-	
+
 	// Ensure directories exist
 	for _, dir := range []string{cfg.Storage.BaseDir, cfg.Storage.GlobalDir} {
 		if dir == "" {
@@ -166,7 +166,7 @@ func postProcessConfig(cfg *Config) error {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -175,23 +175,23 @@ func validateConfig(cfg *Config) error {
 	if cfg.Server.Name == "" {
 		return fmt.Errorf("server.name is required")
 	}
-	
+
 	if cfg.Server.Port <= 0 || cfg.Server.Port > 65535 {
 		return fmt.Errorf("server.port must be between 1 and 65535")
 	}
-	
+
 	if cfg.Storage.BaseDir == "" {
 		return fmt.Errorf("storage.base_dir is required")
 	}
-	
+
 	if cfg.Storage.MaxSize <= 0 {
 		return fmt.Errorf("storage.max_size must be positive")
 	}
-	
+
 	if cfg.Storage.Retention <= 0 {
 		return fmt.Errorf("storage.retention_days must be positive")
 	}
-	
+
 	// Log level validation
 	validLogLevels := []string{"trace", "debug", "info", "warn", "error"}
 	if cfg.Log.Level != "" {
@@ -206,7 +206,7 @@ func validateConfig(cfg *Config) error {
 			return fmt.Errorf("invalid log level: %s", cfg.Log.Level)
 		}
 	}
-	
+
 	// Log format validation
 	validLogFormats := []string{"text", "json", "logfmt"}
 	if cfg.Log.Format != "" {
@@ -221,6 +221,6 @@ func validateConfig(cfg *Config) error {
 			return fmt.Errorf("invalid log format: %s", cfg.Log.Format)
 		}
 	}
-	
+
 	return nil
 }

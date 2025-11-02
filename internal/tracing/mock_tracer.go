@@ -33,13 +33,13 @@ func NewMockTracer(name string) *MockTracer {
 func (m *MockTracer) Start(ctx context.Context, operationName string) (context.Context, Span) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Starting trace span", "tracer", m.name, "operation", operationName)
-	
+
 	span := &MockSpan{
-		tracer:       m,
+		tracer:        m,
 		operationName: operationName,
-		startTime:    time.Now(),
+		startTime:     time.Now(),
 	}
-	
+
 	// In a real implementation, we'd use a proper tracing context
 	// For now, we'll store the span in a simple context value
 	return context.WithValue(ctx, "current_span", span), span
@@ -47,16 +47,16 @@ func (m *MockTracer) Start(ctx context.Context, operationName string) (context.C
 
 // MockSpan represents a trace span
 type MockSpan struct {
-	tracer       *MockTracer
+	tracer        *MockTracer
 	operationName string
-	startTime    time.Time
+	startTime     time.Time
 }
 
 // End completes the trace span
 func (s *MockSpan) End() {
 	logger := log.Default()
 	duration := time.Since(s.startTime)
-	logger.Debug("Trace span ended", 
+	logger.Debug("Trace span ended",
 		"tracer", s.tracer.name,
 		"operation", s.operationName,
 		"duration_ms", duration.Milliseconds())
@@ -65,7 +65,7 @@ func (s *MockSpan) End() {
 // AddEvent adds an event to the current span
 func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[string]interface{}) {
 	logger := log.FromContext(ctx)
-	logger.Debug("Trace event", 
+	logger.Debug("Trace event",
 		"tracer", s.tracer.name,
 		"operation", s.operationName,
 		"event", event,
@@ -75,7 +75,7 @@ func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[st
 // SetAttribute sets an attribute on the current span
 func (s *MockSpan) SetAttribute(ctx context.Context, key string, value interface{}) {
 	logger := log.FromContext(ctx)
-	logger.Debug("Trace attribute set", 
+	logger.Debug("Trace attribute set",
 		"tracer", s.tracer.name,
 		"operation", s.operationName,
 		"key", key,
@@ -102,7 +102,7 @@ func NewNoOpTracer() Tracer {
 func (n *NoOpTracer) Start(ctx context.Context, operationName string) (context.Context, Span) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Starting trace span", "tracer", "noop", "operation", operationName)
-	
+
 	span := &NoOpSpan{}
 	return context.WithValue(ctx, "current_span", span), span
 }

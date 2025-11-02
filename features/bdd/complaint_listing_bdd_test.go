@@ -2,340 +2,375 @@ package bdd_test
 
 import (
 	"context"
-	"encoding/json"
-	"testing"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
-	"github.com/larsartmann/complaints-mcp/cmd/server"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/charmbracelet/log"
 )
 
 var _ = Describe("Complaint Listing BDD Tests", func() {
 	var (
-		serverCmd *server.ServerCommand
-		ctx    context.Context
+		tempDir string
+		repository repo.Repository
+		complaintService *service.ComplaintService
+		logger *log.Logger
+		tracer tracing.Tracer
+		testComplaints []*domain.Complaint
 	)
 
 	BeforeEach(func() {
-		ctx = context.Background()
-		serverCmd = &server.ServerCommand{}
+		// Create a temporary directory for each test
+		tempDir = GinkgoT().TempDir()
+		logger = log.New(os.Stdout)
+		tracer = tracing.NewMockTracer("test")
+
+		// Initialize repository and service
+		repository = repo.NewFileRepository(tempDir, tracer)
+		complaintService = service.NewComplaintService(repository, tracer, logger)
+
+		// Create test complaints
+		testComplaints = []*domain.Complaint{}
+		
+		// Create complaints with different data for testing
+		complaint1, err := complaintService.CreateComplaint(context.Background(),
+			"AI Assistant 1",
+			"session-1",
+			"Authentication issue",
+			"JWT token validation unclear",
+			"Missing error codes",
+			"Documentation unclear",
+			"Add examples",
+			domain.SeverityHigh,
+			"auth-project")
+		Expect(err).NotTo(HaveOccurred())
+		testComplaints = append(testComplaints, complaint1)
+
+		complaint2, err := complaintService.CreateComplaint(context.Background(),
+			"AI Assistant 2", 
+			"session-2",
+			"API design confusion",
+			"REST vs GraphQL unclear",
+			"",
+			"Inconsistent patterns",
+			"Standardize approach",
+			domain.SeverityMedium,
+			"api-project")
+		Expect(err).NotTo(HaveOccurred())
+		testComplaints = append(testComplaints, complaint2)
+
+		complaint3, err := complaintService.CreateComplaint(context.Background(),
+			"AI Assistant 3",
+			"session-3", 
+			"Database schema missing",
+			"No table definitions",
+			"Migration scripts absent",
+			"Data relationships unclear",
+			"Add ERD diagrams",
+			domain.SeverityLow,
+			"database-project")
+		Expect(err).NotTo(HaveOccurred())
+		testComplaints = append(testComplaints, complaint3)
+
+		complaint4, err := complaintService.CreateComplaint(context.Background(),
+			"AI Assistant 4",
+			"session-4",
+			"Testing framework confusion",
+			"Unit vs integration unclear",
+			"Mock patterns missing",
+			"Test coverage unknown",
+			"Add testing guidelines",
+			domain.SeverityCritical,
+			"auth-project") // Same project as complaint1
+		Expect(err).NotTo(HaveOccurred())
+		testComplaints = append(testComplaints, complaint4)
 	})
 
-	Context("List all complaints successfully", func() {
-		It("should return list of all complaints", func(ctx SpecContext) {
-			// Setup mock repository with some test complaints
-			repo := &mockRepository{
-				complaints: []*domain.Complaint{
-					{
-						ID:              domain.ComplaintID{Value: "1"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 1",
-						ContextInfo:     "Context 1",
-						MissingInfo:     "Missing 1",
-						ConfusedBy:      "Confused 1",
-						FutureWishes:    "Wishes 1",
-						Severity:        "low",
-						ProjectName:     "project-a",
-						Timestamp:       time.Now().Add(-1 * 24 * time.Hour),
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "2"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 2",
-						ContextInfo:     "Context 2",
-						MissingInfo:     "Missing 2",
-						ConfusedBy:      "Confused 2",
-						FutureWishes:    "Wishes 2",
-						Severity:        "medium",
-						ProjectName:     "project-b",
-						Timestamp:       time.Now().Add(-2 * 24 * time.Hour),
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "3"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 3",
-						ContextInfo:     "Context 3",
-						MissingInfo:     "Missing 3",
-						ConfusedBy:      "Confused 3",
-						FutureWishes:    "Wishes 3",
-						Severity:        "high",
-						ProjectName:     "project-a",
-						Timestamp:       time.Now().Add(-3 * 24 * time.Hour),
-						Resolved:        true, // This one is resolved
-					},
-				},
+	AfterEach(func() {
+		// Clean up temporary directory
+		os.RemoveAll(tempDir)
+	})
+
+	Context("List all complaints", func() {
+		It("should return all complaints with pagination", func(ctx SpecContext) {
+			// Get first page of complaints
+			complaints, err := complaintService.ListComplaints(ctx, 2, 0)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints)).To(Equal(2))
+
+			// Get second page
+			complaints2, err := complaintService.ListComplaints(ctx, 2, 2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints2)).To(Equal(2))
+
+			// Verify no overlap
+			ids1 := map[string]bool{}
+			for _, c := range complaints {
+				ids1[c.ID.Value] = true
+			}
+			for _, c := range complaints2 {
+				Expect(ids1[c.ID.Value]).To(BeFalse())
+			}
+		})
+
+		It("should return empty list when offset exceeds total", func(ctx SpecContext) {
+			complaints, err := complaintService.ListComplaints(ctx, 10, 100)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints)).To(Equal(0))
+		})
+
+		It("should return complaints in creation order", func(ctx SpecContext) {
+			complaints, err := complaintService.ListComplaints(ctx, 10, 0)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints)).To(Equal(4))
+
+			// Should be ordered by creation time (oldest first due to file loading)
+			for i := 1; i < len(complaints); i++ {
+				Expect(complaints[i].Timestamp).To(
+					BeTemporally(">=", complaints[i-1].Timestamp))
+			}
+		})
+	})
+
+	Context("List complaints by severity", func() {
+		It("should filter complaints by severity level", func(ctx SpecContext) {
+			// Get high severity complaints
+			highComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityHigh, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(highComplaints)).To(Equal(1))
+			Expect(highComplaints[0].Severity).To(Equal(domain.SeverityHigh))
+			Expect(highComplaints[0].TaskDescription).To(Equal("Authentication issue"))
+
+			// Get medium severity complaints
+			mediumComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityMedium, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(mediumComplaints)).To(Equal(1))
+			Expect(mediumComplaints[0].Severity).To(Equal(domain.SeverityMedium))
+
+			// Get low severity complaints
+			lowComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityLow, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(lowComplaints)).To(Equal(1))
+			Expect(lowComplaints[0].Severity).To(Equal(domain.SeverityLow))
+
+			// Get critical severity complaints
+			criticalComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityCritical, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(criticalComplaints)).To(Equal(1))
+			Expect(criticalComplaints[0].Severity).To(Equal(domain.SeverityCritical))
+		})
+
+		It("should respect limit parameter", func(ctx SpecContext) {
+			// Create more complaints of same severity for testing limit
+			for i := 0; i < 5; i++ {
+				_, err := complaintService.CreateComplaint(ctx,
+					"Test Agent",
+					"limit-test",
+					"Low severity test",
+					"",
+					"",
+					"",
+					"",
+					domain.SeverityLow,
+					"limit-test")
+				Expect(err).NotTo(HaveOccurred())
 			}
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(repo, config)
-
-			// Test listing without filters
-			complaints, err := svc.ListComplaintsByProject(ctx, "", 50, 0)
+			// Test with limit
+			limitedComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityLow, 3)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints)).To(Equal(3))
-			Expect(complaints[0].TaskDescription).To(Equal("Task 1"))
-			Expect(complaints[1].TaskDescription).To(Equal("Task 2"))
-			Expect(complaints[2].TaskDescription).To(Equal("Task 3"))
+			Expect(len(limitedComplaints)).To(Equal(3))
 
-			// Verify resolved status
-			Expect(complaints[0].Resolved).To(BeFalse())
-			Expect(complaints[1].Resolved).To(BeFalse())
-			Expect(complaints[2].Resolved).To(BeTrue())
-		})
-
-		It("should format response properly as JSON", func(ctx SpecContext) {
-			repo := &mockRepository{}
-			svc := service.NewComplaintService(repo, nil)
-
-			// Mock the list response
-			serverCmd.SetMockListResponse(`[{
-				"id": "1",
-				"agent_name": "AI Assistant",
-				"task_description": "Task 1",
-				"severity": "low",
-				"project_name": "project-a",
-				"resolved": false,
-				"timestamp": "2025-01-01T00:00:00Z",
-				"context_info": "Context 1",
-				"missing_info": "Missing 1",
-				"confused_by": "Confused 1",
-				"future_wishes": "Wishes 1"
-			}, {
-				"id": "2",
-				"agent_name": "AI Assistant",
-				"task_description": "Task 2",
-				"severity": "medium",
-				"project_name": "project-b",
-				"resolved": false,
-				"timestamp": "2025-01-02T00:00:00Z",
-				"context_info": "Context 2",
-				"missing_info": "Missing 2",
-				"confused_by": "Confused 2",
-				"future_wishes": "Wishes 2"
-			}, {
-				"id": "3",
-				"agent_name": "AI Assistant",
-				"task_description": "Task 3",
-				"severity": "high",
-				"project_name": "project-a",
-				"resolved": true,
-				"timestamp": "2025-01-03T00:00:00Z",
-				"context_info": "Context 3",
-				"missing_info": "Missing 3",
-				"confused_by": "Confused 3",
-				"future_wishes": "Wishes 3"
-			}]`)
-
-			response, err := serverCmd.ListComplaints(ctx, nil)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response).NotTo(BeNil())
-
-			// Parse and verify JSON response
-			var complaints []map[string]interface{}
-			err = json.Unmarshal([]byte(response.Content), &complaints)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints)).To(Equal(3))
+			// All should be low severity
+			for _, complaint := range limitedComplaints {
+				Expect(complaint.Severity).To(Equal(domain.SeverityLow))
+			}
 		})
 	})
 
-	Context("List complaints filtered by project", func() {
-		It("should return only complaints from specified project", func(ctx SpecContext) {
-			repo := &mockRepository{
-				complaints: []*domain.Complaint{
-					{
-						ID:              domain.ComplaintID{Value: "1"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 1",
-						ProjectName:     "project-a",
-						Severity:        "low",
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "2"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 2",
-						ProjectName:     "project-b", // Different project
-						Severity:        "medium",
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "3"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 3",
-						ProjectName:     "project-a", // Same as first
-						Severity:        "high",
-						Resolved:        true,
-					},
-				},
+	Context("List complaints by project", func() {
+		It("should filter complaints by project name", func(ctx SpecContext) {
+			// Get complaints for auth-project
+			authComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(authComplaints)).To(Equal(2))
+			
+			for _, complaint := range authComplaints {
+				Expect(complaint.ProjectName).To(Equal("auth-project"))
 			}
 
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(repo, config)
-
-			// Test filtering by project-a
-			complaints, err := svc.ListComplaintsByProject(ctx, "project-a", 50, 0)
+			// Get complaints for api-project
+			apiComplaints, err := complaintService.ListComplaintsByProject(ctx, "api-project", 10)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints)).To(Equal(2)) // Only 2 from project-a
-			Expect(complaints[0].ProjectName).To(Equal("project-a"))
-			Expect(complaints[1].ProjectName).To(Equal("project-a"))
+			Expect(len(apiComplaints)).To(Equal(1))
+			Expect(apiComplaints[0].ProjectName).To(Equal("api-project"))
 
-			// Test filtering by project-b
-			complaintsB, err := svc.ListComplaintsByProject(ctx, "project-b", 50, 0)
+			// Get complaints for database-project
+			dbComplaints, err := complaintService.ListComplaintsByProject(ctx, "database-project", 10)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaintsB)).To(Equal(1)) // Only 1 from project-b
-			Expect(complaintsB[0].ProjectName).To(Equal("project-b"))
+			Expect(len(dbComplaints)).To(Equal(1))
+			Expect(dbComplaints[0].ProjectName).To(Equal("database-project"))
+		})
+
+		It("should return empty for non-existent project", func(ctx SpecContext) {
+			complaints, err := complaintService.ListComplaintsByProject(ctx, "non-existent-project", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(complaints)).To(Equal(0))
+		})
+
+		It("should respect limit parameter for project filtering", func(ctx SpecContext) {
+			// Create more complaints for auth-project
+			for i := 0; i < 3; i++ {
+				_, err := complaintService.CreateComplaint(ctx,
+					"Test Agent",
+					"project-limit-test",
+					"Auth project test",
+					"",
+					"",
+					"",
+					"",
+					domain.SeverityLow,
+					"auth-project")
+				Expect(err).NotTo(HaveOccurred())
+			}
+
+			// Test with limit
+			limitedComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(limitedComplaints)).To(Equal(2))
+			
+			for _, complaint := range limitedComplaints {
+				Expect(complaint.ProjectName).To(Equal("auth-project"))
+			}
 		})
 	})
 
-	Context("List complaints filtered by unresolved status", func() {
+	Context("List unresolved complaints", func() {
 		It("should return only unresolved complaints", func(ctx SpecContext) {
-			repo := &mockRepository{
-				complaints: []*domain.Complaint{
-					{
-						ID:              domain.ComplaintID{Value: "1"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 1",
-						ProjectName:     "project-a",
-						Severity:        "low",
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "2"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 2",
-						ProjectName:     "project-b",
-						Severity:        "medium",
-						Resolved:        false,
-					},
-					{
-						ID:              domain.ComplaintID{Value: "3"},
-						AgentName:       "AI Assistant",
-						TaskDescription: "Task 3",
-						ProjectName:     "project-a",
-						Severity:        "high",
-						Resolved:        true,
-					},
-				},
-			}
-
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(repo, config)
-
-			// Test filtering for unresolved
-			complaints, err := svc.ListUnresolvedComplaints(ctx, 50, 0)
+			unresolvedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 10)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints)).To(Equal(2)) // Only 2 unresolved
-			Expect(complaints[0].Resolved).To(BeFalse())
-			Expect(complaints[1].Resolved).To(BeFalse())
+			Expect(len(unresolvedComplaints)).To(Equal(4)) // All test complaints are unresolved
 
-			// Verify resolved complaints are excluded
-			for _, complaint := range complaints {
+			for _, complaint := range unresolvedComplaints {
+				Expect(complaint.Resolved).To(BeFalse())
+			}
+		})
+
+		It("should exclude resolved complaints", func(ctx SpecContext) {
+			// Resolve one complaint
+			err := complaintService.ResolveComplaint(ctx, testComplaints[0].ID)
+			Expect(err).NotTo(HaveOccurred())
+
+			// List unresolved complaints
+			unresolvedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(unresolvedComplaints)).To(Equal(3)) // One was resolved
+
+			// Verify resolved complaint is not in list
+			for _, complaint := range unresolvedComplaints {
+				Expect(complaint.ID.Value).NotTo(Equal(testComplaints[0].ID.Value))
+				Expect(complaint.Resolved).To(BeFalse())
+			}
+		})
+
+		It("should respect limit parameter for unresolved filtering", func(ctx SpecContext) {
+			limitedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 2)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(limitedComplaints)).To(Equal(2))
+			
+			for _, complaint := range limitedComplaints {
 				Expect(complaint.Resolved).To(BeFalse())
 			}
 		})
 	})
 
-	Context("List complaints with pagination", func() {
-		It("should respect limit and offset parameters", func(ctx SpecContext) {
-			repo := &mockRepository{
-				complaints: make([]*domain.Complaint, 100),
+	Context("Search complaints", func() {
+		It("should search complaint content", func(ctx SpecContext) {
+			// Search for "authentication"
+			authResults, err := complaintService.SearchComplaints(ctx, "authentication", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(authResults)).To(Equal(1))
+			Expect(authResults[0].TaskDescription).To(ContainSubstring("authentication"))
+
+			// Search for "API"
+			apiResults, err := complaintService.SearchComplaints(ctx, "API", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(apiResults)).To(Equal(1))
+			Expect(apiResults[0].TaskDescription).To(ContainSubstring("API"))
+
+			// Search for "database"
+			dbResults, err := complaintService.SearchComplaints(ctx, "database", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(dbResults)).To(Equal(1))
+			Expect(dbResults[0].TaskDescription).To(ContainSubstring("database"))
+		})
+
+		It("should be case-insensitive", func(ctx SpecContext) {
+			// Search in different cases
+			lowerResults, err := complaintService.SearchComplaints(ctx, "jwt", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(lowerResults)).To(Equal(1))
+
+			upperResults, err := complaintService.SearchComplaints(ctx, "JWT", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(upperResults)).To(Equal(1))
+
+			mixedResults, err := complaintService.SearchComplaints(ctx, "JwT", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(mixedResults)).To(Equal(1))
+		})
+
+		It("should search across multiple fields", func(ctx SpecContext) {
+			// Search in context info
+			contextResults, err := complaintService.SearchComplaints(ctx, "validation", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(contextResults)).To(Equal(1))
+			Expect(contextResults[0].ContextInfo).To(ContainSubstring("validation"))
+
+			// Search in missing info
+			missingResults, err := complaintService.SearchComplaints(ctx, "codes", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(missingResults)).To(Equal(1))
+			Expect(missingResults[0].MissingInfo).To(ContainSubstring("codes"))
+
+			// Search in confused by
+			confusedResults, err := complaintService.SearchComplaints(ctx, "Documentation", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(confusedResults)).To(Equal(1))
+			Expect(confusedResults[0].ConfusedBy).To(ContainSubstring("Documentation"))
+		})
+
+		It("should return empty for non-matching search", func(ctx SpecContext) {
+			results, err := complaintService.SearchComplaints(ctx, "nonexistentterm", 10)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(results)).To(Equal(0))
+		})
+
+		It("should respect limit parameter for search", func(ctx SpecContext) {
+			// Create complaints with common term
+			for i := 0; i < 5; i++ {
+				_, err := complaintService.CreateComplaint(ctx,
+					"Search Test Agent",
+					"search-session",
+					"Common search term test",
+					"common term in context",
+					"",
+					"",
+					"",
+					domain.SeverityLow,
+					"search-test")
+				Expect(err).NotTo(HaveOccurred())
 			}
 
-			// Add 100 complaints to repository
-			for i := 0; i < 100; i++ {
-				complaints := append(repo.complaints, &domain.Complaint{
-					ID:              domain.ComplaintID{Value: fmt.Sprintf("%d", i)},
-					AgentName:       "AI Assistant",
-					TaskDescription: fmt.Sprintf("Task %d", i),
-					ProjectName:     "pagination-test",
-					Severity:        "low",
-					Resolved:        false,
-				})
-			}
-
-			config := &service.ServiceConfig{}
-			svc := service.NewComplaintService(repo, config)
-
-			// Test with limit 10, offset 0
-			complaints1, err := svc.ListComplaintsByProject(ctx, "pagination-test", 10, 0)
+			// Search with limit
+			limitedResults, err := complaintService.SearchComplaints(ctx, "common", 3)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints1)).To(Equal(10))
-			Expect(complaints1[0].TaskDescription).To(Equal("Task 0"))
-
-			// Test with limit 10, offset 10 (should get complaints 10-19)
-			complaints2, err := svc.ListComplaintsByProject(ctx, "pagination-test", 10, 10)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints2)).To(Equal(10))
-			Expect(complaints2[0].TaskDescription).To(Equal("Task 10"))
-
-			// Test with limit 10, offset 20 (should get complaints 20-29, but only have up to 80)
-			complaints3, err := svc.ListComplaintsByProject(ctx, "pagination-test", 10, 20)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints3)).To(Equal(10)) // Even though we only have 80 total, we request 10 and get 10
-			Expect(complaints3[0].TaskDescription).To(Equal("Task 20"))
+			Expect(len(limitedResults)).To(Equal(3))
 		})
 	})
 })
-
-// mockRepository implements a simple in-memory repository for testing
-type mockRepository struct {
-	complaints []*domain.Complaint
-}
-
-func (m *mockRepository) Store(ctx context.Context, complaint *domain.Complaint) error {
-	m.complaints = append(m.complaints, complaint)
-	return nil
-}
-
-func (m *mockRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
-	for _, complaint := range m.complaints {
-		if complaint.ID.Value == id.Value {
-			return complaint, nil
-		}
-	}
-	return nil, nil
-}
-
-func (m *mockRepository) FindByProject(ctx context.Context, projectName string, limit int, offset int) ([]*domain.Complaint, error) {
-	var result []*domain.Complaint
-	count := 0
-	started := false
-
-	for _, complaint := range m.complaints {
-		if complaint.ProjectName == projectName {
-			if count >= offset && !started {
-				started = true
-			}
-			if started && count < offset+limit {
-				result = append(result, complaint)
-				count++
-			}
-		}
-	}
-	return result, nil
-}
-
-func (m *mockRepository) FindUnresolved(ctx context.Context, limit int, offset int) ([]*domain.Complaint, error) {
-	var result []*domain.Complaint
-	for _, complaint := range m.complaints {
-		if !complaint.Resolved {
-			result = append(result, complaint)
-		}
-	}
-	return result, nil
-}
-
-func (m *mockRepository) MarkResolved(ctx context.Context, id domain.ComplaintID) error {
-	for i, complaint := range m.complaints {
-		if complaint.ID.Value == id.Value {
-			complaint.Resolved = true
-			m.complaints[i] = complaint
-			break
-		}
-	}
-	return nil
-}

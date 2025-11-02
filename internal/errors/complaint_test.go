@@ -131,21 +131,21 @@ func TestNewDuplicateError(t *testing.T) {
 
 func TestNewStorageError(t *testing.T) {
 	tests := []struct {
-		name  string
-		message string
-		cause []error
+		name     string
+		message  string
+		cause    []error
 		hasCause bool
 	}{
 		{
-			name: "storage error without cause",
-			message: "file write failed",
-			cause: nil,
+			name:     "storage error without cause",
+			message:  "file write failed",
+			cause:    nil,
 			hasCause: false,
 		},
 		{
-			name: "storage error with cause",
-			message: "file write failed",
-			cause: []error{errors.New("disk full")},
+			name:     "storage error with cause",
+			message:  "file write failed",
+			cause:    []error{errors.New("disk full")},
 			hasCause: true,
 		},
 	}

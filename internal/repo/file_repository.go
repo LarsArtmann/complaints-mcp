@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 )
 
 // Repository defines the interface for complaint storage
@@ -19,6 +19,8 @@ type Repository interface {
 	FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error)
 	FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error)
 	FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error)
+	FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error)
+	FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error)
 	Update(ctx context.Context, complaint *domain.Complaint) error
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
 }
@@ -26,16 +28,16 @@ type Repository interface {
 // FileRepository implements Repository using file system storage
 type FileRepository struct {
 	baseDir string
-	logger   *log.Logger
-	tracer   tracing.Tracer
+	logger  *log.Logger
+	tracer  tracing.Tracer
 }
 
 // NewFileRepository creates a new file-based repository
 func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 	return &FileRepository{
 		baseDir: baseDir,
-		logger:   log.Default(),
-		tracer:   tracer,
+		logger:  log.Default(),
+		tracer:  tracer,
 	}
 }
 
@@ -47,33 +49,32 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 	logger := r.logger.With("component", "file-repository", "complaint_id", complaint.ID.String())
 	logger.Info("Saving complaint")
 
-	// Create filename with timestamp and session info
+	// ✅ FIX: Use UUID as primary filename component to prevent collisions
+	// Old: timestamp-session.json (collision if same second + same session)
+	// New: uuid-timestamp.json (guaranteed unique)
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04-05")
-	filename := fmt.Sprintf("%s-%s.json", timestamp, complaint.SessionName)
-	if complaint.SessionName == "" {
-		filename = fmt.Sprintf("%s.json", timestamp)
-	}
-	
+	filename := fmt.Sprintf("%s-%s.json", complaint.ID.String(), timestamp)
+
 	filePath := filepath.Join(r.baseDir, filename)
-	
+
 	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
 		logger.Error("Failed to create directory", "error", err, "path", filepath.Dir(filePath))
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Write complaint as JSON
 	data, err := json.MarshalIndent(complaint, "", "  ")
 	if err != nil {
 		logger.Error("Failed to marshal complaint", "error", err)
 		return fmt.Errorf("failed to marshal complaint: %w", err)
 	}
-	
+
 	if err := os.WriteFile(filePath, data, 0644); err != nil {
 		logger.Error("Failed to write complaint file", "error", err, "path", filePath)
 		return fmt.Errorf("failed to write complaint file: %w", err)
 	}
-	
+
 	logger.Info("Complaint saved successfully", "path", filePath)
 	return nil
 }
@@ -91,14 +92,14 @@ func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, complaint := range complaints {
 		if complaint.ID.String() == id.String() {
 			logger.Info("Complaint found by ID")
 			return complaint, nil
 		}
 	}
-	
+
 	logger.Warn("Complaint not found", "complaint_id", id.String())
 	return nil, fmt.Errorf("complaint not found: %s", id.String())
 }
@@ -115,19 +116,19 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Apply pagination
 	total := len(complaints)
 	if offset >= total {
 		return []*domain.Complaint{}, nil
 	}
-	
+
 	start := offset
 	end := offset + limit
 	if end > total {
 		end = total
 	}
-	
+
 	result := complaints[start:end]
 	logger.Info("Complaints retrieved", "count", len(result))
 	return result, nil
@@ -145,7 +146,7 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var filtered []*domain.Complaint
 	count := 0
 	for _, complaint := range complaints {
@@ -157,7 +158,7 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 			}
 		}
 	}
-	
+
 	logger.Info("Complaints filtered by severity", "severity", string(severity), "count", len(filtered))
 	return filtered, nil
 }
@@ -175,7 +176,7 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	if err != nil {
 		return fmt.Errorf("failed to find existing complaint: %w", err)
 	}
-	
+
 	// Update fields
 	existing.Resolved = complaint.Resolved
 	existing.TaskDescription = complaint.TaskDescription
@@ -183,7 +184,7 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
-	
+
 	// Save updated complaint
 	return r.Save(ctx, existing)
 }
@@ -200,11 +201,11 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 	if err != nil {
 		return nil, err
 	}
-	
+
 	queryLower := strings.ToLower(query)
 	var results []*domain.Complaint
 	count := 0
-	
+
 	for _, complaint := range complaints {
 		// Simple text search in relevant fields
 		if strings.Contains(strings.ToLower(complaint.TaskDescription), queryLower) ||
@@ -214,7 +215,7 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 			strings.Contains(strings.ToLower(complaint.FutureWishes), queryLower) ||
 			strings.Contains(strings.ToLower(complaint.AgentName), queryLower) ||
 			strings.Contains(strings.ToLower(complaint.ProjectName), queryLower) {
-			
+
 			results = append(results, complaint)
 			count++
 			if limit > 0 && count >= limit {
@@ -222,7 +223,7 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 			}
 		}
 	}
-	
+
 	logger.Info("Complaints searched", "query", query, "count", len(results))
 	return results, nil
 }
@@ -244,27 +245,27 @@ func (r *FileRepository) loadAllComplaints(ctx context.Context) ([]*domain.Compl
 		logger.Error("Failed to read base directory", "error", err, "path", r.baseDir)
 		return nil, fmt.Errorf("failed to read base directory: %w", err)
 	}
-	
+
 	var complaints []*domain.Complaint
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		if !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
-		
+
 		filePath := filepath.Join(r.baseDir, entry.Name())
 		complaint, err := r.loadComplaintFromFile(filePath)
 		if err != nil {
 			logger.Warn("Failed to load complaint file", "error", err, "path", filePath)
 			continue
 		}
-		
+
 		complaints = append(complaints, complaint)
 	}
-	
+
 	logger.Info("Complaints loaded successfully", "count", len(complaints))
 	return complaints, nil
 }
@@ -275,11 +276,69 @@ func (r *FileRepository) loadComplaintFromFile(filePath string) (*domain.Complai
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	var complaint domain.Complaint
 	if err := json.Unmarshal(data, &complaint); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal complaint: %w", err)
 	}
-	
+
 	return &complaint, nil
+}
+
+// FindByProject retrieves complaints by project name
+func (r *FileRepository) FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "FindByProject")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "project_name", projectName, "limit", limit)
+	logger.Debug("Finding complaints by project")
+
+	complaints, err := r.loadAllComplaints(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	count := 0
+	for _, complaint := range complaints {
+		if complaint.ProjectName == projectName {
+			filtered = append(filtered, complaint)
+			count++
+			if limit > 0 && count >= limit {
+				break
+			}
+		}
+	}
+
+	logger.Info("Complaints filtered by project", "project_name", projectName, "count", len(filtered))
+	return filtered, nil
+}
+
+// FindUnresolved retrieves unresolved complaints
+func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+	ctx, span := r.tracer.Start(ctx, "FindUnresolved")
+	defer span.End()
+
+	logger := r.logger.With("component", "file-repository", "limit", limit)
+	logger.Debug("Finding unresolved complaints")
+
+	complaints, err := r.loadAllComplaints(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	count := 0
+	for _, complaint := range complaints {
+		if !complaint.Resolved {
+			filtered = append(filtered, complaint)
+			count++
+			if limit > 0 && count >= limit {
+				break
+			}
+		}
+	}
+
+	logger.Info("Unresolved complaints filtered", "count", len(filtered))
+	return filtered, nil
 }

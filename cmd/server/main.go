@@ -8,12 +8,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/larsartmann/complaints-mcp/internal/config"
-	"github.com/larsartmann/complaints-mcp/internal/service"
-	"github.com/larsartmann/complaints-mcp/internal/repo"
-	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
-	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/charmbracelet/log"
+	"github.com/larsartmann/complaints-mcp/internal/config"
+	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
+	"github.com/larsartmann/complaints-mcp/internal/service"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 	Use:   "complaints-mcp",
 	Short: "MCP server for filing structured complaints",
 	Long:  `A Model Context Protocol server that allows AI agents to file structured complaints about missing or confusing information they encounter during development tasks.`,
-	RunE: runServer,
+	RunE:  runServer,
 }
 
 func init() {
@@ -60,7 +60,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Initialize logging
 	logLevel, _ := cmd.Flags().GetString("log-level")
 	devMode, _ := cmd.Flags().GetBool("dev")
-	
+
 	var logger *log.Logger
 	if devMode {
 		level, _ := log.ParseLevel(logLevel)
@@ -77,10 +77,10 @@ func runServer(cmd *cobra.Command, args []string) error {
 			ReportCaller:    false,
 		})
 	}
-	
+
 	ctx = log.WithContext(ctx, logger)
-	
-	logger.Info("Starting complaints-mcp server", 
+
+	logger.Info("Starting complaints-mcp server",
 		"version", version,
 		"commit", commit,
 		"log_level", logLevel,
@@ -116,7 +116,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	select {
 	case sig := <-sigChan:
 		logger.Info("Received shutdown signal", "signal", sig.String())
-		
+
 	case err := <-serverErrChan:
 		logger.Error("Server error occurred", "error", err)
 	}
@@ -124,13 +124,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Graceful shutdown with timeout
 	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer shutdownCancel()
-	
+
 	logger.Info("Initiating graceful shutdown")
 	if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 		logger.Error("Error during shutdown", "error", err)
 	} else {
 		logger.Info("Server stopped gracefully")
 	}
-	
+
 	return nil
 }
