@@ -42,6 +42,11 @@ type StorageConfig struct {
 	MaxSize    int64  `mapstructure:"max_size" validate:"min=1024"`
 	Retention  int    `mapstructure:"retention_days" validate:"min=1"`
 	AutoBackup bool   `mapstructure:"auto_backup"`
+	
+	// Cache configuration
+	CacheEnabled  bool  `mapstructure:"cache_enabled"`
+	CacheMaxSize  int64 `mapstructure:"cache_max_size" validate:"min=1"`
+	CacheEviction string `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
 }
 
 // LogConfig represents logging configuration
@@ -132,6 +137,11 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("storage.max_size", 10485760) // 10MB
 	v.SetDefault("storage.retention_days", 30)
 	v.SetDefault("storage.auto_backup", true)
+	
+	// Cache defaults
+	v.SetDefault("storage.cache_enabled", true)
+	v.SetDefault("storage.cache_max_size", 1000) // Maximum complaints to cache
+	v.SetDefault("storage.cache_eviction", "lru")
 
 	// Log defaults
 	v.SetDefault("log.level", "info")
@@ -190,6 +200,25 @@ func validateConfig(cfg *Config) error {
 
 	if cfg.Storage.Retention <= 0 {
 		return fmt.Errorf("storage.retention_days must be positive")
+	}
+	
+	// Cache configuration validation
+	validEvictionPolicies := []string{"lru", "fifo", "none"}
+	if cfg.Storage.CacheEviction != "" {
+		valid := false
+		for _, policy := range validEvictionPolicies {
+			if cfg.Storage.CacheEviction == policy {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("invalid cache eviction policy: %s", cfg.Storage.CacheEviction)
+		}
+	}
+	
+	if cfg.Storage.CacheMaxSize <= 0 {
+		return fmt.Errorf("storage.cache_max_size must be positive")
 	}
 
 	// Log level validation

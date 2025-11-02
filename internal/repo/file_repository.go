@@ -35,6 +35,9 @@ type CachedRepository struct {
 	// Performance cache - O(1) lookups instead of O(n) file scans
 	cache   map[string]*domain.Complaint // key: complaint ID string
 	cacheMu sync.RWMutex                // Thread-safe cache access
+	
+	// Metrics and monitoring
+	metrics *CacheMetrics
 }
 
 // FileRepository implements Repository using file system storage (legacy)
@@ -55,11 +58,15 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 
 // NewCachedRepository creates a new high-performance cached repository
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
+	// Initialize metrics with default cache size
+	maxCacheSize := int64(1000) // TODO: make configurable
+	
 	repo := &CachedRepository{
 		baseDir: baseDir,
 		cache:   make(map[string]*domain.Complaint),
 		logger:  log.Default(),
 		tracer:  tracer,
+		metrics: NewCacheMetrics(maxCacheSize),
 	}
 	
 	// Initialize cache with existing data
@@ -689,4 +696,19 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 
 	logger.Info("Unresolved complaints filtered", "count", len(filtered))
 	return filtered, nil
+}
+
+// GetCacheStats returns current cache performance statistics
+func (r *CachedRepository) GetCacheStats() CacheStats {
+	if r.metrics == nil {
+		return CacheStats{
+			Hits:        0,
+			Misses:      0,
+			Evictions:   0,
+			CurrentSize: int64(len(r.cache)),
+			MaxSize:     0,
+			HitRate:     0.0,
+		}
+	}
+	return r.metrics.GetStats()
 }
