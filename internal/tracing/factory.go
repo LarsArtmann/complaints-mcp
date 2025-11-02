@@ -23,9 +23,10 @@ type TracerConfig struct {
 
 // DefaultTracerConfig returns default tracer configuration
 func DefaultTracerConfig() TracerConfig {
-	tracerType := TracerTypeMock
-	if os.Getenv("TRACER_TYPE") == "real" {
-		tracerType = TracerTypeReal
+	// Default to production tracer for production deployments
+	tracerType := TracerTypeReal
+	if os.Getenv("TRACER_TYPE") == "mock" {
+		tracerType = TracerTypeMock
 	}
 
 	sampleRate := 1.0

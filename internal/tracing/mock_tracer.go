@@ -10,6 +10,7 @@ import (
 // Tracer defines the interface for distributed tracing
 type Tracer interface {
 	Start(ctx context.Context, operationName string) (context.Context, Span)
+	Close() error // Shutdown tracer and flush pending spans
 }
 
 // Span defines the interface for a trace span
@@ -43,6 +44,13 @@ func (m *MockTracer) Start(ctx context.Context, operationName string) (context.C
 	// In a real implementation, we'd use a proper tracing context
 	// For now, we'll store the span in a simple context value
 	return context.WithValue(ctx, "current_span", span), span
+}
+
+// Close shuts down the mock tracer (no-op for mock)
+func (m *MockTracer) Close() error {
+	logger := log.Default()
+	logger.Debug("Mock tracer shutdown", "tracer", m.name)
+	return nil
 }
 
 // MockSpan represents a trace span
@@ -105,6 +113,11 @@ func (n *NoOpTracer) Start(ctx context.Context, operationName string) (context.C
 
 	span := &NoOpSpan{}
 	return context.WithValue(ctx, "current_span", span), span
+}
+
+// Close shuts down the no-op tracer (no-op)
+func (n *NoOpTracer) Close() error {
+	return nil
 }
 
 // NoOpSpan represents a no-op trace span

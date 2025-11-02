@@ -132,10 +132,19 @@ func runServer(cmd *cobra.Command, args []string) error {
 	defer shutdownCancel()
 
 	logger.Info("Initiating graceful shutdown")
+
+	// Shutdown MCP server first
 	if err := mcpServer.Shutdown(shutdownCtx); err != nil {
-		logger.Error("Error during shutdown", "error", err)
+		logger.Error("Error during MCP server shutdown", "error", err)
 	} else {
-		logger.Info("Server stopped gracefully")
+		logger.Info("MCP server stopped gracefully")
+	}
+
+	// Shutdown tracer to flush pending spans
+	if err := tracer.Close(); err != nil {
+		logger.Error("Error during tracer shutdown", "error", err)
+	} else {
+		logger.Info("Tracer shutdown successfully")
 	}
 
 	return nil
