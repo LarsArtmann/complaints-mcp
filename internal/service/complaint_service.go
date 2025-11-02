@@ -94,7 +94,7 @@ func (s *ComplaintService) ListComplaints(ctx context.Context, limit int, offset
 }
 
 // ResolveComplaint marks a complaint as resolved
-func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID) error {
+func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID, resolvedBy string) error {
 	ctx, span := s.tracer.Start(ctx, "ResolveComplaint")
 	defer span.End()
 
@@ -112,7 +112,7 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 		return fmt.Errorf("complaint not found: %s", id.String())
 	}
 
-	complaint.Resolve(ctx)
+	complaint.Resolve(ctx, resolvedBy) // ✅ NEW: Pass through resolvedBy
 
 	if err := s.repo.Update(ctx, complaint); err != nil {
 		logger.Error("Failed to update complaint", "error", err)

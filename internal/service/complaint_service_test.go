@@ -341,7 +341,7 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// Resolve the complaint
-	err = svc.ResolveComplaint(ctx, created.ID)
+	err = svc.ResolveComplaint(ctx, created.ID, "test-agent")
 	if err != nil {
 		t.Errorf("ResolveComplaint error = %v, want nil", err)
 		return
@@ -378,7 +378,7 @@ func TestComplaintService_ResolveComplaint_NotFound(t *testing.T) {
 	}
 
 	// Try to resolve non-existent complaint
-	err = svc.ResolveComplaint(ctx, nonExistentID)
+	err = svc.ResolveComplaint(ctx, nonExistentID, "test-agent")
 
 	// Verify
 	if err == nil {

@@ -104,7 +104,7 @@ func TestComplaint_Resolve(t *testing.T) {
 		Resolved: false,
 	}
 
-	complaint.Resolve(ctx) // ✅ Pass context
+	complaint.Resolve(ctx, "test-agent") // ✅ Pass context and resolvedBy
 
 	if !complaint.Resolved {
 		t.Error("Complaint.Resolve() did not set Resolved to true")
@@ -113,6 +113,11 @@ func TestComplaint_Resolve(t *testing.T) {
 	// ✅ Verify ResolvedAt timestamp is set (prevents split-brain)
 	if complaint.ResolvedAt == nil {
 		t.Error("Complaint.Resolve() did not set ResolvedAt timestamp")
+	}
+
+	// ✅ NEW: Verify ResolvedBy field is set
+	if complaint.ResolvedBy != "test-agent" {
+		t.Errorf("Complaint.Resolve() did not set ResolvedBy correctly. Expected 'test-agent', got '%s'", complaint.ResolvedBy)
 	}
 }
 
