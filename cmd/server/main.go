@@ -35,7 +35,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "log level (trace, debug, info, warn, error)")
 	rootCmd.PersistentFlags().BoolP("dev", "d", false, "development mode")
 	rootCmd.PersistentFlags().Bool("version", false, "show version information")
-	
+
 	// Cache configuration flags
 	rootCmd.PersistentFlags().Bool("cache-enabled", true, "enable complaint caching for performance")
 	rootCmd.PersistentFlags().Int("cache-max-size", 1000, "maximum number of complaints to cache")

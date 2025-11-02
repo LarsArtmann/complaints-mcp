@@ -84,7 +84,7 @@ type Complaint struct {
 	// If Resolved is true, ResolvedAt MUST have a value
 	Resolved   bool       `json:"resolved"`
 	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // ✅ Pointer: nil when not resolved
-	ResolvedBy string      `json:"resolved_by,omitempty"` // ✅ NEW: Who resolved it
+	ResolvedBy string     `json:"resolved_by,omitempty"` // ✅ NEW: Who resolved it
 }
 
 // NewComplaint creates a new complaint with the given parameters
@@ -137,7 +137,7 @@ func (c *Complaint) Resolve(ctx context.Context, resolvedBy string) {
 	logger := log.FromContext(ctx)
 	now := time.Now()
 	c.Resolved = true
-	c.ResolvedAt = &now // ✅ Set resolution timestamp
+	c.ResolvedAt = &now       // ✅ Set resolution timestamp
 	c.ResolvedBy = resolvedBy // ✅ NEW: Set who resolved it
 	logger.Info("marked complaint as resolved",
 		"complaint_id", c.ID.String(),

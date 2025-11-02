@@ -7,21 +7,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 )
 
 var _ = Describe("Complaint Listing BDD Tests", func() {
 	var (
-		tempDir string
-		repository repo.Repository
+		tempDir          string
+		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger *log.Logger
-		tracer tracing.Tracer
-		testComplaints []*domain.Complaint
+		logger           *log.Logger
+		tracer           tracing.Tracer
+		testComplaints   []*domain.Complaint
 	)
 
 	BeforeEach(func() {
@@ -36,7 +36,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		// Create test complaints
 		testComplaints = []*domain.Complaint{}
-		
+
 		// Create complaints with different data for testing
 		complaint1, err := complaintService.CreateComplaint(context.Background(),
 			"AI Assistant 1",
@@ -52,7 +52,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		testComplaints = append(testComplaints, complaint1)
 
 		complaint2, err := complaintService.CreateComplaint(context.Background(),
-			"AI Assistant 2", 
+			"AI Assistant 2",
 			"session-2",
 			"API design confusion",
 			"REST vs GraphQL unclear",
@@ -66,7 +66,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		complaint3, err := complaintService.CreateComplaint(context.Background(),
 			"AI Assistant 3",
-			"session-3", 
+			"session-3",
 			"Database schema missing",
 			"No table definitions",
 			"Migration scripts absent",
@@ -199,7 +199,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			authComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(authComplaints)).To(Equal(2))
-			
+
 			for _, complaint := range authComplaints {
 				Expect(complaint.ProjectName).To(Equal("auth-project"))
 			}
@@ -243,7 +243,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			limitedComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 2)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(limitedComplaints)).To(Equal(2))
-			
+
 			for _, complaint := range limitedComplaints {
 				Expect(complaint.ProjectName).To(Equal("auth-project"))
 			}
@@ -282,7 +282,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			limitedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 2)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(limitedComplaints)).To(Equal(2))
-			
+
 			for _, complaint := range limitedComplaints {
 				Expect(complaint.Resolved).To(BeFalse())
 			}

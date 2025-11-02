@@ -39,17 +39,17 @@ func (m *mockRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	if offset >= len(m.complaints) {
 		return []*domain.Complaint{}, nil
 	}
-	
+
 	end := offset + limit
 	if end > len(m.complaints) {
 		end = len(m.complaints)
 	}
-	
+
 	result := make([]*domain.Complaint, 0, end-offset)
 	for i := offset; i < end; i++ {
 		result = append(result, m.complaints[i])
 	}
-	
+
 	return result, nil
 }
 
@@ -95,11 +95,11 @@ func (m *mockRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 func (m *mockRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	queryLower := strings.ToLower(query)
-	
+
 	for _, c := range m.complaints {
 		// Simple case-insensitive search in task description and context
-		if strings.Contains(strings.ToLower(c.TaskDescription), queryLower) || 
-		   strings.Contains(strings.ToLower(c.ContextInfo), queryLower) {
+		if strings.Contains(strings.ToLower(c.TaskDescription), queryLower) ||
+			strings.Contains(strings.ToLower(c.ContextInfo), queryLower) {
 			result = append(result, c)
 			if len(result) >= limit {
 				break
@@ -432,7 +432,7 @@ func TestComplaintService_ListComplaints(t *testing.T) {
 		if complaint == nil {
 			t.Errorf("Complaint %d should not be nil", i)
 		}
-		
+
 		if !strings.Contains(complaint.TaskDescription, "test task") {
 			t.Errorf("Complaint %d should contain 'test task', got: %s", i, complaint.TaskDescription)
 		}

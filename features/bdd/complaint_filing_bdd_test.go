@@ -6,20 +6,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 )
 
 var _ = Describe("Complaint Filing BDD Tests", func() {
 	var (
-		tempDir string
-		repository repo.Repository
+		tempDir          string
+		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger *log.Logger
-		tracer tracing.Tracer
+		logger           *log.Logger
+		tracer           tracing.Tracer
 	)
 
 	BeforeEach(func() {
@@ -40,7 +40,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File a valid complaint successfully", func() {
 		It("should store complaint with all required fields", func(ctx SpecContext) {
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"Implement authentication system",
@@ -68,14 +68,14 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 		})
 
 		It("should store complaint with minimum required data", func(ctx SpecContext) {
-			complaint, err := complaintService.CreateComplaint(ctx, 
-				"A",    // minimal valid name
-				"",    // optional session name
-				"T",    // minimal valid description
-				"",    // optional context info
-				"",    // optional missing info
-				"",    // optional confused by
-				"",    // optional future wishes
+			complaint, err := complaintService.CreateComplaint(ctx,
+				"A", // minimal valid name
+				"",  // optional session name
+				"T", // minimal valid description
+				"",  // optional context info
+				"",  // optional missing info
+				"",  // optional confused by
+				"",  // optional future wishes
 				domain.SeverityLow,
 				"test") // valid project name
 
@@ -90,7 +90,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File a complaint with missing required field", func() {
 		It("should return validation error for missing task description", func(ctx SpecContext) {
-			_, err := complaintService.CreateComplaint(ctx, 
+			_, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"", // empty task description
@@ -109,7 +109,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 		})
 
 		It("should return validation error for missing agent name", func(ctx SpecContext) {
-			_, err := complaintService.CreateComplaint(ctx, 
+			_, err := complaintService.CreateComplaint(ctx,
 				"", // empty agent name
 				"test-session",
 				"Test task",
@@ -129,7 +129,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 		It("should return validation error for invalid severity", func(ctx SpecContext) {
 			// This will be caught at the domain level
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"Test task",
@@ -148,7 +148,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File a complaint with invalid severity", func() {
 		It("should return validation error for unsupported severity", func(ctx SpecContext) {
-			_, err := complaintService.CreateComplaint(ctx, 
+			_, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"Test task",
@@ -168,7 +168,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 		It("should handle large content gracefully", func(ctx SpecContext) {
 			// Create a large complaint
 			largeContent := string(make([]byte, 2000)) // 2KB content
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"Large content test",
@@ -188,7 +188,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			// Test content that exceeds reasonable limits
 			veryLargeContent := string(make([]byte, 1000000)) // 1MB content
 
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant",
 				"test-session",
 				"Oversized content",
@@ -208,7 +208,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File complaint with special characters", func() {
 		It("should handle special characters properly", func(ctx SpecContext) {
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"AI Assistant 🤖",
 				"test-session",
 				"Test with special chars: quotes, newlines, tabs",
@@ -229,7 +229,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 	Context("File complaint and verify persistence", func() {
 		It("should persist complaint to file system", func(ctx SpecContext) {
-			complaint, err := complaintService.CreateComplaint(ctx, 
+			complaint, err := complaintService.CreateComplaint(ctx,
 				"Test Agent",
 				"persist-session",
 				"Test persistence functionality",
@@ -254,7 +254,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 		It("should create separate file for each complaint", func(ctx SpecContext) {
 			// Create multiple complaints
-			complaint1, err := complaintService.CreateComplaint(ctx, 
+			complaint1, err := complaintService.CreateComplaint(ctx,
 				"Agent 1",
 				"session-1",
 				"First complaint",
@@ -266,7 +266,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"test")
 			Expect(err).NotTo(HaveOccurred())
 
-			complaint2, err := complaintService.CreateComplaint(ctx, 
+			complaint2, err := complaintService.CreateComplaint(ctx,
 				"Agent 2",
 				"session-2",
 				"Second complaint",

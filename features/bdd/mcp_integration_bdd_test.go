@@ -7,26 +7,26 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 	"github.com/spf13/cobra"
 )
 
 var _ = Describe("MCP Integration BDD Tests", func() {
 	var (
-		tempDir string
-		repository repo.Repository
+		tempDir          string
+		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer *mcpdelivery.MCPServer
-		logger *log.Logger
-		tracer tracing.Tracer
-		testConfig *config.Config
-		cmd *cobra.Command
+		mcpServer        *mcpdelivery.MCPServer
+		logger           *log.Logger
+		tracer           tracing.Tracer
+		testConfig       *config.Config
+		cmd              *cobra.Command
 	)
 
 	BeforeEach(func() {

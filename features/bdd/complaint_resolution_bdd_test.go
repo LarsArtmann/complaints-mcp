@@ -9,21 +9,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/charmbracelet/log"
 )
 
 var _ = Describe("Complaint Resolution BDD Tests", func() {
 	var (
-		tempDir string
-		repository repo.Repository
+		tempDir          string
+		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger *log.Logger
-		tracer tracing.Tracer
-		testComplaint *domain.Complaint
+		logger           *log.Logger
+		tracer           tracing.Tracer
+		testComplaint    *domain.Complaint
 	)
 
 	BeforeEach(func() {
@@ -82,7 +82,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// Verify all original data is preserved
 			resolvedComplaint, err := complaintService.GetComplaint(ctx, testComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
-			
+
 			Expect(resolvedComplaint.ID.Value).To(Equal(testComplaint.ID.Value))
 			Expect(resolvedComplaint.AgentName).To(Equal(testComplaint.AgentName))
 			Expect(resolvedComplaint.SessionName).To(Equal(testComplaint.SessionName))
@@ -301,7 +301,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// This tests error handling at the service level
 			// In a real scenario, this might test file permission errors, disk full, etc.
 			// For now, we verify normal operation since we can't easily simulate file system errors
-			
+
 			err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 

@@ -242,8 +242,8 @@ type SearchComplaintsInput struct {
 
 // Output types for tool handlers
 type FileComplaintOutput struct {
-	Success bool        `json:"success"`
-	Message string        `json:"message"`
+	Success   bool         `json:"success"`
+	Message   string       `json:"message"`
 	Complaint ComplaintDTO `json:"complaint"` // ✅ Type-safe instead of string ID
 }
 
@@ -252,14 +252,14 @@ type ListComplaintsOutput struct {
 }
 
 type ResolveComplaintOutput struct {
-	Success bool         `json:"success"`
-	Message string        `json:"message"`
+	Success   bool         `json:"success"`
+	Message   string       `json:"message"`
 	Complaint ComplaintDTO `json:"complaint"` // ✅ Type-safe instead of string ID
 }
 
 type SearchComplaintsOutput struct {
 	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
-	Query      string        `json:"query"`
+	Query      string         `json:"query"`
 }
 
 // handleFileComplaint handles the file_complaint tool
@@ -305,8 +305,8 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	logger.Info("Complaint filed successfully", "complaint_id", complaint.ID.String())
 
 	output := FileComplaintOutput{
-		Success: true,
-		Message: "Complaint filed successfully",
+		Success:   true,
+		Message:   "Complaint filed successfully",
 		Complaint: ToDTO(complaint),
 	}
 
@@ -403,8 +403,8 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 	}
 
 	output := ResolveComplaintOutput{
-		Success: true,
-		Message: "Complaint resolved successfully",
+		Success:   true,
+		Message:   "Complaint resolved successfully",
 		Complaint: ToDTO(updatedComplaint),
 	}
 

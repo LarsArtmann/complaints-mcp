@@ -17,7 +17,7 @@ const (
 type TracerConfig struct {
 	Type        TracerType
 	ServiceName string
-	JaegerURL  string
+	JaegerURL   string
 	SampleRate  float64
 }
 
@@ -38,7 +38,7 @@ func DefaultTracerConfig() TracerConfig {
 	return TracerConfig{
 		Type:        tracerType,
 		ServiceName: "complaints-mcp",
-		JaegerURL:  getEnvOrDefault("JAEGER_URL", "http://localhost:14268/api/traces"),
+		JaegerURL:   getEnvOrDefault("JAEGER_URL", "http://localhost:14268/api/traces"),
 		SampleRate:  sampleRate,
 	}
 }

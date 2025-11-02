@@ -265,7 +265,7 @@ var _ = Describe("FileRepository", func() {
 			for i := 0; i < 3; i++ {
 				savedComplaint.TaskDescription = fmt.Sprintf("Updated task %d", i)
 				savedComplaint.Resolved = (i%2 == 0)
-				
+
 				err := repository.Update(ctx, savedComplaint)
 				Expect(err).NotTo(HaveOccurred(), "Update %d should succeed", i)
 			}
@@ -323,8 +323,8 @@ var _ = Describe("FileRepository", func() {
 		BeforeEach(func() {
 			// Create complaints with different content
 			contents := []struct {
-				task  string
-				proj   string
+				task     string
+				proj     string
 				severity domain.Severity
 			}{
 				{"Database connection issue", "project-alpha", domain.SeverityHigh},

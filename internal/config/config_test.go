@@ -14,13 +14,13 @@ func TestConfig_Load(t *testing.T) {
 	// Test that Load function can create a valid config
 	// Note: This tests structure without requiring actual files
 	ctx := context.Background()
-	
+
 	// Create a simple command with basic flags
 	cmd := &cobra.Command{}
 	cmd.PersistentFlags().String("config", "", "config file")
 	cmd.PersistentFlags().String("server.host", "", "server host")
 	cmd.PersistentFlags().Int("server.port", 0, "server port")
-	
+
 	cfg, err := config.Load(ctx, cmd)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
@@ -33,11 +33,11 @@ func TestConfig_ServerConfig(t *testing.T) {
 		Host: "localhost",
 		Port: 8080,
 	}
-	
+
 	// Test Address method
 	address := serverConfig.Address()
 	require.Equal(t, "localhost:8080", address)
-	
+
 	// Test Address method with empty host
 	serverConfig.Host = ""
 	address = serverConfig.Address()
@@ -53,7 +53,7 @@ func TestConfig_StorageConfig(t *testing.T) {
 		Retention:  30,
 		AutoBackup: true,
 	}
-	
+
 	// Test that fields are set correctly
 	require.Equal(t, "/tmp/complaints", storageConfig.BaseDir)
 	require.Equal(t, "/tmp/global", storageConfig.GlobalDir)
@@ -69,7 +69,7 @@ func TestConfig_LogConfig(t *testing.T) {
 		Format: "json",
 		Output: "stdout",
 	}
-	
+
 	// Test that fields are set correctly
 	require.Equal(t, "info", logConfig.Level)
 	require.Equal(t, "json", logConfig.Format)
@@ -97,18 +97,18 @@ func TestConfig_CompleteConfig(t *testing.T) {
 			Output: "stderr",
 		},
 	}
-	
+
 	// Test all components
 	require.Equal(t, "complaints-mcp", cfg.Server.Name)
 	require.Equal(t, "localhost", cfg.Server.Host)
 	require.Equal(t, 8080, cfg.Server.Port)
-	
+
 	require.Equal(t, "/data/complaints", cfg.Storage.BaseDir)
 	require.Equal(t, "/data/global", cfg.Storage.GlobalDir)
 	require.Equal(t, int64(10*1024*1024), cfg.Storage.MaxSize)
 	require.Equal(t, 90, cfg.Storage.Retention)
 	require.False(t, cfg.Storage.AutoBackup)
-	
+
 	require.Equal(t, "debug", cfg.Log.Level)
 	require.Equal(t, "text", cfg.Log.Format)
 	require.Equal(t, "stderr", cfg.Log.Output)
@@ -140,14 +140,14 @@ func TestConfig_ServerAddress(t *testing.T) {
 			expected: "example.com:9090",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			serverConfig := config.ServerConfig{
 				Host: tt.host,
 				Port: tt.port,
 			}
-			
+
 			address := serverConfig.Address()
 			require.Equal(t, tt.expected, address)
 		})

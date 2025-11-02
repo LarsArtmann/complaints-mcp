@@ -31,11 +31,11 @@ type CachedRepository struct {
 	baseDir string
 	logger  *log.Logger
 	tracer  tracing.Tracer
-	
+
 	// Performance cache - O(1) lookups instead of O(n) file scans
 	cache   map[string]*domain.Complaint // key: complaint ID string
-	cacheMu sync.RWMutex                // Thread-safe cache access
-	
+	cacheMu sync.RWMutex                 // Thread-safe cache access
+
 	// Metrics and monitoring
 	metrics *CacheMetrics
 }
@@ -60,7 +60,7 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 	// Initialize metrics with default cache size
 	maxCacheSize := int64(1000) // TODO: make configurable
-	
+
 	repo := &CachedRepository{
 		baseDir: baseDir,
 		cache:   make(map[string]*domain.Complaint),
@@ -68,7 +68,7 @@ func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 		tracer:  tracer,
 		metrics: NewCacheMetrics(maxCacheSize),
 	}
-	
+
 	// Initialize cache with existing data
 	repo.warmCache(context.Background())
 	return repo
@@ -331,7 +331,7 @@ func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complai
 	r.cacheMu.RLock()
 	existing, exists := r.cache[complaint.ID.String()]
 	r.cacheMu.RUnlock()
-	
+
 	if !exists {
 		return fmt.Errorf("complaint not found: %s", complaint.ID.String())
 	}

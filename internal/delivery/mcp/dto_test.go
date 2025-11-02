@@ -15,7 +15,7 @@ func TestToDTO(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	now := time.Now()
 	resolvedAt := now.Add(time.Hour)
-	
+
 	complaint := &domain.Complaint{
 		ID:              id,
 		AgentName:       "Test Agent",
@@ -49,7 +49,7 @@ func TestToDTO(t *testing.T) {
 	assert.Equal(t, now, dto.Timestamp, "Timestamp should match")
 	assert.Equal(t, "test-project", dto.ProjectName, "ProjectName should match")
 	assert.True(t, dto.Resolved, "Resolved should be true")
-	
+
 	// Verify timestamp pointer is properly converted
 	require.NotNil(t, dto.ResolvedAt, "ResolvedAt should not be nil")
 	assert.Equal(t, resolvedAt, *dto.ResolvedAt, "ResolvedAt should match")
@@ -190,7 +190,7 @@ func TestResolveComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	now := time.Now()
 	resolvedAt := now.Add(time.Hour)
-	
+
 	complaint := &domain.Complaint{
 		ID:              id,
 		AgentName:       "Test Agent",

@@ -7,8 +7,8 @@ import (
 
 // RepositoryConfig holds configuration for repository creation
 type RepositoryConfig struct {
-	Type        string
-	BaseDir     string
+	Type          string
+	BaseDir       string
 	StorageConfig config.StorageConfig
 }
 
@@ -35,9 +35,9 @@ func NewRepository(cfg RepositoryConfig) Repository {
 // NewRepositoryFromConfig creates repository from full config
 func NewRepositoryFromConfig(cfg *config.Config) Repository {
 	repoConfig := RepositoryConfig{
-		BaseDir:     cfg.Storage.BaseDir,
+		BaseDir:       cfg.Storage.BaseDir,
 		StorageConfig: cfg.Storage,
-		Type:        "cached", // Default to cached
+		Type:          "cached", // Default to cached
 	}
 
 	// Use cache disabled if explicitly set

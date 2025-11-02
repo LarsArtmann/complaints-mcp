@@ -6,12 +6,12 @@ import (
 
 // CacheMetrics tracks cache performance statistics
 type CacheMetrics struct {
-	hits        int64     // Number of cache hits
-	misses       int64     // Number of cache misses
-	evictions    int64     // Number of cache evictions
-	currentSize  int64     // Current number of entries in cache
-	maxSize      int64      // Maximum allowed cache size
-	totalLookups int64      // Total number of lookup operations
+	hits         int64 // Number of cache hits
+	misses       int64 // Number of cache misses
+	evictions    int64 // Number of cache evictions
+	currentSize  int64 // Current number of entries in cache
+	maxSize      int64 // Maximum allowed cache size
+	totalLookups int64 // Total number of lookup operations
 }
 
 // NewCacheMetrics creates a new cache metrics tracker
