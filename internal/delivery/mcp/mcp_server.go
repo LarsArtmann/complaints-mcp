@@ -170,8 +170,12 @@ func (m *MCPServer) registerTools() error {
 					"description": "Unique identifier of the complaint",
 					"pattern":     "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
 				},
+				"resolved_by": map[string]interface{}{
+					"type":        "string",
+					"description": "Identifier of who resolved the complaint (agent name, user ID, etc.)",
+				},
 			},
-			"required": []string{"complaint_id"},
+			"required": []string{"complaint_id", "resolved_by"},
 		},
 	}
 
@@ -229,6 +233,7 @@ type ListComplaintsInput struct {
 
 type ResolveComplaintInput struct {
 	ComplaintID string `json:"complaint_id"`
+	ResolvedBy  string `json:"resolved_by"`
 }
 
 type SearchComplaintsInput struct {
@@ -396,12 +401,12 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 
 	complaintID := domain.ComplaintID{Value: input.ComplaintID}
 
-	if err := m.service.ResolveComplaint(ctx, complaintID); err != nil {
-		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", input.ComplaintID)
+	if err := m.service.ResolveComplaint(ctx, complaintID, input.ResolvedBy); err != nil {
+		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
 		return nil, ResolveComplaintOutput{}, err
 	}
 
-	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID)
+	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
 
 	output := ResolveComplaintOutput{
 		Message:     "Complaint resolved successfully",

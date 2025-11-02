@@ -263,7 +263,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should exclude resolved complaints", func(ctx SpecContext) {
 			// Resolve one complaint
-			err := complaintService.ResolveComplaint(ctx, testComplaints[0].ID)
+			err := complaintService.ResolveComplaint(ctx, testComplaints[0].ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// List unresolved complaints
