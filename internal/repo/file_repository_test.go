@@ -3,6 +3,7 @@ package repo_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -248,6 +249,73 @@ var _ = Describe("FileRepository", func() {
 			err = repository.Update(ctx, nonExistentComplaint)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("not found"))
+		})
+
+		It("should NOT create duplicate files when updating complaint", func() {
+			// Initial save - should create exactly one file
+			err := repository.Save(ctx, savedComplaint)
+			Expect(err).NotTo(HaveOccurred())
+
+			// List files to verify we have exactly one
+			files, err := os.ReadDir(tempDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(files)).To(Equal(1), "Should have exactly one file after initial save")
+
+			// Update complaint multiple times
+			for i := 0; i < 3; i++ {
+				savedComplaint.TaskDescription = fmt.Sprintf("Updated task %d", i)
+				savedComplaint.Resolved = (i%2 == 0)
+				
+				err := repository.Update(ctx, savedComplaint)
+				Expect(err).NotTo(HaveOccurred(), "Update %d should succeed", i)
+			}
+
+			// Verify still only one file exists
+			files, err = os.ReadDir(tempDir)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(files)).To(Equal(1), "Should still have exactly one file after multiple updates")
+
+			// Verify the file has the correct name (UUID-only)
+			expectedFilename := savedComplaint.ID.String() + ".json"
+			Expect(files[0].Name()).To(Equal(expectedFilename), "Filename should be UUID-only")
+
+			// Verify content is correctly updated
+			found, err := repository.FindByID(ctx, savedComplaint.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found.TaskDescription).To(Equal("Updated task 2"))
+			Expect(found.Resolved).To(BeTrue())
+		})
+
+		It("should update existing file in-place", func() {
+			// Get initial file modification time
+			filename := filepath.Join(tempDir, savedComplaint.ID.String()+".json")
+			fileInfo, err := os.Stat(filename)
+			Expect(err).NotTo(HaveOccurred())
+			initialModTime := fileInfo.ModTime()
+
+			// Wait a bit to ensure different timestamp
+			time.Sleep(10 * time.Millisecond)
+
+			// Update the complaint
+			savedComplaint.TaskDescription = "Updated in-place"
+			savedComplaint.Resolved = true
+			resolveTime := time.Now()
+			savedComplaint.ResolvedAt = &resolveTime
+
+			err = repository.Update(ctx, savedComplaint)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Verify file was modified (newer timestamp)
+			fileInfo, err = os.Stat(filename)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(fileInfo.ModTime()).To(BeTemporally(">", initialModTime))
+
+			// Verify content was updated
+			found, err := repository.FindByID(ctx, savedComplaint.ID)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(found.TaskDescription).To(Equal("Updated in-place"))
+			Expect(found.Resolved).To(BeTrue())
+			Expect(found.ResolvedAt).NotTo(BeNil())
 		})
 	})
 

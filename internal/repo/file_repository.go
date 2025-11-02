@@ -49,11 +49,10 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 	logger := r.logger.With("component", "file-repository", "complaint_id", complaint.ID.String())
 	logger.Info("Saving complaint")
 
-	// ✅ FIX: Use UUID as primary filename component to prevent collisions
-	// Old: timestamp-session.json (collision if same second + same session)
-	// New: uuid-timestamp.json (guaranteed unique)
-	timestamp := complaint.Timestamp.Format("2006-01-02_15-04-05")
-	filename := fmt.Sprintf("%s-%s.json", complaint.ID.String(), timestamp)
+	// ✅ FIX: Use UUID-only filename for consistent file updates
+	// Old: uuid-timestamp.json (creates duplicates on update)
+	// New: uuid.json (single file, updated in-place)
+	filename := fmt.Sprintf("%s.json", complaint.ID.String())
 
 	filePath := filepath.Join(r.baseDir, filename)
 
@@ -163,7 +162,7 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 	return filtered, nil
 }
 
-// Update updates an existing complaint
+// Update updates an existing complaint in-place
 func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
 	ctx, span := r.tracer.Start(ctx, "Update")
 	defer span.End()
@@ -177,15 +176,17 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 		return fmt.Errorf("failed to find existing complaint: %w", err)
 	}
 
-	// Update fields
+	// Update fields with new data
 	existing.Resolved = complaint.Resolved
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
+	existing.ResolvedAt = complaint.ResolvedAt
+	existing.ResolvedBy = complaint.ResolvedBy
 
-	// Save updated complaint
+	// Save updated complaint (updates existing file in-place)
 	return r.Save(ctx, existing)
 }
 
