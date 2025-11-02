@@ -3,7 +3,6 @@ package delivery
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/config"
@@ -243,25 +242,24 @@ type SearchComplaintsInput struct {
 
 // Output types for tool handlers
 type FileComplaintOutput struct {
-	ComplaintID string `json:"complaint_id"`
-	Message     string `json:"message"`
-	Timestamp   string `json:"timestamp"`
+	Success bool        `json:"success"`
+	Message string        `json:"message"`
+	Complaint ComplaintDTO `json:"complaint"` // ✅ Type-safe instead of string ID
 }
 
 type ListComplaintsOutput struct {
-	Complaints []map[string]interface{} `json:"complaints"`
-	Count      int                      `json:"count"`
+	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
 }
 
 type ResolveComplaintOutput struct {
-	Message     string `json:"message"`
-	ComplaintID string `json:"complaint_id"`
+	Success bool         `json:"success"`
+	Message string        `json:"message"`
+	Complaint ComplaintDTO `json:"complaint"` // ✅ Type-safe instead of string ID
 }
 
 type SearchComplaintsOutput struct {
-	Complaints []map[string]interface{} `json:"complaints"`
-	Query      string                   `json:"query"`
-	Count      int                      `json:"count"`
+	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
+	Query      string        `json:"query"`
 }
 
 // handleFileComplaint handles the file_complaint tool
@@ -307,9 +305,9 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	logger.Info("Complaint filed successfully", "complaint_id", complaint.ID.String())
 
 	output := FileComplaintOutput{
-		ComplaintID: complaint.ID.String(),
-		Message:     "Complaint filed successfully",
-		Timestamp:   complaint.Timestamp.Format(time.RFC3339),
+		Success: true,
+		Message: "Complaint filed successfully",
+		Complaint: ToDTO(complaint),
 	}
 
 	return nil, output, nil
@@ -358,7 +356,7 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 	}
 
 	// Convert to response format
-	var results []map[string]interface{}
+	var results []ComplaintDTO
 	for _, complaint := range complaints {
 		// Apply resolved filter if set
 		if input.Resolved && !complaint.IsResolved() {
@@ -368,24 +366,13 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 			continue
 		}
 
-		result := map[string]interface{}{
-			"complaint_id":     complaint.ID.String(),
-			"agent_name":       complaint.AgentName,
-			"session_name":     complaint.SessionName,
-			"task_description": complaint.TaskDescription,
-			"severity":         string(complaint.Severity),
-			"timestamp":        complaint.Timestamp.Format(time.RFC3339),
-			"resolved":         complaint.IsResolved(),
-			"project_name":     complaint.ProjectName,
-		}
-		results = append(results, result)
+		results = append(results, ToDTO(complaint))
 	}
 
 	logger.Info("Complaints listed successfully", "count", len(results))
 
 	output := ListComplaintsOutput{
 		Complaints: results,
-		Count:      len(results),
 	}
 
 	return nil, output, nil
@@ -408,9 +395,17 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 
 	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
 
+	// Get updated complaint for response
+	updatedComplaint, err := m.service.GetComplaint(ctx, complaintID)
+	if err != nil {
+		logger.Error("Failed to get updated complaint", "error", err, "complaint_id", input.ComplaintID)
+		return nil, ResolveComplaintOutput{}, err
+	}
+
 	output := ResolveComplaintOutput{
-		Message:     "Complaint resolved successfully",
-		ComplaintID: input.ComplaintID,
+		Success: true,
+		Message: "Complaint resolved successfully",
+		Complaint: ToDTO(updatedComplaint),
 	}
 
 	return nil, output, nil
@@ -436,19 +431,9 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 	}
 
 	// Convert to response format
-	var results []map[string]interface{}
+	var results []ComplaintDTO
 	for _, complaint := range complaints {
-		result := map[string]interface{}{
-			"complaint_id":     complaint.ID.String(),
-			"agent_name":       complaint.AgentName,
-			"session_name":     complaint.SessionName,
-			"task_description": complaint.TaskDescription,
-			"severity":         string(complaint.Severity),
-			"timestamp":        complaint.Timestamp.Format(time.RFC3339),
-			"resolved":         complaint.IsResolved(),
-			"project_name":     complaint.ProjectName,
-		}
-		results = append(results, result)
+		results = append(results, ToDTO(complaint))
 	}
 
 	logger.Info("Complaints searched successfully", "query", input.Query, "count", len(results))
@@ -456,7 +441,6 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 	output := SearchComplaintsOutput{
 		Complaints: results,
 		Query:      input.Query,
-		Count:      len(results),
 	}
 
 	return nil, output, nil
