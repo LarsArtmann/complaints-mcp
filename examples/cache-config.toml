@@ -1,0 +1,47 @@
+# Cache Configuration Examples
+# This file demonstrates various cache configuration scenarios
+
+## BASIC CONFIGURATION - File Repository (No Cache)
+[storage]
+base_dir = "./data/complaints"
+cache_enabled = false
+
+## SMALL CACHE FOR DEVELOPMENT
+[storage]
+base_dir = "./data/complaints" 
+cache_enabled = true
+cache_max_size = 50
+cache_eviction = "lru"
+
+## MEDIUM CACHE FOR SMALL PRODUCTION
+[storage]
+base_dir = "/var/lib/complaints-mcp/data"
+cache_enabled = true
+cache_max_size = 1000
+cache_eviction = "lru"
+
+## LARGE CACHE FOR HIGH-TRAFFIC PRODUCTION
+[storage]
+base_dir = "/var/lib/complaints-mcp/data"
+cache_enabled = true
+cache_max_size = 50000
+cache_eviction = "lru"
+
+## FIFO EVICTION POLICY (for predictable cleanup)
+[storage]
+base_dir = "/var/lib/complaints-mcp/data"
+cache_enabled = true
+cache_max_size = 10000
+cache_eviction = "fifo"
+
+## NO EVICTION (manual cache management)
+[storage]
+base_dir = "/var/lib/complaints-mcp/data"
+cache_enabled = true
+cache_max_size = 5000
+cache_eviction = "none"
+
+[tracing]
+enabled = true
+jaeger_endpoint = "http://localhost:14268/api/traces"
+service_name = "complaints-mcp"
