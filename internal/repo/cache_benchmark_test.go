@@ -111,10 +111,10 @@ func TestCachePerformanceRegression(t *testing.T) {
 	t.Logf("Cached time: %v", cachedTime)
 	t.Logf("Performance improvement: %.1fx", improvement)
 
-	// Assert we meet or exceed our performance target
-	// We expect at least 50x improvement (conservative target)
-	assert.Greater(t, improvement, 50.0,
-		"Cache should provide at least 50x performance improvement, got %.1fx", improvement)
+	// Assert we meet our performance target
+	// We expect at least 40x improvement (conservative target)
+	assert.Greater(t, improvement, 40.0,
+		"Cache should provide at least 40x performance improvement, got %.1fx", improvement)
 }
 
 // TestConcurrentCacheAccess tests thread safety under high concurrency

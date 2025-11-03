@@ -172,6 +172,10 @@ func TestRepositoryConfigValidation(t *testing.T) {
 				Type: "cached",
 			}
 
+			// Normalize configuration to populate type-safe fields
+			err := config.Normalize()
+			require.NoError(t, err)
+
 			repo := NewRepository(config)
 			require.NotNil(t, repo)
 
