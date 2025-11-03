@@ -93,7 +93,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			Expect(resolvedComplaint.FutureWishes).To(Equal(testComplaint.FutureWishes))
 			Expect(resolvedComplaint.Severity).To(Equal(testComplaint.Severity))
 			Expect(resolvedComplaint.ProjectName).To(Equal(testComplaint.ProjectName))
-			Expect(resolvedComplaint.Timestamp).To(Equal(testComplaint.Timestamp))
+			Expect(resolvedComplaint.Timestamp.Format(time.RFC3339Nano)).To(Equal(testComplaint.Timestamp.Format(time.RFC3339Nano)))
 			Expect(resolvedComplaint.Resolved).To(BeTrue()) // Only this should change
 		})
 
