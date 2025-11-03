@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -202,11 +203,23 @@ func (m *MCPServer) registerTools() error {
 		},
 	}
 
+	// Get cache stats tool
+	getCacheStatsTool := &mcp.Tool{
+		Name:        "get_cache_stats",
+		Description: "Get cache performance statistics",
+		InputSchema: map[string]interface{}{
+			"type":       "object",
+			"properties": map[string]interface{}{},
+			"required":   []string{},
+		},
+	}
+
 	// Register tools with handlers
 	mcp.AddTool(m.server, fileComplaintTool, m.handleFileComplaint)
 	mcp.AddTool(m.server, listComplaintsTool, m.handleListComplaints)
 	mcp.AddTool(m.server, resolveComplaintTool, m.handleResolveComplaint)
 	mcp.AddTool(m.server, searchComplaintsTool, m.handleSearchComplaints)
+	mcp.AddTool(m.server, getCacheStatsTool, m.handleGetCacheStats)
 
 	return nil
 }
@@ -240,6 +253,9 @@ type SearchComplaintsInput struct {
 	Limit int    `json:"limit"`
 }
 
+type GetCacheStatsInput struct {
+}
+
 // Output types for tool handlers
 type FileComplaintOutput struct {
 	Success   bool         `json:"success"`
@@ -260,6 +276,12 @@ type ResolveComplaintOutput struct {
 type SearchComplaintsOutput struct {
 	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
 	Query      string         `json:"query"`
+}
+
+type GetCacheStatsOutput struct {
+	CacheEnabled bool          `json:"cache_enabled"`
+	Stats       repo.CacheStats `json:"stats"`
+	Message     string        `json:"message"`
 }
 
 // handleFileComplaint handles the file_complaint tool
@@ -442,6 +464,38 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 		Complaints: results,
 		Query:      input.Query,
 	}
+
+	return nil, output, nil
+}
+
+// handleGetCacheStats handles the get_cache_stats tool
+func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRequest, input GetCacheStatsInput) (*mcp.CallToolResult, GetCacheStatsOutput, error) {
+	ctx, span := m.tracer.Start(ctx, "handleGetCacheStats")
+	defer span.End()
+
+	logger := m.logger.With("component", "mcp-server", "tool", "get_cache_stats")
+	logger.Info("Handling get cache stats request")
+
+	stats := m.service.GetCacheStats()
+	
+	// Determine if cache is enabled (non-zero max size indicates cached repository)
+	cacheEnabled := stats.MaxSize > 0
+	message := "Cache statistics retrieved successfully"
+	if !cacheEnabled {
+		message = "Cache disabled (using FileRepository)"
+	}
+
+	output := GetCacheStatsOutput{
+		CacheEnabled: cacheEnabled,
+		Stats:       stats,
+		Message:     message,
+	}
+
+	logger.Info("Cache stats retrieved successfully", 
+		"cache_enabled", cacheEnabled,
+		"hit_rate", stats.HitRate,
+		"current_size", stats.CurrentSize,
+		"max_size", stats.MaxSize)
 
 	return nil, output, nil
 }

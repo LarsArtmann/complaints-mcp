@@ -194,3 +194,8 @@ func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit i
 	logger.Info("Unresolved complaints listed successfully", "count", len(complaints))
 	return complaints, nil
 }
+
+// GetCacheStats returns cache performance statistics
+func (s *ComplaintService) GetCacheStats() repo.CacheStats {
+	return s.repo.GetCacheStats()
+}

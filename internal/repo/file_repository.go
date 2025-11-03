@@ -23,6 +23,7 @@ type Repository interface {
 	FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error)
 	Update(ctx context.Context, complaint *domain.Complaint) error
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
+	GetCacheStats() CacheStats // Optional - only CachedRepository implements
 }
 
 // CachedRepository implements Repository with in-memory LRU caching for O(1) lookups
@@ -671,6 +672,18 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 
 	logger.Info("Unresolved complaints filtered", "count", len(filtered))
 	return filtered, nil
+}
+
+// GetCacheStats returns "not available" for FileRepository (no cache)
+func (r *FileRepository) GetCacheStats() CacheStats {
+	return CacheStats{
+		Hits:        0,
+		Misses:      0,
+		Evictions:   0,
+		CurrentSize: 0,
+		MaxSize:     0,
+		HitRate:     0.0,
+	}
 }
 
 // GetCacheStats returns current LRU cache performance statistics

@@ -12,6 +12,7 @@ import (
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/errors"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
@@ -127,6 +128,17 @@ func (m *mockRepository) Delete(ctx context.Context, id domain.ComplaintID) erro
 		}
 	}
 	return errors.NewNotFoundError("complaint not found")
+}
+
+func (m *mockRepository) GetCacheStats() repo.CacheStats {
+	return repo.CacheStats{
+		Hits:        0,
+		Misses:      0,
+		Evictions:   0,
+		CurrentSize: 0,
+		MaxSize:     0,
+		HitRate:     0.0,
+	}
 }
 
 func TestNewComplaintService(t *testing.T) {
