@@ -45,13 +45,13 @@ type StorageConfig struct {
 	Retention  int    `mapstructure:"retention_days" validate:"min=1"`
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
-	// Cache configuration
-	CacheEnabled  bool                   `mapstructure:"cache_enabled"`
-	CacheMaxSize  int64                  `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
-	CacheEviction string                 `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
+	// Cache configuration - JSON fields for Viper
+	CacheEnabled   bool    `mapstructure:"cache_enabled"`
+	CacheMaxSize   int64   `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
+	CacheEviction  string  `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
 	
-	// Type-safe cache configuration (for internal use)
-	CacheSize       types.CacheSize       `mapstructure:"-"` // derived from CacheMaxSize
+	// Type-safe fields for internal use (populated in postProcessConfig)
+	CacheSize       types.CacheSize          `mapstructure:"-"` // derived from CacheMaxSize
 	EvictionPolicy  types.CacheEvictionPolicy `mapstructure:"-"` // derived from CacheEviction
 }
 
