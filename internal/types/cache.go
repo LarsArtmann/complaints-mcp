@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-// CacheSize is a type-safe cache size that prevents invalid values
-type CacheSize uint32 // Max 4,294,967,295 - more than enough
+// CacheSize provides type-safe cache size that prevents invalid states
+type CacheSize uint32
 
 const (
 	MinCacheSize     CacheSize = 1
@@ -13,6 +13,7 @@ const (
 	DefaultCacheSize CacheSize = 1000
 )
 
+// NewCacheSize creates a validated cache size
 func NewCacheSize(size uint32) (CacheSize, error) {
 	if size < uint32(MinCacheSize) {
 		return MinCacheSize, fmt.Errorf("cache size must be >= %d", MinCacheSize)
@@ -23,15 +24,26 @@ func NewCacheSize(size uint32) (CacheSize, error) {
 	return CacheSize(size), nil
 }
 
+// MustNewCacheSize creates a cache size or panics (for constants)
+func MustNewCacheSize(size uint32) CacheSize {
+	cs, err := NewCacheSize(size)
+	if err != nil {
+		panic(err) // Used for compile-time constants only
+	}
+	return cs
+}
+
+// Int returns the cache size as int for compatibility
 func (cs CacheSize) Int() int {
 	return int(cs)
 }
 
+// Uint32 returns the cache size as uint32
 func (cs CacheSize) Uint32() uint32 {
 	return uint32(cs)
 }
 
-// CacheEvictionPolicy is a type-safe eviction policy
+// CacheEvictionPolicy provides type-safe eviction policy
 type CacheEvictionPolicy string
 
 const (
@@ -40,31 +52,31 @@ const (
 	EvictionNone CacheEvictionPolicy = "none"
 )
 
-var ValidEvictionPolicies = []CacheEvictionPolicy{
-	EvictionLRU,
-	EvictionFIFO,
-	EvictionNone,
-}
-
+// NewEvictionPolicy creates a validated eviction policy
 func NewEvictionPolicy(policy string) (CacheEvictionPolicy, error) {
-	p := CacheEvictionPolicy(policy)
-	for _, valid := range ValidEvictionPolicies {
-		if p == valid {
-			return p, nil
-		}
+	if policy == "" {
+		return EvictionLRU, nil // Default to LRU
 	}
-	return EvictionLRU, fmt.Errorf("invalid eviction policy: %s", policy)
+	p := CacheEvictionPolicy(policy)
+	switch p {
+	case EvictionLRU, EvictionFIFO, EvictionNone:
+		return p, nil
+	default:
+		return EvictionLRU, fmt.Errorf("invalid eviction policy: %s (must be lru, fifo, or none)", policy)
+	}
 }
 
+// String returns the eviction policy as string
 func (cep CacheEvictionPolicy) String() string {
 	return string(cep)
 }
 
+// IsValid returns true if the eviction policy is valid
 func (cep CacheEvictionPolicy) IsValid() bool {
-	for _, valid := range ValidEvictionPolicies {
-		if cep == valid {
-			return true
-		}
+	switch cep {
+	case EvictionLRU, EvictionFIFO, EvictionNone:
+		return true
+	default:
+		return false
 	}
-	return false
 }

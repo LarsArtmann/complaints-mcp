@@ -64,7 +64,7 @@ func (r *FileRepository) WarmCache(ctx context.Context) error {
 func NewCachedRepository(baseDir string, maxCacheSize int, tracer tracing.Tracer) Repository {
 	repo := &CachedRepository{
 		baseDir: baseDir,
-		cache:   NewLRUCache(maxCacheSize),
+		cache:   NewLRUCache(uint32(maxCacheSize)),
 		logger:  log.Default(),
 		tracer:  tracer,
 	}

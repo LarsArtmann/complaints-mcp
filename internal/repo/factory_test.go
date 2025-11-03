@@ -75,6 +75,10 @@ func TestNewRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			err := tt.config.Normalize()
+			require.NoError(t, err)
+			
 			// Act
 			repo := NewRepository(tt.config)
 
