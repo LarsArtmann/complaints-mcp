@@ -439,7 +439,7 @@ func (r *CachedRepository) WarmCache(ctx context.Context) error {
 	logger.Info("Warming LRU cache with existing complaint data")
 
 	// Load all existing complaints into LRU cache
-	complaints, err := r.loadAllComplaintsFromDisk(ctx)
+	complaints, err := r.loadAllComplaintsFromDisk()
 	if err != nil {
 		logger.Error("Failed to warm LRU cache", "error", err)
 		return fmt.Errorf("failed to warm cache: %w", err)
@@ -459,7 +459,7 @@ func (r *CachedRepository) warmCache(ctx context.Context) {
 	logger.Info("Warming LRU cache with existing complaint data")
 
 	// Load all existing complaints into LRU cache
-	complaints, err := r.loadAllComplaintsFromDisk(ctx)
+	complaints, err := r.loadAllComplaintsFromDisk()
 	if err != nil {
 		logger.Error("Failed to warm LRU cache", "error", err)
 		return
@@ -473,7 +473,7 @@ func (r *CachedRepository) warmCache(ctx context.Context) {
 }
 
 // loadAllComplaintsFromDisk loads all complaints from disk (cache warm-up only)
-func (r *CachedRepository) loadAllComplaintsFromDisk(ctx context.Context) ([]*domain.Complaint, error) {
+func (r *CachedRepository) loadAllComplaintsFromDisk() ([]*domain.Complaint, error) {
 	logger := r.logger.With("component", "cached-repository")
 	logger.Debug("Loading all complaints from disk for cache warm-up")
 

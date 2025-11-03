@@ -97,14 +97,13 @@ func TestNewComplaint(t *testing.T) {
 }
 
 func TestComplaint_Resolve(t *testing.T) {
-	ctx := context.Background() // ✅ Added context
 	id, _ := NewComplaintID()
 	complaint := &Complaint{
 		ID:       id,
 		Resolved: false,
 	}
 
-	complaint.Resolve(ctx, "test-agent") // ✅ Pass context and resolvedBy
+	complaint.Resolve("test-agent") // Pure domain method - no context
 
 	if !complaint.Resolved {
 		t.Error("Complaint.Resolve() did not set Resolved to true")

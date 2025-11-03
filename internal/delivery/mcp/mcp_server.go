@@ -292,19 +292,10 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	logger := m.logger.With("component", "mcp-server", "tool", "file_complaint")
 	logger.Info("Handling file complaint request")
 
-	// Convert severity string to domain type
-	var domainSeverity domain.Severity
-	switch input.Severity {
-	case "low":
-		domainSeverity = domain.SeverityLow
-	case "medium":
-		domainSeverity = domain.SeverityMedium
-	case "high":
-		domainSeverity = domain.SeverityHigh
-	case "critical":
-		domainSeverity = domain.SeverityCritical
-	default:
-		return nil, FileComplaintOutput{}, fmt.Errorf("invalid severity: %s", input.Severity)
+	// Parse severity with type safety (eliminates runtime errors)
+	domainSeverity, err := domain.ParseSeverity(input.Severity)
+	if err != nil {
+		return nil, FileComplaintOutput{}, fmt.Errorf("invalid severity: %w", err)
 	}
 
 	complaint, err := m.service.CreateComplaint(
@@ -351,15 +342,10 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 
 	var severityFilter domain.Severity
 	if input.Severity != "" {
-		switch input.Severity {
-		case "low":
-			severityFilter = domain.SeverityLow
-		case "medium":
-			severityFilter = domain.SeverityMedium
-		case "high":
-			severityFilter = domain.SeverityHigh
-		case "critical":
-			severityFilter = domain.SeverityCritical
+		var err error
+		severityFilter, err = domain.ParseSeverity(input.Severity)
+		if err != nil {
+			return nil, ListComplaintsOutput{}, fmt.Errorf("invalid severity filter: %w", err)
 		}
 	}
 

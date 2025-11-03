@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid"
 )
@@ -99,11 +98,10 @@ type Complaint struct {
 
 // NewComplaint creates a new complaint with the given parameters
 func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity Severity, projectName string) (*Complaint, error) {
-	logger := log.FromContext(ctx)
+	// Domain layer is now pure - no external dependencies
 
 	id, err := NewComplaintID()
 	if err != nil {
-		logger.Error("failed to generate complaint ID", "error", err)
 		return nil, fmt.Errorf("failed to generate complaint ID: %w", err)
 	}
 
@@ -127,32 +125,25 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		Resolved:        false,
 	}
 
-	// Validate the complaint
+	// Validate the complaint (pure domain logic)
 	if err := complaint.Validate(); err != nil {
-		logger.Error("invalid complaint data", "error", err, "complaint", complaint)
 		return nil, err
 	}
 
-	logger.Info("created new complaint",
-		"complaint_id", id.String(),
-		"agent_name", agentName,
-		"severity", string(severity))
-
+	// Complaint created - service layer should handle logging
 	return complaint, nil
 }
 
-// Resolve marks a complaint as resolved
-// ✅ Now sets Resolved flag, ResolvedAt timestamp, and ResolvedBy field (prevents split-brain)
-func (c *Complaint) Resolve(ctx context.Context, resolvedBy string) {
-	logger := log.FromContext(ctx)
+// Resolve marks a complaint as resolved - pure domain logic
+func (c *Complaint) Resolve(resolvedBy string) error {
+	if c.Resolved {
+		return fmt.Errorf("complaint already resolved")
+	}
 	now := time.Now()
 	c.Resolved = true
-	c.ResolvedAt = &now       // ✅ Set resolution timestamp
-	c.ResolvedBy = resolvedBy // ✅ NEW: Set who resolved it
-	logger.Info("marked complaint as resolved",
-		"complaint_id", c.ID.String(),
-		"resolved_at", now.Format(time.RFC3339),
-		"resolved_by", resolvedBy) // ✅ NEW: Log who resolved it
+	c.ResolvedAt = &now       // Set resolution timestamp
+	c.ResolvedBy = resolvedBy // Set who resolved it
+	return nil
 }
 
 // IsResolved checks if the complaint is resolved

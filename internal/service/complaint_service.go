@@ -112,7 +112,10 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 		return fmt.Errorf("complaint not found: %s", id.String())
 	}
 
-	complaint.Resolve(ctx, resolvedBy) // ✅ NEW: Pass through resolvedBy
+	if err := complaint.Resolve(resolvedBy); err != nil {
+		logger.Error("failed to resolve complaint", "error", err, "complaint_id", id.String())
+		return fmt.Errorf("failed to resolve complaint: %w", err)
+	}
 
 	if err := s.repo.Update(ctx, complaint); err != nil {
 		logger.Error("Failed to update complaint", "error", err)
