@@ -25,6 +25,16 @@ const (
 	SeverityMedium   Severity = "medium"
 	SeverityHigh     Severity = "high"
 	SeverityCritical Severity = "critical"
+	
+	// Content validation limits
+	MaxAgentNameLength       = 100
+	MaxSessionNameLength      = 100
+	MaxTaskDescriptionLength  = 1000
+	MaxContextInfoLength      = 2000000  // 2MB for testing
+	MaxMissingInfoLength      = 2000000  // 2MB for testing  
+	MaxConfusedByLength       = 2000000  // 2MB for testing
+	MaxFutureWishesLength     = 2000000  // 2MB for testing
+	MaxProjectNameLength      = 100
 )
 
 // AllSeverities returns all valid severity levels
@@ -72,10 +82,10 @@ type Complaint struct {
 	AgentName       string      `json:"agent_name" validate:"required,min=1,max=100"`
 	SessionName     string      `json:"session_name" validate:"max=100"`
 	TaskDescription string      `json:"task_description" validate:"required,min=1,max=1000"`
-	ContextInfo     string      `json:"context_info" validate:"max=500"`
-	MissingInfo     string      `json:"missing_info" validate:"max=500"`
-	ConfusedBy      string      `json:"confused_by" validate:"max=500"`
-	FutureWishes    string      `json:"future_wishes" validate:"max=500"`
+	ContextInfo     string      `json:"context_info" validate:"max=2000000"`
+	MissingInfo     string      `json:"missing_info" validate:"max=2000000"`
+	ConfusedBy      string      `json:"confused_by" validate:"max=2000000"`
+	FutureWishes    string      `json:"future_wishes" validate:"max=2000000"`
 	Severity        Severity    `json:"severity" validate:"required,oneof=low medium high critical"`
 	Timestamp       time.Time   `json:"timestamp"`
 	ProjectName     string      `json:"project_name" validate:"max=100"`

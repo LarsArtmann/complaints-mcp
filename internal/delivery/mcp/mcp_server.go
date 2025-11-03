@@ -77,52 +77,52 @@ func (m *MCPServer) registerTools() error {
 	fileComplaintTool := &mcp.Tool{
 		Name:        "file_complaint",
 		Description: "File a structured complaint about missing or confusing information",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"agent_name": map[string]interface{}{
+			"properties": map[string]any{
+				"agent_name": map[string]any{
 					"type":        "string",
 					"description": "Name of the AI agent filing the complaint",
 					"minLength":   1,
 					"maxLength":   100,
 				},
-				"session_name": map[string]interface{}{
+				"session_name": map[string]any{
 					"type":        "string",
 					"description": "Name of the current session",
 					"maxLength":   100,
 				},
-				"task_description": map[string]interface{}{
+				"task_description": map[string]any{
 					"type":        "string",
 					"description": "Description of the task being performed",
 					"minLength":   1,
 					"maxLength":   1000,
 				},
-				"context_info": map[string]interface{}{
+				"context_info": map[string]any{
 					"type":        "string",
 					"description": "Additional context information",
 					"maxLength":   500,
 				},
-				"missing_info": map[string]interface{}{
+				"missing_info": map[string]any{
 					"type":        "string",
 					"description": "What information was missing or unclear",
 					"maxLength":   500,
 				},
-				"confused_by": map[string]interface{}{
+				"confused_by": map[string]any{
 					"type":        "string",
 					"description": "What aspects were confusing",
 					"maxLength":   500,
 				},
-				"future_wishes": map[string]interface{}{
+				"future_wishes": map[string]any{
 					"type":        "string",
 					"description": "Suggestions for future improvements",
 					"maxLength":   500,
 				},
-				"severity": map[string]interface{}{
+				"severity": map[string]any{
 					"type":        "string",
 					"description": "Severity level (low, medium, high, critical)",
 					"enum":        []string{"low", "medium", "high", "critical"},
 				},
-				"project_name": map[string]interface{}{
+				"project_name": map[string]any{
 					"type":        "string",
 					"description": "Name of the project (auto-detected if not provided)",
 					"maxLength":   100,
@@ -136,21 +136,21 @@ func (m *MCPServer) registerTools() error {
 	listComplaintsTool := &mcp.Tool{
 		Name:        "list_complaints",
 		Description: "List all filed complaints with optional filtering",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"limit": map[string]interface{}{
+			"properties": map[string]any{
+				"limit": map[string]any{
 					"type":        "integer",
 					"description": "Maximum number of complaints to return",
 					"minimum":     1,
 					"maximum":     100,
 				},
-				"severity": map[string]interface{}{
+				"severity": map[string]any{
 					"type":        "string",
 					"description": "Filter by severity level",
 					"enum":        []string{"low", "medium", "high", "critical"},
 				},
-				"resolved": map[string]interface{}{
+				"resolved": map[string]any{
 					"type":        "boolean",
 					"description": "Filter by resolved status",
 				},
@@ -162,15 +162,15 @@ func (m *MCPServer) registerTools() error {
 	resolveComplaintTool := &mcp.Tool{
 		Name:        "resolve_complaint",
 		Description: "Mark a complaint as resolved",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"complaint_id": map[string]interface{}{
+			"properties": map[string]any{
+				"complaint_id": map[string]any{
 					"type":        "string",
 					"description": "Unique identifier of the complaint",
 					"pattern":     "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
 				},
-				"resolved_by": map[string]interface{}{
+				"resolved_by": map[string]any{
 					"type":        "string",
 					"description": "Identifier of who resolved the complaint (agent name, user ID, etc.)",
 				},
@@ -183,16 +183,16 @@ func (m *MCPServer) registerTools() error {
 	searchComplaintsTool := &mcp.Tool{
 		Name:        "search_complaints",
 		Description: "Search complaints by content",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type": "object",
-			"properties": map[string]interface{}{
-				"query": map[string]interface{}{
+			"properties": map[string]any{
+				"query": map[string]any{
 					"type":        "string",
 					"description": "Search query text",
 					"minLength":   1,
 					"maxLength":   500,
 				},
-				"limit": map[string]interface{}{
+				"limit": map[string]any{
 					"type":        "integer",
 					"description": "Maximum number of results",
 					"minimum":     1,
@@ -207,9 +207,9 @@ func (m *MCPServer) registerTools() error {
 	getCacheStatsTool := &mcp.Tool{
 		Name:        "get_cache_stats",
 		Description: "Get cache performance statistics",
-		InputSchema: map[string]interface{}{
+		InputSchema: map[string]any{
 			"type":       "object",
-			"properties": map[string]interface{}{},
+			"properties": map[string]any{},
 			"required":   []string{},
 		},
 	}
@@ -264,7 +264,7 @@ type FileComplaintOutput struct {
 }
 
 type ListComplaintsOutput struct {
-	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
+	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]any
 }
 
 type ResolveComplaintOutput struct {
@@ -274,7 +274,7 @@ type ResolveComplaintOutput struct {
 }
 
 type SearchComplaintsOutput struct {
-	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]interface{}
+	Complaints []ComplaintDTO `json:"complaints"` // ✅ Type-safe instead of []map[string]any
 	Query      string         `json:"query"`
 }
 

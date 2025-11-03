@@ -22,7 +22,7 @@ func BenchmarkCachePerformance(b *testing.B) {
 
 	// Create repositories
 	legacyRepo := NewFileRepository(baseDir, tracer)
-	cachedRepo := NewCachedRepository(baseDir, tracer)
+	cachedRepo := NewCachedRepository(baseDir, 1000, tracer)
 
 	// Generate test complaints
 	numComplaints := 100
@@ -67,7 +67,7 @@ func TestCachePerformanceRegression(t *testing.T) {
 
 	// Create repositories
 	legacyRepo := NewFileRepository(baseDir, tracer)
-	cachedRepo := NewCachedRepository(baseDir, tracer)
+	cachedRepo := NewCachedRepository(baseDir, 1000, tracer)
 
 	// Generate test complaints
 	numComplaints := 50
@@ -123,7 +123,7 @@ func TestConcurrentCacheAccess(t *testing.T) {
 	tracer := tracing.NewMockTracer("concurrent-test")
 
 	// Create cached repository
-	repo := NewCachedRepository(baseDir, tracer)
+	repo := NewCachedRepository(baseDir, 1000, tracer)
 
 	// Generate test complaints
 	numComplaints := 20
@@ -216,7 +216,7 @@ func TestCacheMetricsAccuracy(t *testing.T) {
 	tracer := tracing.NewMockTracer("metrics-test")
 
 	// Create cached repository
-	repo := NewCachedRepository(baseDir, tracer)
+	repo := NewCachedRepository(baseDir, 1000, tracer)
 	cachedRepo := repo.(*CachedRepository)
 
 	// Generate test complaints

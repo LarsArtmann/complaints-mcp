@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/adrg/xdg"
@@ -45,7 +46,7 @@ type StorageConfig struct {
 
 	// Cache configuration
 	CacheEnabled  bool   `mapstructure:"cache_enabled"`
-	CacheMaxSize  int64  `mapstructure:"cache_max_size" validate:"min=1"`
+	CacheMaxSize  int64  `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
 	CacheEviction string `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
 }
 
@@ -205,14 +206,7 @@ func validateConfig(cfg *Config) error {
 	// Cache configuration validation
 	validEvictionPolicies := []string{"lru", "fifo", "none"}
 	if cfg.Storage.CacheEviction != "" {
-		valid := false
-		for _, policy := range validEvictionPolicies {
-			if cfg.Storage.CacheEviction == policy {
-				valid = true
-				break
-			}
-		}
-		if !valid {
+		if !slices.Contains(validEvictionPolicies, cfg.Storage.CacheEviction) {
 			return fmt.Errorf("invalid cache eviction policy: %s", cfg.Storage.CacheEviction)
 		}
 	}
@@ -220,18 +214,14 @@ func validateConfig(cfg *Config) error {
 	if cfg.Storage.CacheMaxSize <= 0 {
 		return fmt.Errorf("storage.cache_max_size must be positive")
 	}
+	if cfg.Storage.CacheMaxSize > 100000 {
+		return fmt.Errorf("storage.cache_max_size must be <= 100000")
+	}
 
 	// Log level validation
 	validLogLevels := []string{"trace", "debug", "info", "warn", "error"}
 	if cfg.Log.Level != "" {
-		valid := false
-		for _, level := range validLogLevels {
-			if cfg.Log.Level == level {
-				valid = true
-				break
-			}
-		}
-		if !valid {
+		if !slices.Contains(validLogLevels, cfg.Log.Level) {
 			return fmt.Errorf("invalid log level: %s", cfg.Log.Level)
 		}
 	}
@@ -239,14 +229,7 @@ func validateConfig(cfg *Config) error {
 	// Log format validation
 	validLogFormats := []string{"text", "json", "logfmt"}
 	if cfg.Log.Format != "" {
-		valid := false
-		for _, format := range validLogFormats {
-			if cfg.Log.Format == format {
-				valid = true
-				break
-			}
-		}
-		if !valid {
+		if !slices.Contains(validLogFormats, cfg.Log.Format) {
 			return fmt.Errorf("invalid log format: %s", cfg.Log.Format)
 		}
 	}

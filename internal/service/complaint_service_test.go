@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
@@ -41,10 +42,7 @@ func (m *mockRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 		return []*domain.Complaint{}, nil
 	}
 
-	end := offset + limit
-	if end > len(m.complaints) {
-		end = len(m.complaints)
-	}
+	end := min(offset+limit, len(m.complaints))
 
 	result := make([]*domain.Complaint, 0, end-offset)
 	for i := offset; i < end; i++ {
@@ -139,6 +137,11 @@ func (m *mockRepository) GetCacheStats() repo.CacheStats {
 		MaxSize:     0,
 		HitRate:     0.0,
 	}
+}
+
+func (m *mockRepository) WarmCache(ctx context.Context) error {
+	// Mock repository doesn't have a cache, so this is a no-op
+	return nil
 }
 
 func TestNewComplaintService(t *testing.T) {
@@ -448,5 +451,92 @@ func TestComplaintService_ListComplaints(t *testing.T) {
 		if !strings.Contains(complaint.TaskDescription, "test task") {
 			t.Errorf("Complaint %d should contain 'test task', got: %s", i, complaint.TaskDescription)
 		}
+	}
+}
+
+func TestComplaintService_GetCacheStats(t *testing.T) {
+	tests := []struct {
+		name           string
+		repositoryType  string
+		expectedMaxSize int64
+	}{
+		{
+			name:           "CachedRepository should return non-zero max size",
+			repositoryType:  "cached",
+			expectedMaxSize: 1000,
+		},
+		{
+			name:           "FileRepository should return zero max size",
+			repositoryType:  "file",
+			expectedMaxSize: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			logger := log.New(io.Discard) // Discard logs for clean test output
+			tracer := tracing.NewMockTracer("test")
+
+			var repository repo.Repository
+			if tt.repositoryType == "cached" {
+				repository = repo.NewCachedRepository(tempDir, 1000, tracer)
+			} else {
+				repository = repo.NewFileRepository(tempDir, tracer)
+			}
+
+			complaintService := service.NewComplaintService(repository, tracer, logger)
+
+			// Act
+			stats := complaintService.GetCacheStats()
+
+			// Assert
+			if stats.MaxSize != tt.expectedMaxSize {
+				t.Errorf("Expected MaxSize %d, got %d", tt.expectedMaxSize, stats.MaxSize)
+			}
+
+			// Verify all fields are accessible and have expected types
+			if stats.Hits < 0 {
+				t.Errorf("Hits should not be negative, got %d", stats.Hits)
+			}
+
+			if stats.Misses < 0 {
+				t.Errorf("Misses should not be negative, got %d", stats.Misses)
+			}
+
+			if stats.Evictions < 0 {
+				t.Errorf("Evictions should not be negative, got %d", stats.Evictions)
+			}
+
+			if stats.CurrentSize < 0 {
+				t.Errorf("CurrentSize should not be negative, got %d", stats.CurrentSize)
+			}
+
+			if stats.HitRate < 0.0 || stats.HitRate > 100.0 {
+				t.Errorf("HitRate should be between 0 and 100, got %f", stats.HitRate)
+			}
+
+			// Test JSON serialization (important for MCP response)
+			jsonData, err := json.Marshal(stats)
+			if err != nil {
+				t.Fatalf("Failed to marshal stats to JSON: %v", err)
+			}
+
+			var unmarshaledStats repo.CacheStats
+			err = json.Unmarshal(jsonData, &unmarshaledStats)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal stats from JSON: %v", err)
+			}
+
+			if unmarshaledStats.MaxSize != stats.MaxSize {
+				t.Errorf("JSON roundtrip failed for MaxSize: expected %d, got %d",
+					stats.MaxSize, unmarshaledStats.MaxSize)
+			}
+
+			if unmarshaledStats.HitRate != stats.HitRate {
+				t.Errorf("JSON roundtrip failed for HitRate: expected %f, got %f",
+					stats.HitRate, unmarshaledStats.HitRate)
+			}
+		})
 	}
 }

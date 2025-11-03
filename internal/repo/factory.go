@@ -25,7 +25,7 @@ func NewRepository(cfg RepositoryConfig) Repository {
 	tracer := tracing.NewTracer(tracerConfig)
 
 	if cacheEnabled {
-		return NewCachedRepository(cfg.BaseDir, tracer)
+		return NewCachedRepository(cfg.BaseDir, int(cfg.StorageConfig.CacheMaxSize), tracer)
 	}
 
 	// Default to file repository

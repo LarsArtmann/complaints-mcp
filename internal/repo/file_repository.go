@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/log"
@@ -24,6 +25,7 @@ type Repository interface {
 	Update(ctx context.Context, complaint *domain.Complaint) error
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
 	GetCacheStats() CacheStats // Optional - only CachedRepository implements
+	WarmCache(ctx context.Context) error // Optional - warm cache with context support
 }
 
 // CachedRepository implements Repository with in-memory LRU caching for O(1) lookups
@@ -52,11 +54,14 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
 	}
 }
 
-// NewCachedRepository creates a new high-performance cached repository with LRU eviction
-func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
-	// Initialize LRU cache with default max size
-	maxCacheSize := 1000 // TODO: make configurable via config
+// WarmCache is a no-op for FileRepository (no cache to warm)
+func (r *FileRepository) WarmCache(ctx context.Context) error {
+	// FileRepository doesn't have a cache, so this is a no-op
+	return nil
+}
 
+// NewCachedRepository creates a new high-performance cached repository with LRU eviction
+func NewCachedRepository(baseDir string, maxCacheSize int, tracer tracing.Tracer) Repository {
 	repo := &CachedRepository{
 		baseDir: baseDir,
 		cache:   NewLRUCache(maxCacheSize),
@@ -64,8 +69,7 @@ func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 		tracer:  tracer,
 	}
 
-	// Initialize cache with existing data
-	repo.warmCache(context.Background())
+	// Don't warm cache automatically - let caller do it with proper context
 	return repo
 }
 
@@ -208,10 +212,7 @@ func (r *CachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*d
 	}
 
 	start := offset
-	end := offset + limit
-	if end > total {
-		end = total
-	}
+	end := min(offset+limit, total)
 
 	result := complaints[start:end]
 	logger.Info("Complaints retrieved from LRU cache", "count", len(result))
@@ -238,10 +239,7 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	}
 
 	start := offset
-	end := offset + limit
-	if end > total {
-		end = total
-	}
+	end := min(offset+limit, total)
 
 	result := complaints[start:end]
 	logger.Info("Complaints retrieved", "count", len(result))
@@ -347,6 +345,7 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 
 	// Update fields with new data
 	existing.Resolved = complaint.Resolved
+	existing.Timestamp = complaint.Timestamp
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
@@ -434,7 +433,27 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 	return results, nil
 }
 
-// warmCache initializes the LRU cache with existing complaint data
+// WarmCache warms the cache with existing complaint data (public method)
+func (r *CachedRepository) WarmCache(ctx context.Context) error {
+	logger := r.logger.With("component", "cached-repository")
+	logger.Info("Warming LRU cache with existing complaint data")
+
+	// Load all existing complaints into LRU cache
+	complaints, err := r.loadAllComplaintsFromDisk(ctx)
+	if err != nil {
+		logger.Error("Failed to warm LRU cache", "error", err)
+		return fmt.Errorf("failed to warm cache: %w", err)
+	}
+
+	for _, complaint := range complaints {
+		r.cache.Put(complaint.ID.String(), complaint)
+	}
+
+	logger.Info("LRU cache warmed successfully", "complaints_loaded", len(complaints))
+	return nil
+}
+
+// warmCache (private) initializes LRU cache with existing complaint data
 func (r *CachedRepository) warmCache(ctx context.Context) {
 	logger := r.logger.With("component", "cached-repository")
 	logger.Info("Warming LRU cache with existing complaint data")
@@ -544,6 +563,11 @@ func (r *FileRepository) loadAllComplaints(ctx context.Context) ([]*domain.Compl
 
 		complaints = append(complaints, complaint)
 	}
+
+	// Sort complaints by timestamp (oldest first for consistent ordering)
+	sort.Slice(complaints, func(i, j int) bool {
+		return complaints[i].Timestamp.Before(complaints[j].Timestamp)
+	})
 
 	logger.Info("Complaints loaded successfully", "count", len(complaints))
 	return complaints, nil

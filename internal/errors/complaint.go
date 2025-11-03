@@ -9,7 +9,7 @@ type ComplaintError struct {
 	Code    string                 `json:"code"`
 	Message string                 `json:"message"`
 	Field   string                 `json:"field,omitempty"`
-	Details map[string]interface{} `json:"details,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 	Cause   error                  `json:"-"`
 }
 
@@ -40,7 +40,7 @@ func NewComplaintError(code, message, field string) *ComplaintError {
 		Code:    code,
 		Message: message,
 		Field:   field,
-		Details: make(map[string]interface{}),
+		Details: make(map[string]any),
 	}
 }
 
@@ -79,7 +79,7 @@ func NewInvalidFormatError(message, field string) *ComplaintError {
 }
 
 // WithDetails adds details to an error
-func (e *ComplaintError) WithDetails(key string, value interface{}) *ComplaintError {
+func (e *ComplaintError) WithDetails(key string, value any) *ComplaintError {
 	e.Details[key] = value
 	return e
 }

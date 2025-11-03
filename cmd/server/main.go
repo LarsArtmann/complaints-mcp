@@ -104,6 +104,20 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintService := service.NewComplaintService(complaintRepo, tracer, logger)
 	mcpServer := mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
+	// Warm cache with proper context and timeout if cache is enabled
+	if cfg.Storage.CacheEnabled {
+		logger.Info("Warming complaint cache with timeout")
+		cacheCtx, cacheCancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cacheCancel()
+		
+		if err := complaintRepo.WarmCache(cacheCtx); err != nil {
+			logger.Warn("Failed to warm complaint cache", "error", err)
+			// Continue anyway - cache will populate lazily
+		} else {
+			logger.Info("Complaint cache warmed successfully")
+		}
+	}
+
 	// Setup graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

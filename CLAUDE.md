@@ -39,6 +39,12 @@ go test ./internal/repo -v
 # Run in development mode with enhanced logging
 ./complaints-mcp --dev --log-level debug
 
+# Run with cache disabled for debugging
+./complaints-mcp --cache-enabled=false
+
+# Run with custom cache size (default: 1000)
+./complaints-mcp --cache-max-size=500
+
 # Show version information
 ./complaints-mcp --version
 ```
@@ -172,6 +178,40 @@ Configuration is loaded from (in order of precedence):
 3. Config file (./config.yaml, ~/.complaints-mcp/config.yaml, /etc/complaints-mcp/config.yaml)
 4. XDG config directory ($XDG_CONFIG_HOME/complaints-mcp/config.yaml)
 5. Default values
+
+### Cache Configuration
+
+The repository factory supports configurable caching:
+
+```yaml
+storage:
+  cache_enabled: true        # Use CachedRepository vs FileRepository
+  cache_max_size: 1000       # LRU cache size
+  cache_eviction: "lru"      # Eviction policy (lru, fifo, none)
+```
+
+CLI Flags:
+```bash
+--cache-enabled=true        # Enable/disable cache (default: true)
+--cache-max-size=1000       # Set cache size (default: 1000)
+--cache-eviction=lru        # Set eviction policy (default: lru)
+```
+
+Environment Variables:
+```bash
+COMPLAINTS_MCP_CACHE_ENABLED=true
+COMPLAINTS_MCP_CACHE_MAX_SIZE=1000
+COMPLAINTS_MCP_CACHE_EVICTION=lru
+```
+
+**Repository Selection Logic:**
+- `cache_enabled=true` → Creates CachedRepository (LRU cache for O(1) lookups)
+- `cache_enabled=false` → Creates FileRepository (no cache, direct file I/O)
+- Explicit `type="file"` always forces FileRepository regardless of cache settings
+
+**Performance Impact:**
+- CachedRepository: ~1000x faster for repeated lookups (O(1) vs O(n))
+- FileRepository: Lower memory usage, always reads from disk
 
 ## Internal Package Note
 

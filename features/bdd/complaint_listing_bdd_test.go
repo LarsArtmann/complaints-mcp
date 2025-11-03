@@ -3,6 +3,7 @@ package bdd_test
 import (
 	"context"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -295,7 +296,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			authResults, err := complaintService.SearchComplaints(ctx, "authentication", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(authResults)).To(Equal(1))
-			Expect(authResults[0].TaskDescription).To(ContainSubstring("authentication"))
+			Expect(strings.ToLower(authResults[0].TaskDescription)).To(ContainSubstring("authentication"))
 
 			// Search for "API"
 			apiResults, err := complaintService.SearchComplaints(ctx, "API", 10)
@@ -307,7 +308,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			dbResults, err := complaintService.SearchComplaints(ctx, "database", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbResults)).To(Equal(1))
-			Expect(dbResults[0].TaskDescription).To(ContainSubstring("database"))
+			Expect(strings.ToLower(dbResults[0].TaskDescription)).To(ContainSubstring("database"))
 		})
 
 		It("should be case-insensitive", func(ctx SpecContext) {
