@@ -59,7 +59,7 @@ This project follows a clean, layered architecture with clear separation of conc
 
 2. **internal/delivery/mcp** - MCP Protocol Layer
    - Implements MCP server using the official go-sdk
-   - Provides 4 tools: file_complaint, list_complaints, resolve_complaint, search_complaints
+   - Provides 5 tools: file_complaint, list_complaints, resolve_complaint, search_complaints, get_cache_stats
    - Handles JSON schema validation and tool registration
    - Uses stdio transport for communication
 
@@ -106,6 +106,7 @@ This project follows a clean, layered architecture with clear separation of conc
   - complaint_filing_bdd_test.go
   - complaint_listing_bdd_test.go
   - complaint_resolution_bdd_test.go
+  - cache_stats_bdd_test.go (NEW!)
   - mcp_integration_bdd_test.go
 - **Unit Tests**: Each internal package has corresponding *_test.go files
 - Test files use table-driven tests where appropriate
@@ -135,6 +136,33 @@ Complaints are stored as JSON files with naming pattern:
 
 ### MCP Tool Implementation
 Tools are registered with schema definitions and handler functions. Handlers use type-safe input/output structs and return (result, output, error).
+
+#### Available Tools:
+1. **file_complaint** - File a new structured complaint
+2. **list_complaints** - List all complaints with pagination
+3. **resolve_complaint** - Mark a complaint as resolved
+4. **search_complaints** - Search complaints by content
+5. **get_cache_stats** - Get cache performance statistics (NEW!)
+
+#### get_cache_stats Tool Details:
+- **Purpose**: Monitor LRU cache performance metrics
+- **Input**: No parameters required
+- **Output**: JSON with cache statistics:
+  ```json
+  {
+    "cache_enabled": true,
+    "stats": {
+      "hits": 42,
+      "misses": 8,
+      "evictions": 3,
+      "current_size": 15,
+      "max_size": 1000,
+      "hit_rate_percent": 84.0
+    },
+    "message": "Cache statistics retrieved successfully"
+  }
+  ```
+- **Usage**: Call `get_cache_stats` tool to monitor cache health and performance
 
 ## Configuration
 
