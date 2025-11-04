@@ -12,18 +12,25 @@ import (
 
 // ComplaintService provides business logic for managing complaints
 type ComplaintService struct {
-	repo   repo.Repository
-	logger *log.Logger
-	tracer tracing.Tracer
+	repo         repo.Repository
+	docsRepo     *repo.DocsRepository
+	logger       *log.Logger
+	tracer       tracing.Tracer
 }
 
 // NewComplaintService creates a new complaint service
 func NewComplaintService(repo repo.Repository, tracer tracing.Tracer, logger *log.Logger) *ComplaintService {
 	return &ComplaintService{
-		repo:   repo,
-		logger: logger,
-		tracer: tracer,
+		repo:     repo,
+		logger:   logger,
+		tracer:   tracer,
+		// DocsRepository will be set by UpdateConfig method after config is loaded
 	}
+}
+
+// UpdateConfig updates service configuration including docs repository
+func (s *ComplaintService) UpdateConfig(docsDir, docsFormat string, docsEnabled bool) {
+	s.docsRepo = repo.NewDocsRepository(docsDir, docsFormat, docsEnabled, s.logger, s.tracer)
 }
 
 // CreateComplaint creates a new complaint
@@ -46,6 +53,14 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 	if err := s.repo.Save(ctx, complaint); err != nil {
 		logger.Error("Failed to save complaint", "error", err, "complaint_id", complaint.ID.String())
 		return nil, fmt.Errorf("failed to save complaint: %w", err)
+	}
+
+	// Export to documentation format (markdown by default)
+	if s.docsRepo != nil {
+		if err := s.docsRepo.ExportToDocs(complaint); err != nil {
+			logger.Warn("Failed to export complaint to documentation", "error", err, "complaint_id", complaint.ID.String())
+			// Don't fail the entire operation if docs export fails
+		}
 	}
 
 	logger.Info("Complaint created successfully", "complaint_id", complaint.ID.String())

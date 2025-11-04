@@ -42,8 +42,13 @@ type StorageConfig struct {
 	BaseDir    string `mapstructure:"base_dir" validate:"required"`
 	GlobalDir  string `mapstructure:"global_dir"`
 	MaxSize    int64  `mapstructure:"max_size" validate:"min=1024"`
-	Retention  int    `mapstructure:"retention_days" validate:"min=1"`
+	Retention  int    `mapstructure:"retention_days" validate:"min=0"` // 0 = infinite retention
 	AutoBackup bool   `mapstructure:"auto_backup"`
+
+	// Documentation storage configuration
+	DocsDir        string `mapstructure:"docs_dir"`
+	DocsEnabled    bool   `mapstructure:"docs_enabled"`
+	DocsFormat     string `mapstructure:"docs_format"` // "markdown", "html", "text"
 
 	// Cache configuration - JSON fields for Viper
 	CacheEnabled  bool   `mapstructure:"cache_enabled"`
@@ -141,8 +146,13 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("storage.base_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.global_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.max_size", 10485760) // 10MB
-	v.SetDefault("storage.retention_days", 30)
+	v.SetDefault("storage.retention_days", 0) // 0 = infinite retention
 	v.SetDefault("storage.auto_backup", true)
+
+	// Documentation storage defaults
+	v.SetDefault("storage.docs_dir", "docs/complaints") // Relative to project root
+	v.SetDefault("storage.docs_enabled", true)        // Enable markdown export by default
+	v.SetDefault("storage.docs_format", "markdown")    // Default to markdown format
 
 	// Cache defaults
 	v.SetDefault("storage.cache_enabled", true)
