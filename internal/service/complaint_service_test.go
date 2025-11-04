@@ -415,7 +415,7 @@ func TestComplaintService_ListComplaints(t *testing.T) {
 	ctx := context.Background()
 
 	// Create multiple complaints
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		_, err := svc.CreateComplaint(ctx,
 			"test-agent",
 			"test-session",

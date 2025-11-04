@@ -453,24 +453,6 @@ func (r *CachedRepository) WarmCache(ctx context.Context) error {
 	return nil
 }
 
-// warmCache (private) initializes LRU cache with existing complaint data
-func (r *CachedRepository) warmCache(ctx context.Context) {
-	logger := r.logger.With("component", "cached-repository")
-	logger.Info("Warming LRU cache with existing complaint data")
-
-	// Load all existing complaints into LRU cache
-	complaints, err := r.loadAllComplaintsFromDisk()
-	if err != nil {
-		logger.Error("Failed to warm LRU cache", "error", err)
-		return
-	}
-
-	for _, complaint := range complaints {
-		r.cache.Put(complaint.ID.String(), complaint)
-	}
-
-	logger.Info("LRU cache warmed successfully", "complaints_loaded", len(complaints))
-}
 
 // loadAllComplaintsFromDisk loads all complaints from disk (cache warm-up only)
 func (r *CachedRepository) loadAllComplaintsFromDisk() ([]*domain.Complaint, error) {

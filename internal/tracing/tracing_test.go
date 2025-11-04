@@ -13,7 +13,7 @@ func TestDefaultTracerConfig(t *testing.T) {
 
 	assert.NotNil(t, config)
 	assert.Equal(t, "complaints-mcp", config.ServiceName)
-	assert.Equal(t, "dev", config.Version)
+	assert.Equal(t, TracerTypeReal, config.Type)
 }
 
 func TestNewTracer(t *testing.T) {
@@ -24,7 +24,7 @@ func TestNewTracer(t *testing.T) {
 }
 
 func TestMockTracer(t *testing.T) {
-	tracer := NewMockTracer()
+	tracer := NewMockTracer("test-service")
 
 	assert.NotNil(t, tracer)
 
@@ -43,7 +43,7 @@ func TestMockTracer(t *testing.T) {
 
 func TestRealTracer(t *testing.T) {
 	config := DefaultTracerConfig()
-	tracer := NewRealTracer(config)
+	tracer := NewRealTracer(config.ServiceName)
 
 	assert.NotNil(t, tracer)
 
@@ -66,6 +66,6 @@ func TestRealTracer(t *testing.T) {
 
 func TestTracerInterface(t *testing.T) {
 	// Ensure both mock and real tracers implement the Tracer interface
-	var _ Tracer = NewMockTracer()
-	var _ Tracer = NewRealTracer(DefaultTracerConfig())
+	var _ Tracer = NewMockTracer("test-service")
+	var _ Tracer = NewRealTracer("test-service")
 }

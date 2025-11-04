@@ -180,26 +180,7 @@ func (c *Complaint) Validate() error {
 	return validate.Struct(c)
 }
 
-// ValidateLegacy performs legacy validation (kept for backward compatibility)
-func (c *Complaint) ValidateLegacy() error {
-	if c.AgentName == "" {
-		return fmt.Errorf("agent name is required")
-	}
 
-	if c.TaskDescription == "" {
-		return fmt.Errorf("task description is required")
-	}
-
-	if c.Severity == "" {
-		return fmt.Errorf("severity is required")
-	}
-
-	if !c.Severity.IsValid() {
-		return fmt.Errorf("invalid severity: %s", c.Severity)
-	}
-
-	return nil
-}
 
 // GetSummary returns a summary of the complaint
 func (c *Complaint) GetSummary() string {

@@ -169,7 +169,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			errors := make(chan error, 3)
 
 			// Start 3 goroutines trying to resolve the same complaint
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				go func() {
 					defer func() { done <- true }()
 					err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
@@ -178,12 +178,12 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			}
 
 			// Wait for all goroutines to complete
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				<-done
 			}
 
 			// Check that all operations completed without error
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				err := <-errors
 				Expect(err).NotTo(HaveOccurred())
 			}
