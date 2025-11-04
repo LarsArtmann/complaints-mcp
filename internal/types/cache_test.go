@@ -48,7 +48,7 @@ func TestNewCacheSize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := NewCacheSize(tt.size)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Equal(t, tt.expected, result) // Should return fallback value
@@ -120,7 +120,7 @@ func TestNewEvictionPolicy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := NewEvictionPolicy(tt.policy)
-			
+
 			if tt.expectError {
 				assert.Error(t, err)
 				assert.Equal(t, tt.expected, result) // Should return fallback value

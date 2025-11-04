@@ -453,7 +453,6 @@ func (r *CachedRepository) WarmCache(ctx context.Context) error {
 	return nil
 }
 
-
 // loadAllComplaintsFromDisk loads all complaints from disk (cache warm-up only)
 func (r *CachedRepository) loadAllComplaintsFromDisk() ([]*domain.Complaint, error) {
 	logger := r.logger.With("component", "cached-repository")

@@ -10,36 +10,36 @@ type ErrorCode string
 
 const (
 	// Domain errors
-	ErrCodeValidation     ErrorCode = "VALIDATION_ERROR"
-	ErrCodeNotFound       ErrorCode = "NOT_FOUND"
-	ErrCodeDuplicate      ErrorCode = "DUPLICATE_ERROR"
-	ErrCodeInvalidInput  ErrorCode = "INVALID_INPUT"
+	ErrCodeValidation   ErrorCode = "VALIDATION_ERROR"
+	ErrCodeNotFound     ErrorCode = "NOT_FOUND"
+	ErrCodeDuplicate    ErrorCode = "DUPLICATE_ERROR"
+	ErrCodeInvalidInput ErrorCode = "INVALID_INPUT"
 
 	// Repository errors
-	ErrCodeRepository     ErrorCode = "REPOSITORY_ERROR"
-	ErrCodeStorage       ErrorCode = "STORAGE_ERROR"
-	ErrCodeFileIO        ErrorCode = "FILE_IO_ERROR"
-	ErrCodeDatabase      ErrorCode = "DATABASE_ERROR"
+	ErrCodeRepository ErrorCode = "REPOSITORY_ERROR"
+	ErrCodeStorage    ErrorCode = "STORAGE_ERROR"
+	ErrCodeFileIO     ErrorCode = "FILE_IO_ERROR"
+	ErrCodeDatabase   ErrorCode = "DATABASE_ERROR"
 
 	// Service errors
-	ErrCodeService       ErrorCode = "SERVICE_ERROR"
-	ErrCodeBusiness      ErrorCode = "BUSINESS_ERROR"
-	ErrCodePermission    ErrorCode = "PERMISSION_ERROR"
+	ErrCodeService      ErrorCode = "SERVICE_ERROR"
+	ErrCodeBusiness     ErrorCode = "BUSINESS_ERROR"
+	ErrCodePermission   ErrorCode = "PERMISSION_ERROR"
 	ErrCodeUnauthorized ErrorCode = "UNAUTHORIZED_ERROR"
 
 	// System errors
-	ErrCodeInternal      ErrorCode = "INTERNAL_ERROR"
-	ErrCodeExternal      ErrorCode = "EXTERNAL_ERROR"
-	ErrCodeTimeout      ErrorCode = "TIMEOUT_ERROR"
-	ErrCodeUnavailable  ErrorCode = "UNAVAILABLE_ERROR"
-	ErrCodeRateLimit    ErrorCode = "RATE_LIMIT_ERROR"
+	ErrCodeInternal    ErrorCode = "INTERNAL_ERROR"
+	ErrCodeExternal    ErrorCode = "EXTERNAL_ERROR"
+	ErrCodeTimeout     ErrorCode = "TIMEOUT_ERROR"
+	ErrCodeUnavailable ErrorCode = "UNAVAILABLE_ERROR"
+	ErrCodeRateLimit   ErrorCode = "RATE_LIMIT_ERROR"
 )
 
 // AppError represents a structured application error
 type AppError struct {
 	Code       ErrorCode   `json:"code"`
 	Message    string      `json:"message"`
-	Details    interface{} `json:"details,omitempty"`
+	Details    any `json:"details,omitempty"`
 	Cause      error       `json:"-"`
 	HTTPStatus int         `json:"-"`
 }
@@ -79,7 +79,7 @@ func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError
 }
 
 // NewAppErrorWithDetails creates a new application error with details
-func NewAppErrorWithDetails(code ErrorCode, message string, details interface{}) *AppError {
+func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
 	return &AppError{
 		Code:       code,
@@ -101,7 +101,7 @@ func Wrap(err error, code ErrorCode, message string) *AppError {
 }
 
 // WrapDetails wraps an existing error with application context and details
-func WrapDetails(err error, code ErrorCode, message string, details interface{}) *AppError {
+func WrapDetails(err error, code ErrorCode, message string, details any) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
 	return &AppError{
 		Code:       code,
@@ -162,7 +162,7 @@ func NewValidationError(message string) *AppError {
 }
 
 // NewValidationErrorWithDetails creates a validation error with details
-func NewValidationErrorWithDetails(message string, details interface{}) *AppError {
+func NewValidationErrorWithDetails(message string, details any) *AppError {
 	return NewAppErrorWithDetails(ErrCodeValidation, message, details)
 }
 

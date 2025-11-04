@@ -102,10 +102,10 @@ func runServer(cmd *cobra.Command, args []string) error {
 	tracer := tracing.NewTracer(tracerConfig)
 	complaintRepo := repo.NewRepositoryFromConfig(cfg)
 	complaintService := service.NewComplaintService(complaintRepo, tracer, logger)
-	
+
 	// Configure documentation repository with settings from config
 	complaintService.UpdateConfig(cfg.Storage.DocsDir, cfg.Storage.DocsFormat, cfg.Storage.DocsEnabled)
-	
+
 	mcpServer := mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled

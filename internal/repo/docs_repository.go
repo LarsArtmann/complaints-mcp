@@ -11,12 +11,13 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/larsartmann/complaints-mcp/internal/types"
 )
 
 // DocsRepository handles exporting complaints to documentation formats
 type DocsRepository struct {
 	docsDir  string
-	format    string
+	format    types.DocsFormat
 	enabled   bool
 	logger    *log.Logger
 	tracer    tracing.Tracer
@@ -24,9 +25,16 @@ type DocsRepository struct {
 
 // NewDocsRepository creates a new documentation repository
 func NewDocsRepository(docsDir, format string, enabled bool, logger *log.Logger, tracer tracing.Tracer) *DocsRepository {
+	// Convert string to strong type
+	docsFormat := types.DocsFormat(format)
+	if !docsFormat.IsValid() {
+		logger.Warn("Invalid docs format, falling back to markdown", "format", format)
+		docsFormat = types.DocsFormatMarkdown
+	}
+	
 	return &DocsRepository{
 		docsDir: docsDir,
-		format:   format,
+		format:   docsFormat,
 		enabled:  enabled,
 		logger:   logger,
 		tracer:   tracer,
@@ -45,33 +53,20 @@ func (d *DocsRepository) ExportToDocs(complaint *domain.Complaint) error {
 	defer span.End()
 
 	switch d.format {
-	case "markdown":
+	case types.DocsFormatMarkdown:
 		return d.exportToMarkdown(complaint)
-	case "html":
+	case types.DocsFormatHTML:
 		return d.exportToHTML(complaint)
-	case "text":
+	case types.DocsFormatText:
 		return d.exportToText(complaint)
 	default:
 		return fmt.Errorf("unsupported documentation format: %s", d.format)
 	}
 }
 
-// GenerateDocsFilename generates human-readable documentation filename
+// GenerateDocsFilename generates human-readable documentation filename using strong types
 func (d *DocsRepository) GenerateDocsFilename(complaint *domain.Complaint) string {
-	timestamp := complaint.Timestamp.Format("2006-01-02_15-04-05")
-	sessionName := complaint.SessionName
-	if sessionName == "" {
-		sessionName = "no-session"
-	}
-	
-	// Sanitize session name for filename
-	sessionName = strings.ReplaceAll(sessionName, " ", "_")
-	sessionName = strings.ReplaceAll(sessionName, "/", "_")
-	sessionName = strings.ReplaceAll(sessionName, "..", "_")
-	sessionName = strings.ReplaceAll(sessionName, ":", "-")
-	sessionName = strings.ReplaceAll(sessionName, "\"", "")
-	
-	return fmt.Sprintf("%s-%s.md", timestamp, sessionName)
+	return types.GenerateFilename(complaint.Timestamp, complaint.SessionName, d.format)
 }
 
 // exportToMarkdown exports complaint to markdown format
@@ -136,7 +131,7 @@ func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 
 ---
 
-*This complaint was filed via the complaints-mcp system and is stored for infinite retention as documentation.*`
+*This complaint was filed via complaints-mcp system and is stored for infinite retention as documentation.*`
 
 	// Execute template
 	t, err := template.New("complaint").Parse(tmpl)
@@ -165,7 +160,7 @@ func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 // exportToHTML exports complaint to HTML format
 func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 	filename := d.GenerateDocsFilename(complaint)
-	filepath := filepath.Join(d.docsDir, strings.Replace(filename, ".md", ".html", 1))
+	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatHTML.FileExtension(), 1))
 	
 	// Ensure directory exists
 	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
@@ -195,13 +190,13 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
     </div>
     
     <div class="section">
-        <p><span class="field">Created:</span> {{.CreatedAt}}</p>
+        <p><span class="field">Created:</span> {{.Timestamp.Format "2006-01-02 15:04:05"}}</p>
         <p><span class="field">Session:</span> {{.SessionName}}</p>
         <p><span class="field">Severity:</span> {{.Severity}}</p>
         <p><span class="field">Project:</span> {{.ProjectName}}</p>
         {{if .Resolved}}
         <p><span class="field">Resolved By:</span> {{.ResolvedBy}}</p>
-        <p><span class="field">Resolved At:</span> {{.ResolvedAt}}</p>
+        <p><span class="field">Resolved At:</span> {{.ResolvedAt.Format "2006-01-02 15:04:05"}}</p>
         {{end}}
     </div>
     
@@ -233,15 +228,7 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
     <div class="section metadata">
         <h2>Metadata</h2>
         <p><span class="field">Complaint ID:</span> {{.ID}}</p>
-        <p><span class="field">Timestamp:</span> {{.Timestamp}}</p>
-        <p><span class="field">Created At:</span> {{.CreatedAt}}</p>
-        <p><span class="field">Updated At:</span> {{.UpdatedAt}}</p>
-        {{if .Metadata}}
-        <h3>Additional Metadata</h3>
-        {{range $key, $value := .Metadata}}
-        <p><span class="field">{{$key}}:</span> {{$value}}</p>
-        {{end}}
-        {{end}}
+        <p><span class="field">Timestamp:</span> {{.Timestamp.Format "2006-01-02T15:04:05Z07:00"}}</p>
     </div>
     
     <footer>
@@ -277,7 +264,7 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 // exportToText exports complaint to plain text format
 func (d *DocsRepository) exportToText(complaint *domain.Complaint) error {
 	filename := d.GenerateDocsFilename(complaint)
-	filepath := filepath.Join(d.docsDir, strings.Replace(filename, ".md", ".txt", 1))
+	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatText.FileExtension(), 1))
 	
 	// Ensure directory exists
 	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
@@ -288,13 +275,13 @@ func (d *DocsRepository) exportToText(complaint *domain.Complaint) error {
 	tmpl := `{{.AgentName}} Complaint
 =====================
 
-Created: {{.CreatedAt}}
+Created: {{.Timestamp.Format "2006-01-02 15:04:05"}}
 Session: {{.SessionName}}
 Severity: {{.Severity}}
 Project: {{.ProjectName}}
 Status: {{if .Resolved}}✅ Resolved{{else}}🔄 Open{{end}}
 {{if .Resolved}}Resolved By: {{.ResolvedBy}}
-Resolved At: {{.ResolvedAt}}{{end}}
+Resolved At: {{.ResolvedAt.Format "2006-01-02 15:04:05"}}{{end}}
 
 Task Description
 ----------------
@@ -319,14 +306,7 @@ Future Wishes
 Metadata
 ---------
 Complaint ID: {{.ID}}
-Timestamp: {{.Timestamp}}
-Created At: {{.CreatedAt}}
-Updated At: {{.UpdatedAt}}
-{{if .Metadata}}Additional Metadata:
-{{range $key, $value := .Metadata}}
-{{$key}}: {{$value}}
-{{end}}
-{{end}}
+Timestamp: {{.Timestamp.Format "2006-01-02T15:04:05Z07:00"}}
 
 This complaint was filed via the complaints-mcp system and is stored for infinite retention as documentation.
 `
@@ -361,7 +341,7 @@ func (d *DocsRepository) IsEnabled() bool {
 }
 
 // GetFormat returns the current documentation format
-func (d *DocsRepository) GetFormat() string {
+func (d *DocsRepository) GetFormat() types.DocsFormat {
 	return d.format
 }
 

@@ -180,8 +180,6 @@ func (c *Complaint) Validate() error {
 	return validate.Struct(c)
 }
 
-
-
 // GetSummary returns a summary of the complaint
 func (c *Complaint) GetSummary() string {
 	return fmt.Sprintf("[%s] %s - %s", c.Severity, c.AgentName, c.TaskDescription)

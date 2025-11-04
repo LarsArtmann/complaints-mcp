@@ -12,18 +12,18 @@ import (
 
 // ComplaintService provides business logic for managing complaints
 type ComplaintService struct {
-	repo         repo.Repository
-	docsRepo     *repo.DocsRepository
-	logger       *log.Logger
-	tracer       tracing.Tracer
+	repo     repo.Repository
+	docsRepo *repo.DocsRepository
+	logger   *log.Logger
+	tracer   tracing.Tracer
 }
 
 // NewComplaintService creates a new complaint service
 func NewComplaintService(repo repo.Repository, tracer tracing.Tracer, logger *log.Logger) *ComplaintService {
 	return &ComplaintService{
-		repo:     repo,
-		logger:   logger,
-		tracer:   tracer,
+		repo:   repo,
+		logger: logger,
+		tracer: tracer,
 		// DocsRepository will be set by UpdateConfig method after config is loaded
 	}
 }
