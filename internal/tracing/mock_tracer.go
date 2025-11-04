@@ -16,8 +16,8 @@ type Tracer interface {
 // Span defines the interface for a trace span
 type Span interface {
 	End()
-	AddEvent(ctx context.Context, event string, attributes map[string]interface{})
-	SetAttribute(ctx context.Context, key string, value interface{})
+	AddEvent(ctx context.Context, event string, attributes map[string]any)
+	SetAttribute(ctx context.Context, key string, value any)
 }
 
 // MockTracer provides a simple tracing implementation for development
@@ -71,7 +71,7 @@ func (s *MockSpan) End() {
 }
 
 // AddEvent adds an event to the current span
-func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[string]interface{}) {
+func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Trace event",
 		"tracer", s.tracer.name,
@@ -81,7 +81,7 @@ func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[st
 }
 
 // SetAttribute sets an attribute on the current span
-func (s *MockSpan) SetAttribute(ctx context.Context, key string, value interface{}) {
+func (s *MockSpan) SetAttribute(ctx context.Context, key string, value any) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Trace attribute set",
 		"tracer", s.tracer.name,
@@ -130,13 +130,13 @@ func (n *NoOpSpan) End() {
 }
 
 // AddEvent adds an event to the current span (no-op implementation)
-func (n *NoOpSpan) AddEvent(ctx context.Context, event string, attributes map[string]interface{}) {
+func (n *NoOpSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Trace event", "tracer", "noop", "event", event, "attributes", attributes)
 }
 
 // SetAttribute sets an attribute on the current span (no-op implementation)
-func (n *NoOpSpan) SetAttribute(ctx context.Context, key string, value interface{}) {
+func (n *NoOpSpan) SetAttribute(ctx context.Context, key string, value any) {
 	logger := log.FromContext(ctx)
 	logger.Debug("Trace attribute set", "tracer", "noop", "key", key, "value", value)
 }

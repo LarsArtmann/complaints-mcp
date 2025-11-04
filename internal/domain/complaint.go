@@ -24,16 +24,16 @@ const (
 	SeverityMedium   Severity = "medium"
 	SeverityHigh     Severity = "high"
 	SeverityCritical Severity = "critical"
-	
+
 	// Content validation limits
 	MaxAgentNameLength       = 100
-	MaxSessionNameLength      = 100
-	MaxTaskDescriptionLength  = 1000
-	MaxContextInfoLength      = 2000000  // 2MB for testing
-	MaxMissingInfoLength      = 2000000  // 2MB for testing  
-	MaxConfusedByLength       = 2000000  // 2MB for testing
-	MaxFutureWishesLength     = 2000000  // 2MB for testing
-	MaxProjectNameLength      = 100
+	MaxSessionNameLength     = 100
+	MaxTaskDescriptionLength = 1000
+	MaxContextInfoLength     = 2000000 // 2MB for testing
+	MaxMissingInfoLength     = 2000000 // 2MB for testing
+	MaxConfusedByLength      = 2000000 // 2MB for testing
+	MaxFutureWishesLength    = 2000000 // 2MB for testing
+	MaxProjectNameLength     = 100
 )
 
 // AllSeverities returns all valid severity levels
@@ -94,6 +94,9 @@ type Complaint struct {
 	Resolved   bool       `json:"resolved"`
 	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // ✅ Pointer: nil when not resolved
 	ResolvedBy string     `json:"resolved_by,omitempty"` // ✅ NEW: Who resolved it
+
+	// Thread safety for concurrent resolution attempts
+	mu sync.RWMutex `json:"-"` // Don't serialize mutex
 }
 
 // NewComplaint creates a new complaint with the given parameters
@@ -134,20 +137,37 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 	return complaint, nil
 }
 
-// Resolve marks a complaint as resolved - pure domain logic
+// Resolve marks a complaint as resolved - thread-safe with proper error handling
 func (c *Complaint) Resolve(resolvedBy string) error {
+	// Use write lock to ensure thread-safe resolution
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Check if already resolved (fixes issue #37)
 	if c.Resolved {
-		return fmt.Errorf("complaint already resolved")
+		return fmt.Errorf("complaint already resolved by %s at %s", c.ResolvedBy, c.ResolvedAt.Format(time.RFC3339))
 	}
+
+	// Validate resolver name
+	if resolvedBy == "" {
+		return fmt.Errorf("resolver name cannot be empty")
+	}
+
+	// Set resolution with timestamp
 	now := time.Now()
 	c.Resolved = true
 	c.ResolvedAt = &now       // Set resolution timestamp
 	c.ResolvedBy = resolvedBy // Set who resolved it
+
 	return nil
 }
 
 // IsResolved checks if the complaint is resolved
+// IsResolved checks if complaint is resolved - thread-safe
 func (c *Complaint) IsResolved() bool {
+	// Use read lock for thread-safe resolution status check
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.Resolved
 }
 

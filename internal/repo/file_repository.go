@@ -24,7 +24,7 @@ type Repository interface {
 	FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error)
 	Update(ctx context.Context, complaint *domain.Complaint) error
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
-	GetCacheStats() CacheStats // Optional - only CachedRepository implements
+	GetCacheStats() CacheStats           // Optional - only CachedRepository implements
 	WarmCache(ctx context.Context) error // Optional - warm cache with context support
 }
 

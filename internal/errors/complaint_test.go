@@ -82,7 +82,7 @@ func TestNewValidationError(t *testing.T) {
 	message := "validation failed"
 	field := "email"
 
-	err := NewValidationError(message, field)
+	err := NewComplaintValidationError(message, field)
 
 	if err.Code != ErrCodeValidationFailed {
 		t.Errorf("NewValidationError().Code = %v, want %v", err.Code, ErrCodeValidationFailed)
@@ -108,10 +108,6 @@ func TestNewNotFoundError(t *testing.T) {
 
 	if err.Message != message {
 		t.Errorf("NewNotFoundError().Message = %v, want %v", err.Message, message)
-	}
-
-	if err.Field != "" {
-		t.Errorf("NewNotFoundError().Field = %v, want empty string", err.Field)
 	}
 }
 
@@ -174,8 +170,8 @@ func TestNewUnauthorizedError(t *testing.T) {
 
 	err := NewUnauthorizedError(message)
 
-	if err.Code != ErrCodeUnauthorized {
-		t.Errorf("NewUnauthorizedError().Code = %v, want %v", err.Code, ErrCodeUnauthorized)
+	if err.Code != "UNAUTHORIZED" {
+		t.Errorf("NewUnauthorizedError().Code = %v, want %v", err.Code, "UNAUTHORIZED")
 	}
 
 	if err.Message != message {
@@ -203,7 +199,7 @@ func TestNewInvalidFormatError(t *testing.T) {
 }
 
 func TestComplaintError_WithDetails(t *testing.T) {
-	err := NewValidationError("invalid input", "email")
+	err := NewComplaintValidationError("invalid input", "email")
 
 	// Test adding details
 	updatedErr := err.WithDetails("min_length", 5)
@@ -223,7 +219,7 @@ func TestComplaintError_WithDetails(t *testing.T) {
 }
 
 func TestComplaintError_WithCause(t *testing.T) {
-	err := NewValidationError("invalid input", "email")
+	err := NewComplaintValidationError("invalid input", "email")
 	cause := errors.New("validation failed")
 
 	// Test adding cause

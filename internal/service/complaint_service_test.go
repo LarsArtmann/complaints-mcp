@@ -456,17 +456,17 @@ func TestComplaintService_ListComplaints(t *testing.T) {
 
 func TestComplaintService_GetCacheStats(t *testing.T) {
 	tests := []struct {
-		name           string
+		name            string
 		repositoryType  string
 		expectedMaxSize int64
 	}{
 		{
-			name:           "CachedRepository should return non-zero max size",
+			name:            "CachedRepository should return non-zero max size",
 			repositoryType:  "cached",
 			expectedMaxSize: 1000,
 		},
 		{
-			name:           "FileRepository should return zero max size",
+			name:            "FileRepository should return zero max size",
 			repositoryType:  "file",
 			expectedMaxSize: 0,
 		},

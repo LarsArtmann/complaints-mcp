@@ -23,13 +23,13 @@ func (cfg *RepositoryConfig) Normalize() error {
 		return fmt.Errorf("invalid cache size: %w", err)
 	}
 	cfg.StorageConfig.CacheSize = cacheSize
-	
+
 	evictionPolicy, err := types.NewEvictionPolicy(cfg.StorageConfig.CacheEviction)
 	if err != nil {
 		return fmt.Errorf("invalid eviction policy: %w", err)
 	}
 	cfg.StorageConfig.EvictionPolicy = evictionPolicy
-	
+
 	return nil
 }
 

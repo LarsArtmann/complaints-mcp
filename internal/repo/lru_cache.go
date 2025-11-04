@@ -9,11 +9,11 @@ import (
 
 // LRUCache implements a thread-safe Least Recently Used cache with O(1) operations
 type LRUCache struct {
-	maxSize  uint32
-	mu       sync.RWMutex
-	items    map[string]*list.Element // key -> list element (contains cacheEntry)
-	lruList  *list.List               // doubly-linked list for LRU tracking
-	metrics  *CacheMetrics
+	maxSize uint32
+	mu      sync.RWMutex
+	items   map[string]*list.Element // key -> list element (contains cacheEntry)
+	lruList *list.List               // doubly-linked list for LRU tracking
+	metrics *CacheMetrics
 }
 
 // cacheEntry represents a single cache entry with key and value
@@ -25,10 +25,10 @@ type cacheEntry struct {
 // NewLRUCache creates a new LRU cache with the specified maximum size
 func NewLRUCache(maxSize uint32) *LRUCache {
 	return &LRUCache{
-		maxSize:  maxSize,
-		items:    make(map[string]*list.Element),
-		lruList:  list.New(),
-		metrics:  NewCacheMetrics(int64(maxSize)),
+		maxSize: maxSize,
+		items:   make(map[string]*list.Element),
+		lruList: list.New(),
+		metrics: NewCacheMetrics(int64(maxSize)),
 	}
 }
 

@@ -71,7 +71,7 @@ func (rs *RealSpan) End() {
 	rs.span.End()
 }
 
-func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[string]interface{}) {
+func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
 	// Convert map[string]interface{} to attribute slice
 	attrs := make([]attribute.KeyValue, 0, len(attributes))
 	for k, v := range attributes {
@@ -80,6 +80,6 @@ func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[s
 	rs.span.AddEvent(event, trace.WithAttributes(attrs...))
 }
 
-func (rs *RealSpan) SetAttribute(ctx context.Context, key string, value interface{}) {
+func (rs *RealSpan) SetAttribute(ctx context.Context, key string, value any) {
 	rs.span.SetAttributes(attribute.String(key, fmt.Sprintf("%v", value)))
 }

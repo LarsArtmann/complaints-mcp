@@ -46,11 +46,11 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 			It("should return cache performance statistics", func(ctx SpecContext) {
 				// Arrange - File some complaints to populate cache
 				complaint1, err := complaintService.CreateComplaint(ctx,
-					"Agent 1", "session-1", "Test cache functionality", 
+					"Agent 1", "session-1", "Test cache functionality",
 					"Context info", "Missing info", "Confused by", "Future wishes",
 					domain.SeverityLow, "")
 				Expect(err).NotTo(HaveOccurred())
-				
+
 				complaint2, err := complaintService.CreateComplaint(ctx,
 					"Agent 2", "session-2", "Test cache hit tracking",
 					"More context", "More missing", "More confusion", "More wishes",
@@ -72,7 +72,7 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 				_, err = complaintService.GetComplaint(ctx, complaint2.ID)
 				Expect(err).NotTo(HaveOccurred())
-				
+
 				// Create additional hits
 				_, err = complaintService.GetComplaint(ctx, complaint1.ID)
 				Expect(err).NotTo(HaveOccurred())
@@ -145,7 +145,7 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				stats := complaintService.GetCacheStats()
 
 				// Assert - Verify tracking accuracy (all hits since cached from creation)
-				Expect(stats.Hits + stats.Misses).To(Equal(int64(3)), "Should have 3 total lookups")
+				Expect(stats.Hits+stats.Misses).To(Equal(int64(3)), "Should have 3 total lookups")
 				Expect(stats.Hits).To(Equal(int64(3)), "Should have 3 hits (all accesses)")
 				Expect(stats.Misses).To(Equal(int64(0)), "Should have 0 misses (cached from creation)")
 				Expect(stats.HitRate).To(Equal(float64(100.0)), "Hit rate should be 100%")

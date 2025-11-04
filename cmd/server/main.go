@@ -109,7 +109,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		logger.Info("Warming complaint cache with timeout")
 		cacheCtx, cacheCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cacheCancel()
-		
+
 		if err := complaintRepo.WarmCache(cacheCtx); err != nil {
 			logger.Warn("Failed to warm complaint cache", "error", err)
 			// Continue anyway - cache will populate lazily

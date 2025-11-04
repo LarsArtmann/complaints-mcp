@@ -57,7 +57,10 @@ func (b BaseRepository) EnsureDir() error {
 func (b BaseRepository) GenerateFilePath(complaint *domain.Complaint) string {
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04-05")
 	if complaint.SessionName != "" {
-		safeSessionName := strings.ReplaceAll(complaint.SessionName, " ", "_")
+		// Sanitize session name to prevent path traversal attacks
+		safeSessionName := filepath.Base(complaint.SessionName) // Remove any directory components
+		safeSessionName = strings.ReplaceAll(safeSessionName, " ", "_")
+		safeSessionName = strings.ReplaceAll(safeSessionName, "..", "_") // Remove path traversal
 		safeSessionName = strings.ReplaceAll(safeSessionName, "/", "_")
 		return filepath.Join(b.baseDir, fmt.Sprintf("%s-%s.json", timestamp, safeSessionName))
 	}

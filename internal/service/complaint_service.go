@@ -112,6 +112,12 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 		return fmt.Errorf("complaint not found: %s", id.String())
 	}
 
+	// Check if already resolved (for idempotency)
+	if complaint.IsResolved() {
+		logger.Info("Complaint already resolved, returning success for idempotency", "resolved_by", complaint.ResolvedBy, "resolved_at", complaint.ResolvedAt)
+		return nil
+	}
+
 	if err := complaint.Resolve(resolvedBy); err != nil {
 		logger.Error("failed to resolve complaint", "error", err, "complaint_id", id.String())
 		return fmt.Errorf("failed to resolve complaint: %w", err)

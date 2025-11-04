@@ -6,11 +6,11 @@ import (
 
 // ComplaintError represents a complaint-related error with structured information
 type ComplaintError struct {
-	Code    string                 `json:"code"`
-	Message string                 `json:"message"`
-	Field   string                 `json:"field,omitempty"`
+	Code    string         `json:"code"`
+	Message string         `json:"message"`
+	Field   string         `json:"field,omitempty"`
 	Details map[string]any `json:"details,omitempty"`
-	Cause   error                  `json:"-"`
+	Cause   error          `json:"-"`
 }
 
 func (e *ComplaintError) Error() string {
@@ -24,13 +24,10 @@ func (e *ComplaintError) Unwrap() error {
 	return e.Cause
 }
 
-// Predefined error codes
+// Predefined error codes specific to complaints
 const (
 	ErrCodeValidationFailed = "VALIDATION_FAILED"
-	ErrCodeNotFound         = "NOT_FOUND"
-	ErrCodeDuplicate        = "DUPLICATE"
 	ErrCodeStorageError     = "STORAGE_ERROR"
-	ErrCodeUnauthorized     = "UNAUTHORIZED"
 	ErrCodeInvalidFormat    = "INVALID_FORMAT"
 )
 
@@ -44,19 +41,9 @@ func NewComplaintError(code, message, field string) *ComplaintError {
 	}
 }
 
-// NewValidationError creates a validation error
-func NewValidationError(message, field string) *ComplaintError {
+// NewComplaintValidationError creates a validation error for complaints
+func NewComplaintValidationError(message, field string) *ComplaintError {
 	return NewComplaintError(ErrCodeValidationFailed, message, field)
-}
-
-// NewNotFoundError creates a not found error
-func NewNotFoundError(message string) *ComplaintError {
-	return NewComplaintError(ErrCodeNotFound, message, "")
-}
-
-// NewDuplicateError creates a duplicate error
-func NewDuplicateError(message string) *ComplaintError {
-	return NewComplaintError(ErrCodeDuplicate, message, "")
 }
 
 // NewStorageError creates a storage error with optional cause
@@ -70,7 +57,7 @@ func NewStorageError(message string, cause ...error) *ComplaintError {
 
 // NewUnauthorizedError creates an unauthorized error
 func NewUnauthorizedError(message string) *ComplaintError {
-	return NewComplaintError(ErrCodeUnauthorized, message, "")
+	return NewComplaintError("UNAUTHORIZED", message, "")
 }
 
 // NewInvalidFormatError creates an invalid format error

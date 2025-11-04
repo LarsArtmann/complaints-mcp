@@ -53,18 +53,35 @@ deps:
 install-tools:
     go install github.com/mibk/dupl@latest
     go install github.com/cucumber/godog/cmd/godog@latest
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-# Find code duplicates using dupl (threshold: 15 tokens)
+# Find code duplicates using jscpd (modern, multi-language tool)
 fd:
-    @if ! command -v dupl >/dev/null 2>&1; then \
-        echo "dupl not found. Install with: just install-tools"; \
-        exit 1; \
-    fi
-    dupl -t 15 .
+	@if ! command -v jscpd >/dev/null 2>&1; then \
+		echo "jscpd not found. Install with: npm install -g jscpd"; \
+		exit 1; \
+	fi
+	jscpd . --threshold 15 --format console
 
-# Find code duplicates with higher threshold (more strict)
+# Find code duplicates using jscpd with strict threshold
 fd-strict:
-    dupl -t 50 .
+	jscpd . --threshold 50 --format console
+
+# Legacy alias for backwards compatibility (uses dupl)
+fd-legacy:
+	@if ! command -v dupl >/dev/null 2>&1; then \
+		echo "dupl not found. Install with: go install github.com/mibk/dupl@latest"; \
+		exit 1; \
+	fi
+	dupl -t 15 .
+
+# Find code duplicates using golangci-lint dupl (alternative)
+fd-golangci:
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "golangci-lint not found. Install from https://golangci-lint.run/"; \
+		exit 1; \
+	fi
+	golangci-lint run --enable-only=dupl
 
 # Run comprehensive code quality checks
 quality: fmt lint test fd
@@ -103,8 +120,10 @@ help:
     @echo "  fmt            - Format code with gofmt"
     @echo "  deps           - Install dependencies"
     @echo "  install-tools  - Install development tools"
-    @echo "  fd             - Find code duplicates (dupl)"
-    @echo "  fd-strict      - Find duplicates with strict threshold"
+    @echo "  fd             - Find code duplicates (jscpd)"
+    @echo "  fd-strict      - Find duplicates with strict threshold (jscpd)"
+    @echo "  fd-legacy      - Find duplicates using legacy dupl"
+    @echo "  fd-golangci    - Find duplicates using golangci-lint"
     @echo "  quality        - Run comprehensive code quality checks"
     @echo "  ci             - Run full CI pipeline"
     @echo "  dev            - Run development server"

@@ -46,13 +46,13 @@ type StorageConfig struct {
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
 	// Cache configuration - JSON fields for Viper
-	CacheEnabled   bool    `mapstructure:"cache_enabled"`
-	CacheMaxSize   int64   `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
-	CacheEviction  string  `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
-	
+	CacheEnabled  bool   `mapstructure:"cache_enabled"`
+	CacheMaxSize  int64  `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
+	CacheEviction string `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
+
 	// Type-safe fields for internal use (populated in postProcessConfig)
-	CacheSize       types.CacheSize          `mapstructure:"-"` // derived from CacheMaxSize
-	EvictionPolicy  types.CacheEvictionPolicy `mapstructure:"-"` // derived from CacheEviction
+	CacheSize      types.CacheSize           `mapstructure:"-"` // derived from CacheMaxSize
+	EvictionPolicy types.CacheEvictionPolicy `mapstructure:"-"` // derived from CacheEviction
 }
 
 // LogConfig represents logging configuration
@@ -225,7 +225,7 @@ func validateConfig(cfg *Config) error {
 
 	// Populate type-safe cache configuration
 	cfg.Storage.CacheSize = types.MustNewCacheSize(uint32(cfg.Storage.CacheMaxSize))
-	
+
 	evictionPolicy, err := types.NewEvictionPolicy(cfg.Storage.CacheEviction)
 	if err != nil {
 		return fmt.Errorf("invalid cache eviction policy: %w", err)

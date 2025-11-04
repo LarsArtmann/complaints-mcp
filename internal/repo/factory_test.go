@@ -78,7 +78,7 @@ func TestNewRepository(t *testing.T) {
 			// Arrange
 			err := tt.config.Normalize()
 			require.NoError(t, err)
-			
+
 			// Act
 			repo := NewRepository(tt.config)
 
@@ -193,8 +193,8 @@ func TestRepositoryTypePriority(t *testing.T) {
 	config := RepositoryConfig{
 		BaseDir: t.TempDir(),
 		StorageConfig: config.StorageConfig{
-			CacheEnabled: true,  // This should be ignored
-			CacheMaxSize: 1000,  // This should be ignored
+			CacheEnabled: true, // This should be ignored
+			CacheMaxSize: 1000, // This should be ignored
 		},
 		Type: "file", // This should win
 	}
@@ -225,7 +225,7 @@ func TestCacheSizeValidation(t *testing.T) {
 		{"invalid_too_large_size", 100001, true},
 	}
 
-			for _, tt := range tests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// For now, we test that validation works via repository creation
 			// validation is handled at config load time
@@ -255,14 +255,14 @@ func TestCacheConfigurationIntegration(t *testing.T) {
 
 	// Test creating repository with different cache sizes
 	testSizes := []int64{10, 100, 1000, 10000}
-	
+
 	for _, cacheSize := range testSizes {
 		t.Run("cache_size_"+string(rune(cacheSize)), func(t *testing.T) {
 			config := &config.Config{
 				Storage: config.StorageConfig{
-					BaseDir:      t.TempDir(),
-					CacheEnabled: true,
-					CacheMaxSize: cacheSize,
+					BaseDir:       t.TempDir(),
+					CacheEnabled:  true,
+					CacheMaxSize:  cacheSize,
 					CacheEviction: "lru",
 				},
 			}

@@ -279,9 +279,9 @@ type SearchComplaintsOutput struct {
 }
 
 type GetCacheStatsOutput struct {
-	CacheEnabled bool          `json:"cache_enabled"`
-	Stats       repo.CacheStats `json:"stats"`
-	Message     string        `json:"message"`
+	CacheEnabled bool            `json:"cache_enabled"`
+	Stats        repo.CacheStats `json:"stats"`
+	Message      string          `json:"message"`
 }
 
 // handleFileComplaint handles the file_complaint tool
@@ -463,7 +463,7 @@ func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRe
 	logger.Info("Handling get cache stats request")
 
 	stats := m.service.GetCacheStats()
-	
+
 	// Determine if cache is enabled (non-zero max size indicates cached repository)
 	cacheEnabled := stats.MaxSize > 0
 	message := "Cache statistics retrieved successfully"
@@ -473,11 +473,11 @@ func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRe
 
 	output := GetCacheStatsOutput{
 		CacheEnabled: cacheEnabled,
-		Stats:       stats,
-		Message:     message,
+		Stats:        stats,
+		Message:      message,
 	}
 
-	logger.Info("Cache stats retrieved successfully", 
+	logger.Info("Cache stats retrieved successfully",
 		"cache_enabled", cacheEnabled,
 		"hit_rate", stats.HitRate,
 		"current_size", stats.CurrentSize,
