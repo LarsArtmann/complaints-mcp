@@ -214,9 +214,8 @@ func validateConfig(cfg *Config) error {
 		return fmt.Errorf("storage.max_size must be positive")
 	}
 
-	if cfg.Storage.Retention <= 0 {
-		return fmt.Errorf("storage.retention_days must be positive")
-	}
+	// Storage configuration validation (0 = infinite retention is valid)
+	// No validation needed for Retention as 0 is allowed for infinite retention
 
 	// Cache configuration validation
 	validEvictionPolicies := []string{"lru", "fifo", "none"}

@@ -196,7 +196,7 @@ func BenchmarkConfigValidation(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := range b.N {
+	for range b.N {
 		if err := validateConfig(cfg); err != nil {
 			b.Fatalf("Validation failed: %v", err)
 		}
