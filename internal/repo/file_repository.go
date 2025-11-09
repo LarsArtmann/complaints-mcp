@@ -456,7 +456,7 @@ func (r *CachedRepository) WarmCache(ctx context.Context) error {
 // loadAllComplaintsFromDisk loads all complaints from disk (cache warm-up only)
 func (r *CachedRepository) loadAllComplaintsFromDisk() ([]*domain.Complaint, error) {
 	logger := r.logger.With("component", "cached-repository")
-	logger.Debug("Loading all complaints from disk for cache warm-up")
+	logger.Info("Loading all complaints from disk for cache warm-up", "base_dir", r.baseDir)
 
 	entries, err := os.ReadDir(r.baseDir)
 	if err != nil {
@@ -488,7 +488,7 @@ func (r *CachedRepository) loadAllComplaintsFromDisk() ([]*domain.Complaint, err
 		complaints = append(complaints, complaint)
 	}
 
-	logger.Info("Complaints loaded from disk successfully", "count", len(complaints))
+	logger.Info("Complaints loaded from disk successfully", "base_dir", r.baseDir, "count", len(complaints))
 	return complaints, nil
 }
 

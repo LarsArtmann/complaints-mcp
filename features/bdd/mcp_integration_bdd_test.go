@@ -53,7 +53,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 				BaseDir:    tempDir,
 				GlobalDir:  tempDir,
 				MaxSize:    10485760, // 10MB
-				Retention:  30,
+				Retention:  uint(30),
 				AutoBackup: true,
 			},
 			Log: config.LogConfig{
@@ -163,7 +163,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 					BaseDir:    tempDir,
 					GlobalDir:  tempDir,
 					MaxSize:    20971520, // 20MB
-					Retention:  60,
+					Retention:  uint(60),
 					AutoBackup: false,
 				},
 				Log: config.LogConfig{

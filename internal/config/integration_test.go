@@ -15,9 +15,9 @@ func TestLoadConfigSuccess(t *testing.T) {
 	v.Set("server.port", 8080)
 	v.Set("storage.base_dir", "/tmp/test")
 	v.Set("storage.max_size", 1048576) // 1MB
-	v.Set("storage.retention_days", 30)
+	v.Set("storage.retention_days", uint(30))
 	v.Set("storage.max_size", 1048576) // 1MB
-	v.Set("storage.retention_days", 30)
+	v.Set("storage.retention_days", uint(30))
 	v.Set("storage.max_size", 1048576) // 1MB
 	v.Set("storage.cache_enabled", true)
 	v.Set("storage.cache_max_size", 100)
@@ -125,7 +125,7 @@ func TestCacheEvictionPolicyValidation(t *testing.T) {
 				Storage: StorageConfig{
 					BaseDir:       "/tmp",
 					MaxSize:       1048576,
-					Retention:     30,
+					Retention:     uint(30),
 					CacheEviction: tt.policy,
 					CacheMaxSize:  100,
 				},
@@ -150,7 +150,7 @@ func TestConfigIntegration(t *testing.T) {
 	v.Set("storage.base_dir", "/tmp/integration")
 	v.Set("storage.global_dir", "/tmp/integration-global")
 	v.Set("storage.max_size", 5242880) // 5MB
-	v.Set("storage.retention_days", 60)
+	v.Set("storage.retention_days", uint(60))
 	v.Set("storage.auto_backup", true)
 	v.Set("storage.cache_enabled", true)
 	v.Set("storage.cache_max_size", 200)
@@ -173,7 +173,7 @@ func TestConfigIntegration(t *testing.T) {
 	assert.Equal(t, "/tmp/integration", cfg.Storage.BaseDir)
 	assert.Equal(t, "/tmp/integration-global", cfg.Storage.GlobalDir)
 	assert.Equal(t, int64(5242880), cfg.Storage.MaxSize)
-	assert.Equal(t, 60, cfg.Storage.Retention)
+	assert.Equal(t, uint(60), cfg.Storage.Retention)
 	assert.True(t, cfg.Storage.AutoBackup)
 	assert.True(t, cfg.Storage.CacheEnabled)
 	assert.Equal(t, int64(200), cfg.Storage.CacheMaxSize)

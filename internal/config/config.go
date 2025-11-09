@@ -42,7 +42,7 @@ type StorageConfig struct {
 	BaseDir    string `mapstructure:"base_dir" validate:"required"`
 	GlobalDir  string `mapstructure:"global_dir"`
 	MaxSize    int64  `mapstructure:"max_size" validate:"min=1024"`
-	Retention  int    `mapstructure:"retention_days" validate:"min=0"` // 0 = infinite retention
+	Retention  uint   `mapstructure:"retention_days"` // 0 = infinite retention
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
 	// Documentation storage configuration
@@ -146,7 +146,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("storage.base_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.global_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.max_size", 10485760) // 10MB
-	v.SetDefault("storage.retention_days", 0)  // 0 = infinite retention
+	v.SetDefault("storage.retention_days", uint(0))  // 0 = infinite retention
 	v.SetDefault("storage.auto_backup", true)
 
 	// Documentation storage defaults

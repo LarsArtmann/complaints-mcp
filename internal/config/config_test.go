@@ -50,7 +50,7 @@ func TestConfig_StorageConfig(t *testing.T) {
 		BaseDir:    "/tmp/complaints",
 		GlobalDir:  "/tmp/global",
 		MaxSize:    1024 * 1024, // 1MB
-		Retention:  30,
+		Retention:  uint(30),
 		AutoBackup: true,
 	}
 
@@ -58,7 +58,7 @@ func TestConfig_StorageConfig(t *testing.T) {
 	require.Equal(t, "/tmp/complaints", storageConfig.BaseDir)
 	require.Equal(t, "/tmp/global", storageConfig.GlobalDir)
 	require.Equal(t, int64(1024*1024), storageConfig.MaxSize)
-	require.Equal(t, 30, storageConfig.Retention)
+	require.Equal(t, uint(30), storageConfig.Retention)
 	require.True(t, storageConfig.AutoBackup)
 }
 
@@ -88,7 +88,7 @@ func TestConfig_CompleteConfig(t *testing.T) {
 			BaseDir:    "/data/complaints",
 			GlobalDir:  "/data/global",
 			MaxSize:    10 * 1024 * 1024, // 10MB
-			Retention:  90,
+			Retention:  uint(90),
 			AutoBackup: false,
 		},
 		Log: config.LogConfig{
@@ -106,7 +106,7 @@ func TestConfig_CompleteConfig(t *testing.T) {
 	require.Equal(t, "/data/complaints", cfg.Storage.BaseDir)
 	require.Equal(t, "/data/global", cfg.Storage.GlobalDir)
 	require.Equal(t, int64(10*1024*1024), cfg.Storage.MaxSize)
-	require.Equal(t, 90, cfg.Storage.Retention)
+	require.Equal(t, uint(90), cfg.Storage.Retention)
 	require.False(t, cfg.Storage.AutoBackup)
 
 	require.Equal(t, "debug", cfg.Log.Level)
