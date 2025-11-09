@@ -253,9 +253,9 @@ func TestLRUCache_ConcurrentAccess(t *testing.T) {
 	done := make(chan bool)
 
 	// Writer goroutines
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(id int) {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				c := &domain.Complaint{
 					ID:              mustNewComplaintID(),
 					AgentName:       "Agent",
@@ -269,9 +269,9 @@ func TestLRUCache_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Reader goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		go func() {
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				cache.GetAll()
 			}
 			done <- true
@@ -279,7 +279,7 @@ func TestLRUCache_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		<-done
 	}
 

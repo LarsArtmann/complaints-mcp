@@ -37,11 +37,11 @@ const (
 
 // AppError represents a structured application error
 type AppError struct {
-	Code       ErrorCode   `json:"code"`
-	Message    string      `json:"message"`
-	Details    any `json:"details,omitempty"`
-	Cause      error       `json:"-"`
-	HTTPStatus int         `json:"-"`
+	Code       ErrorCode `json:"code"`
+	Message    string    `json:"message"`
+	Details    any       `json:"details,omitempty"`
+	Cause      error     `json:"-"`
+	HTTPStatus int       `json:"-"`
 }
 
 // Error implements the error interface

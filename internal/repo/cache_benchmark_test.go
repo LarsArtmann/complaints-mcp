@@ -43,7 +43,7 @@ func BenchmarkCachePerformance(b *testing.B) {
 	b.ResetTimer()
 
 	b.Run("Legacy_Repository_Lookup", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for i := 0; b.Loop(); i++ {
 			id := complaintIDs[i%numComplaints]
 			_, err := legacyRepo.FindByID(ctx, id)
 			require.NoError(b, err)
@@ -51,7 +51,7 @@ func BenchmarkCachePerformance(b *testing.B) {
 	})
 
 	b.Run("Cached_Repository_Lookup", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for i := 0; b.Loop(); i++ {
 			id := complaintIDs[i%numComplaints]
 			_, err := cachedRepo.FindByID(ctx, id)
 			require.NoError(b, err)
@@ -88,7 +88,7 @@ func TestCachePerformanceRegression(t *testing.T) {
 	// Benchmark legacy repository
 	numLookups := 100
 	start := time.Now()
-	for i := 0; i < numLookups; i++ {
+	for i := range numLookups {
 		id := complaintIDs[i%numComplaints]
 		_, err := legacyRepo.FindByID(ctx, id)
 		require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestCachePerformanceRegression(t *testing.T) {
 
 	// Benchmark cached repository
 	start = time.Now()
-	for i := 0; i < numLookups; i++ {
+	for i := range numLookups {
 		id := complaintIDs[i%numComplaints]
 		_, err := cachedRepo.FindByID(ctx, id)
 		require.NoError(t, err)
@@ -146,12 +146,12 @@ func TestConcurrentCacheAccess(t *testing.T) {
 	start := time.Now()
 
 	// Launch concurrent goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		wg.Add(1)
 		go func(goroutineID int) {
 			defer wg.Done()
 
-			for j := 0; j < numOperationsPerGoroutine; j++ {
+			for j := range numOperationsPerGoroutine {
 				complaintID := complaints[j%numComplaints].ID
 
 				// Mix of reads and writes
@@ -282,7 +282,7 @@ func TestCacheMetricsAccuracy(t *testing.T) {
 func generateTestComplaints(count int) []*domain.Complaint {
 	complaints := make([]*domain.Complaint, count)
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		id, _ := domain.NewComplaintID()
 		complaints[i] = &domain.Complaint{
 			ID:              id,

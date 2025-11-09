@@ -153,7 +153,7 @@ var _ = Describe("FileRepository", func() {
 	Context("Complaint Listing", func() {
 		BeforeEach(func() {
 			// Create multiple complaints
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				complaintID, err := domain.NewComplaintID()
 				Expect(err).NotTo(HaveOccurred())
 
@@ -262,7 +262,7 @@ var _ = Describe("FileRepository", func() {
 			Expect(len(files)).To(Equal(1), "Should have exactly one file after initial save")
 
 			// Update complaint multiple times
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				savedComplaint.TaskDescription = fmt.Sprintf("Updated task %d", i)
 				savedComplaint.Resolved = (i%2 == 0)
 

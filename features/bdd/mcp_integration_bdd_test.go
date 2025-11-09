@@ -215,7 +215,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			const numComplaints = 10
 			complaintIDs := []domain.ComplaintID{}
 
-			for i := 0; i < numComplaints; i++ {
+			for i := range numComplaints {
 				complaint, err := complaintService.CreateComplaint(ctx,
 					fmt.Sprintf("Test Agent %d", i),
 					fmt.Sprintf("perf-session-%d", i),

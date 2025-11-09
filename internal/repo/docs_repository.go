@@ -16,11 +16,11 @@ import (
 
 // DocsRepository handles exporting complaints to documentation formats
 type DocsRepository struct {
-	docsDir  string
-	format    types.DocsFormat
-	enabled   bool
-	logger    *log.Logger
-	tracer    tracing.Tracer
+	docsDir string
+	format  types.DocsFormat
+	enabled bool
+	logger  *log.Logger
+	tracer  tracing.Tracer
 }
 
 // NewDocsRepository creates a new documentation repository
@@ -31,13 +31,13 @@ func NewDocsRepository(docsDir, format string, enabled bool, logger *log.Logger,
 		logger.Warn("Invalid docs format, falling back to markdown", "format", format)
 		docsFormat = types.DocsFormatMarkdown
 	}
-	
+
 	return &DocsRepository{
 		docsDir: docsDir,
-		format:   docsFormat,
-		enabled:  enabled,
-		logger:   logger,
-		tracer:   tracer,
+		format:  docsFormat,
+		enabled: enabled,
+		logger:  logger,
+		tracer:  tracer,
 	}
 }
 
@@ -73,7 +73,7 @@ func (d *DocsRepository) GenerateDocsFilename(complaint *domain.Complaint) strin
 func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 	filename := d.GenerateDocsFilename(complaint)
 	filepath := filepath.Join(d.docsDir, filename)
-	
+
 	// Ensure directory exists
 	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
 		d.logger.Error("Failed to create docs directory", "error", err, "path", d.docsDir)
@@ -149,8 +149,8 @@ func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 		return fmt.Errorf("failed to execute markdown template: %w", err)
 	}
 
-	d.logger.Info("Complaint exported to documentation", 
-		"format", "markdown", 
+	d.logger.Info("Complaint exported to documentation",
+		"format", "markdown",
 		"file", filepath,
 		"complaint_id", complaint.ID.String())
 
@@ -161,7 +161,7 @@ func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 	filename := d.GenerateDocsFilename(complaint)
 	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatHTML.FileExtension(), 1))
-	
+
 	// Ensure directory exists
 	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create docs directory: %w", err)
@@ -253,8 +253,8 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 		return fmt.Errorf("failed to execute HTML template: %w", err)
 	}
 
-	d.logger.Info("Complaint exported to documentation", 
-		"format", "html", 
+	d.logger.Info("Complaint exported to documentation",
+		"format", "html",
 		"file", filepath,
 		"complaint_id", complaint.ID.String())
 
@@ -265,7 +265,7 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 func (d *DocsRepository) exportToText(complaint *domain.Complaint) error {
 	filename := d.GenerateDocsFilename(complaint)
 	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatText.FileExtension(), 1))
-	
+
 	// Ensure directory exists
 	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create docs directory: %w", err)
@@ -327,8 +327,8 @@ This complaint was filed via the complaints-mcp system and is stored for infinit
 		return fmt.Errorf("failed to execute text template: %w", err)
 	}
 
-	d.logger.Info("Complaint exported to documentation", 
-		"format", "text", 
+	d.logger.Info("Complaint exported to documentation",
+		"format", "text",
 		"file", filepath,
 		"complaint_id", complaint.ID.String())
 

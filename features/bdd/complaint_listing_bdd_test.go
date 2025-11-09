@@ -168,7 +168,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter", func(ctx SpecContext) {
 			// Create more complaints of same severity for testing limit
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				_, err := complaintService.CreateComplaint(ctx,
 					"Test Agent",
 					"limit-test",
@@ -226,7 +226,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter for project filtering", func(ctx SpecContext) {
 			// Create more complaints for auth-project
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				_, err := complaintService.CreateComplaint(ctx,
 					"Test Agent",
 					"project-limit-test",
@@ -354,7 +354,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter for search", func(ctx SpecContext) {
 			// Create complaints with common term
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				_, err := complaintService.CreateComplaint(ctx,
 					"Search Test Agent",
 					"search-session",

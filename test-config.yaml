@@ -1,0 +1,10 @@
+storage:
+  base_dir: "./test-data/complaints"
+  docs_dir: "./test-data/docs"
+  cache_enabled: true
+  cache_max_size: 100
+  docs_enabled: true
+  docs_format: "markdown"
+
+log:
+  level: "debug"

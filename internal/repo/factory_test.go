@@ -16,7 +16,7 @@ func TestNewRepository(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         RepositoryConfig
-		expectedType   interface{}
+		expectedType   any
 		expectedCached bool
 	}{
 		{
@@ -104,7 +104,7 @@ func TestNewRepositoryFromConfig(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         *config.Config
-		expectedType   interface{}
+		expectedType   any
 		expectedCached bool
 	}{
 		{
