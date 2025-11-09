@@ -31,7 +31,7 @@ graph TB
     end
     
     subgraph "Data Storage Layer"
-        CacheLayer[LRU Cache<br/>O(1) Memory Access]
+        CacheLayer["LRU Cache<br/>O(1) Memory Access"]
         FileStorage[JSON Files<br/>Persistent Storage]
         DocsExport[Documentation<br/>Multi-format Export]
     end
@@ -406,16 +406,16 @@ graph LR
     end
     
     subgraph "Real-time Metrics"
-        HitRate[Hit Rate %<br/>Hits/(Hits+Misses)]
+        HitRate["Hit Rate %<br/>Hits/(Hits+Misses)"]
         CurrentSize[Current Size<br/>Items in Cache]
         MemoryUsage[Memory Usage<br/>Total Cached Data]
         Throughput[Throughput<br/>Ops/Second]
     end
     
     subgraph "Performance Impact"
-        LatencyReduction[Latency Reduction<br/>~1000x for Hits]
+        LatencyReduction["Latency Reduction<br/>~1000x for Hits"]
         DiskIO[Reduced Disk I/O<br/>Only for Misses]
-        ResponseTime[Response Time<br/>O(1) vs O(n)]
+        ResponseTime["Response Time<br/>O(1) vs O(n)"]
         ResourceUsage[Resource Usage<br/>Memory vs CPU Trade-off]
     end
     
@@ -629,7 +629,7 @@ graph LR
     end
     
     subgraph "Optimization Benefits"
-        ReducedLatency[Reduced Latency<br/>O(1) vs O(n)]
+        ReducedLatency["Reduced Latency<br/>O(1) vs O(n)"]
         LowerResource[Lower Resource Usage<br/>Efficient Memory Use]
         HigherThroughput[Higher Throughput<br/>Concurrent Operations]
         BetterUX[Better User Experience<br/>Faster Responses]

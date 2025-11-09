@@ -1,0 +1,425 @@
+# GitHub Issue Creation
+
+## Issue 1: File Persistence Location Documentation
+
+**Title:** docs: Document file_complaint data persistence locations and structure
+
+**Body:**
+```markdown
+## Issue Description
+The `file_complaint` command documentation needs to clearly specify exactly where data is persisted, file naming conventions, and directory structure. Users need to understand where their complaint data is stored.
+
+## Current Problem
+- Users don't know where complaint files are saved
+- File naming convention is not documented
+- Directory structure is unclear
+- Default vs custom configuration paths are not explained
+
+## Research Findings
+Based on code analysis, here are the actual persistence locations:
+
+### Primary Storage
+- **Default Location**: `~/.local/share/complaints/` (XDG Data Home)
+- **File Naming**: `{complaint_id}.json` (UUID-based)
+- **File Format**: JSON with 2-space indentation
+- **File Permissions**: 0644 (owner read/write, group/others read)
+
+### File Path Construction
+```go
+// In file_repository.go line 87
+filename := fmt.Sprintf("%s.json", complaint.ID.String())
+filePath := filepath.Join(r.baseDir, filename)
+```
+
+### Configuration Override
+Users can override via:
+- CLI: `--storage.base_dir=/path/to/data`
+- Environment: `COMPLAINTS_MCP_STORAGE_BASE_DIR=/path/to/data`
+- Config File: `storage.base_dir = "/path/to/data"`
+
+### Example File Paths
+**Default Configuration:**
+```
+~/.local/share/complaints/550e8400-e29b-41d4-a716-446655440000.json
+~/.local/share/complaints/123e4567-e89b-12d3-a456-426614174000.json
+```
+
+**Custom Configuration:**
+```
+./data/complaints/550e8400-e29b-41d4-a716-446655440000.json
+/var/lib/complaints-mcp/data/550e8400-e29b-41d4-a716-446655440000.json
+```
+
+### Documentation Storage
+- **Default Location**: `docs/complaints/` (relative to project root)
+- **File Naming**: `{timestamp}-{sanitized_session}.{extension}`
+- **Formats**: `.md`, `.html`, `.txt` (configurable)
+- **Example**: `2025-11-09_23-59-feature_development.md`
+
+## Required Documentation Updates
+1. **README.md**: Add "Data Storage" section with default paths
+2. **API Documentation**: Document file_complaint persistence behavior
+3. **Configuration Guide**: Explain path configuration options
+4. **Examples Section**: Show real file path examples
+5. **Migration Guide**: How to move data between locations
+
+## Acceptance Criteria
+- [ ] Default storage locations clearly documented
+- [ ] File naming convention explained
+- [ ] Configuration override options documented
+- [ ] Real file path examples provided
+- [ ] Directory structure visualized
+- [ ] Migration instructions included
+- [ ] Security considerations (permissions, paths) documented
+
+## Additional Notes
+- The system uses UUID-based filenames to avoid conflicts
+- File updates are atomic (temp file + rename)
+- Cache layer improves performance but files are source of truth
+- Documentation export is separate from primary storage
+
+## Priority
+High - This is essential information for users to understand their data persistence.
+```
+
+## Issue 2: Examples Directory Enhancement
+
+**Title:** examples: Add real file_complaint usage examples with actual file output
+
+**Body:**
+```markdown
+## Issue Description
+The examples directory should contain real `file_complaint` usage examples showing:
+1. Actual MCP command usage
+2. Generated file paths and content
+3. Configuration examples
+4. Different scenarios and use cases
+
+## Current State
+- Only configuration examples exist
+- No actual file_complaint usage examples
+- No sample output files shown
+- No real-world scenarios demonstrated
+
+## Required Examples
+
+### 1. Basic Usage Example
+**File:** `examples/basic-complaint/`
+
+**Command:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "file_complaint",
+    "arguments": {
+      "agent_name": "Claude Code",
+      "task_description": "Implementing user authentication",
+      "severity": "medium",
+      "context_info": "Working on Node.js backend",
+      "missing_info": "JWT library documentation",
+      "confused_by": "Token refresh flow examples",
+      "future_wishes": "Better auth tutorial with code examples"
+    }
+  },
+  "id": 1
+}
+```
+
+**Generated File:** `examples/basic-complaint/output/data/550e8400-e29b-41d4-a716-446655440000.json`
+
+**File Content:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "agent_name": "Claude Code",
+  "session_name": "",
+  "task_description": "Implementing user authentication",
+  "context_info": "Working on Node.js backend",
+  "missing_info": "JWT library documentation",
+  "confused_by": "Token refresh flow examples",
+  "future_wishes": "Better auth tutorial with code examples",
+  "severity": "medium",
+  "project_name": "",
+  "timestamp": "2025-11-09T23:59:00Z",
+  "resolved": false,
+  "resolved_at": null,
+  "resolved_by": ""
+}
+```
+
+### 2. Session-Based Example
+**File:** `examples/session-complaint/`
+
+**Command:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "file_complaint",
+    "arguments": {
+      "agent_name": "GitHub Copilot",
+      "session_name": "feature-branch-work",
+      "task_description": "Resolving merge conflicts",
+      "severity": "low",
+      "project_name": "my-webapp"
+    }
+  },
+  "id": 2
+}
+```
+
+**Generated Documentation:** `examples/session-complaint/output/docs/2025-11-09_23-59-feature-branch-work.md`
+
+### 3. Multiple Complaints Example
+**File:** `examples/multiple-complaints/`
+
+Show sequential filing of multiple complaints and resulting directory structure.
+
+### 4. Configuration Examples
+**File:** `examples/different-configs/`
+
+- **Local Development:** `./data/complaints/`
+- **Production:** `/var/lib/complaints-mcp/data/`
+- **Home Directory:** `~/.complaints/`
+
+### 5. Error Scenarios
+**File:** `examples/error-cases/`
+
+- Invalid severity
+- Missing required fields
+- File permission issues
+- Disk space issues
+
+## Required Files Structure
+```
+examples/
+├── basic-complaint/
+│   ├── command.json
+│   ├── output/
+│   │   ├── data/
+│   │   │   └── *.json
+│   │   └── docs/
+│   │       └── *.md
+│   └── README.md
+├── session-complaint/
+│   ├── command.json
+│   ├── output/
+│   │   └── ...
+│   └── README.md
+├── multiple-complaints/
+│   ├── sequential-commands.json
+│   ├── output/
+│   │   └── ...
+│   └── README.md
+├── different-configs/
+│   ├── local-dev.toml
+│   ├── production.toml
+│   └── README.md
+└── error-cases/
+    ├── validation-error.json
+    ├── file-permission-error.json
+    └── README.md
+```
+
+## Acceptance Criteria
+- [ ] Real file_complaint command examples
+- [ ] Generated file content samples
+- [ ] Directory structure examples
+- [ ] Configuration variations shown
+- [ ] Error case demonstrations
+- [ ] README files for each example
+- [ ] Actual JSON output files included
+- [ ] Documentation export examples shown
+
+## Priority
+Medium - Important for user onboarding and understanding real-world usage.
+
+## Additional Notes
+- Examples should use realistic data
+- Show both development and production scenarios
+- Include best practices and common patterns
+- Demonstrate different severity levels and use cases
+```
+
+## Issue 3: File Structure Visualization
+
+**Title:** docs: Add file structure and data organization diagrams
+
+**Body:**
+```markdown
+## Issue Description
+Add comprehensive file structure visualization showing how `file_complaint` organizes data on disk, including directory trees, file relationships, and naming patterns.
+
+## Required Visualizations
+
+### 1. Default Directory Structure
+**Mermaid.js Diagram:**
+```mermaid
+graph TB
+    Home[User Home Directory ~/.local/share/]
+    Complaints[complaints/]
+    Files[Complaint Files *.json]
+    
+    Home --> Complaints
+    Complaints --> Files
+    
+    subgraph "Sample Files"
+        File1["550e8400-e29b-41d4-a716-446655440000.json"]
+        File2["123e4567-e89b-12d3-a456-426614174000.json"]
+        File3["789e0123-e89b-23d3-a456-426614174000.json"]
+    end
+    
+    Files --> File1
+    Files --> File2
+    Files --> File3
+```
+
+### 2. Project Directory Structure
+**For local development configuration:**
+```
+my-project/
+├── data/
+│   └── complaints/
+│       ├── 550e8400-e29b-41d4-a716-446655440000.json
+│       ├── 123e4567-e89b-12d3-a456-426614174000.json
+│       └── 789e0123-e89b-23d3-a456-426614174000.json
+├── docs/
+│   └── complaints/
+│       ├── 2025-11-09_23-59-no-session.md
+│       ├── 2025-11-09_23-58-feature-branch-work.md
+│       └── 2025-11-09_23-57-bug-fixing.md
+├── config.yaml
+└── README.md
+```
+
+### 3. File Naming Convention Flow
+**Mermaid.js Diagram:**
+```mermaid
+flowchart LR
+    Complaint[Complaint Entity] --> UUID[Extract UUID]
+    UUID --> Filename[Generate Filename]
+    Filename --> BaseDir[Join with Base Directory]
+    BaseDir --> FullPath[Full File Path]
+    
+    subgraph "Example"
+        Entity["Complaint{ID: 550e8400-...}"]
+        ID["550e8400-e29b-41d4-a716-446655440000"]
+        Filename2["550e8400-e29b-41d4-a716-446655440000.json"]
+        Dir["~/.local/share/complaints/"]
+        Path["~/.local/share/complaints/550e8400-e29b-41d4-a716-446655440000.json"]
+    end
+    
+    Complaint --> Entity
+    UUID --> ID
+    Filename --> Filename2
+    BaseDir --> Dir
+    FullPath --> Path
+```
+
+### 4. Documentation Export Structure
+**Mermaid.js Diagram:**
+```mermaid
+graph TB
+    DocsDir[docs/complaints/]
+    Markdown[Markdown Files *.md]
+    HTML[HTML Files *.html]
+    Text[Text Files *.txt]
+    
+    DocsDir --> Markdown
+    DocsDir --> HTML
+    DocsDir --> Text
+    
+    subgraph "File Naming Pattern"
+        Pattern["{timestamp}-{sanitized_session}.{extension}"]
+        Example["2025-11-09_23-59-feature_development.md"]
+        Example2["2025-11-09_23-58-no-session.md"]
+    end
+    
+    Markdown --> Pattern
+    HTML --> Pattern
+    Text --> Pattern
+    
+    Pattern --> Example
+    Pattern --> Example2
+```
+
+### 5. Configuration Impact on Structure
+**Mermaid.js Diagram:**
+```mermaid
+graph LR
+    subgraph "Configuration Options"
+        Default[Default<br/>XDG Data Home]
+        Local[Local<br/>./data/complaints]
+        Global[Global<br/>/var/lib/complaints-mcp/data]
+        Home[Home<br/>~/.complaints]
+    end
+    
+    subgraph "Resulting Paths"
+        DefaultPath["~/.local/share/complaints/"]
+        LocalPath["./data/complaints/"]
+        GlobalPath["/var/lib/complaints-mcp/data/"]
+        HomePath["~/.complaints/"]
+    end
+    
+    Default --> DefaultPath
+    Local --> LocalPath
+    Global --> GlobalPath
+    Home --> HomePath
+```
+
+## Required Documentation Files
+
+### 1. `docs/file-structure.md`
+- Complete directory structure documentation
+- File naming conventions
+- Configuration impact on paths
+- Migration between configurations
+
+### 2. `docs/data-organization.md`
+- Primary vs documentation storage
+- Cache vs file storage relationship
+- Backup strategies
+- Data retention policies
+
+### 3. Update `README.md`
+- Add "File Organization" section
+- Include structure diagrams
+- Link to detailed documentation
+
+## Acceptance Criteria
+- [ ] All Mermaid.js diagrams included
+- [ ] Real file path examples shown
+- [ ] Configuration variations documented
+- [ ] Directory trees visualized
+- [ ] File naming patterns explained
+- [ ] Migration instructions provided
+- [ ] Integration with existing docs
+
+## Priority
+Medium - Important for understanding data organization and system architecture.
+
+## Additional Notes
+- Use consistent mermaid.js styling across diagrams
+- Include actual UUID examples from test data
+- Show both development and production structures
+- Explain rationale behind UUID-based naming (atomic updates)
+```
+
+## Creation Instructions
+
+To create these GitHub issues:
+
+1. Go to https://github.com/LarsArtmann/complaints-mcp/issues
+2. Click "New issue"
+3. Copy and paste each issue content above
+4. Add appropriate labels:
+   - Issue 1: `documentation`, `storage`, `high-priority`
+   - Issue 2: `examples`, `documentation`, `medium-priority`  
+   - Issue 3: `documentation`, `diagrams`, `medium-priority`
+5. Set assignee if needed
+6. Submit issues
+
+These issues will significantly improve the documentation clarity for users understanding where their data is stored and how to work with the file system organization.
