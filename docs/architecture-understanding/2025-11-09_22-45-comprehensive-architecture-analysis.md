@@ -229,7 +229,7 @@ graph TB
     end
     
     subgraph "Cache Layer"
-        LRU[LRU Cache<br/>O(1) Operations]
+        LRU["LRU Cache<br/>O(1) Operations"]
         Metrics[Cache Metrics<br/>Performance Tracking]
     end
     
@@ -268,7 +268,7 @@ flowchart TD
     CheckType -->|Memory| CreateMemory[Create MemoryRepository]
     CheckType -->|Default| CreateFile
     
-    CreateCached --> WarmCache[Warm Cache (async)]
+    CreateCached --> WarmCache["Warm Cache (async)"]
     CreateFile --> VerifyDir[Verify Storage Directory]
     CreateMemory --> InitMemory[Initialize Memory Store]
     
@@ -810,13 +810,13 @@ graph LR
 ```mermaid
 graph TB
     subgraph "Simple Approach"
-        SimpleFiles[Direct File I/O<br/>O(n) lookups]
+        SimpleFiles["Direct File I/O<br/>O(n) lookups"]
         SimpleMemory[In-memory Only<br/>No persistence]
         SimpleValidation[Basic Validation<br/>Minimal checks]
     end
     
     subgraph "Current Balanced Approach"
-        CachedLRU[LRU Cache + Files<br/>O(1) hot lookups]
+        CachedLRU["LRU Cache + Files<br/>O(1) hot lookups"]
         RichValidation[Comprehensive Validation<br/>Type safety]
         Observability[Full Observability<br/>Tracing + Metrics]
     end
