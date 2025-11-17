@@ -316,12 +316,12 @@ func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complai
 	}
 
 	// Update fields with new data
-	existing.Resolved = complaint.Resolved
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
+	// Update resolution fields (ResolvedAt is single source of truth)
 	existing.ResolvedAt = complaint.ResolvedAt
 	existing.ResolvedBy = complaint.ResolvedBy
 
@@ -344,13 +344,13 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	}
 
 	// Update fields with new data
-	existing.Resolved = complaint.Resolved
 	existing.Timestamp = complaint.Timestamp
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
+	// Update resolution fields (ResolvedAt is single source of truth)
 	existing.ResolvedAt = complaint.ResolvedAt
 	existing.ResolvedBy = complaint.ResolvedBy
 
@@ -637,7 +637,7 @@ func (r *CachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*do
 	var filtered []*domain.Complaint
 	count := 0
 	for _, complaint := range allComplaints {
-		if !complaint.Resolved {
+		if !complaint.IsResolved() {
 			filtered = append(filtered, complaint)
 			count++
 			if limit > 0 && count >= limit {
@@ -666,7 +666,7 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 	var filtered []*domain.Complaint
 	count := 0
 	for _, complaint := range complaints {
-		if !complaint.Resolved {
+		if !complaint.IsResolved() {
 			filtered = append(filtered, complaint)
 			count++
 			if limit > 0 && count >= limit {

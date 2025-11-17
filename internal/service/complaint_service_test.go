@@ -81,7 +81,7 @@ func (m *mockRepository) FindByProject(ctx context.Context, projectName string, 
 func (m *mockRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	for _, c := range m.complaints {
-		if !c.Resolved {
+		if !c.IsResolved() {
 			result = append(result, c)
 			if len(result) >= limit {
 				break
@@ -201,8 +201,8 @@ func TestComplaintService_CreateComplaint(t *testing.T) {
 		t.Errorf("Severity = %v, want %v", complaint.Severity, domain.SeverityHigh)
 	}
 
-	if complaint.Resolved != false {
-		t.Errorf("Resolved = %v, want %v", complaint.Resolved, false)
+	if complaint.IsResolved() {
+		t.Error("Complaint should not be resolved")
 	}
 
 	if complaint.Timestamp.IsZero() {
@@ -348,7 +348,7 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 		t.Fatalf("Failed to create complaint: %v", err)
 	}
 
-	if created.Resolved {
+	if created.IsResolved() {
 		t.Fatal("Complaint should start as unresolved")
 	}
 
@@ -369,7 +369,7 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 		return
 	}
 
-	if !resolved.Resolved {
+	if !resolved.IsResolved() {
 		t.Error("Complaint should be marked as resolved")
 	}
 

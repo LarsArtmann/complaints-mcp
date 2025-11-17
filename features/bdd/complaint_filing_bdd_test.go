@@ -63,7 +63,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(complaint.FutureWishes).To(Equal("Add comprehensive error handling examples"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityHigh))
 			Expect(complaint.ProjectName).To(Equal("auth-project"))
-			Expect(complaint.Resolved).To(BeFalse())
+			Expect(complaint.IsResolved()).To(BeFalse())
 			Expect(complaint.Timestamp).NotTo(BeZero())
 		})
 

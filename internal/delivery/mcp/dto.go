@@ -38,7 +38,7 @@ func ToDTO(c *domain.Complaint) ComplaintDTO {
 		Severity:        string(c.Severity),
 		Timestamp:       c.Timestamp,
 		ProjectName:     c.ProjectName,
-		Resolved:        c.Resolved,
+		Resolved:        c.IsResolved(),
 		ResolvedAt:      c.ResolvedAt,
 		ResolvedBy:      c.ResolvedBy,
 	}

@@ -293,7 +293,11 @@ func generateTestComplaints(count int) []*domain.Complaint {
 			Severity:        domain.SeverityMedium,
 			Timestamp:       time.Now().Add(-time.Duration(i) * time.Hour),
 			ProjectName:     fmt.Sprintf("test-project-%d", i%5),
-			Resolved:        i%3 == 0, // Every third complaint is resolved
+		}
+		// Every third complaint is resolved
+		if i%3 == 0 {
+			resolvedAt := time.Now().Add(-time.Duration(i/3) * time.Hour)
+			complaints[i].ResolvedAt = &resolvedAt
 		}
 	}
 

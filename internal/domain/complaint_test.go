@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestNewComplaintID(t *testing.T) {
@@ -87,8 +88,8 @@ func TestNewComplaint(t *testing.T) {
 		t.Errorf("NewComplaint().Severity = %v, want %v", complaint.Severity, "high")
 	}
 
-	if complaint.Resolved {
-		t.Error("NewComplaint().Resolved should be false")
+	if complaint.IsResolved() {
+		t.Error("NewComplaint().IsResolved() should be false")
 	}
 
 	if complaint.Timestamp.IsZero() {
@@ -99,14 +100,13 @@ func TestNewComplaint(t *testing.T) {
 func TestComplaint_Resolve(t *testing.T) {
 	id, _ := NewComplaintID()
 	complaint := &Complaint{
-		ID:       id,
-		Resolved: false,
+		ID: id,
 	}
 
 	complaint.Resolve("test-agent") // Pure domain method - no context
 
-	if !complaint.Resolved {
-		t.Error("Complaint.Resolve() did not set Resolved to true")
+	if !complaint.IsResolved() {
+		t.Error("Complaint.Resolve() did not set resolved state to true")
 	}
 
 	// ✅ Verify ResolvedAt timestamp is set (prevents split-brain)
@@ -121,6 +121,7 @@ func TestComplaint_Resolve(t *testing.T) {
 }
 
 func TestComplaint_IsResolved(t *testing.T) {
+	now := time.Now()
 	tests := []struct {
 		name      string
 		complaint *Complaint
@@ -129,14 +130,14 @@ func TestComplaint_IsResolved(t *testing.T) {
 		{
 			name: "resolved complaint",
 			complaint: &Complaint{
-				Resolved: true,
+				ResolvedAt: &now,
 			},
 			want: true,
 		},
 		{
 			name: "unresolved complaint",
 			complaint: &Complaint{
-				Resolved: false,
+				ResolvedAt: nil,
 			},
 			want: false,
 		},

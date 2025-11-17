@@ -145,8 +145,8 @@ func setDefaults(v *viper.Viper) {
 	// Storage defaults using XDG
 	v.SetDefault("storage.base_dir", filepath.Join(xdg.DataHome, "complaints"))
 	v.SetDefault("storage.global_dir", filepath.Join(xdg.DataHome, "complaints"))
-	v.SetDefault("storage.max_size", 10485760) // 10MB
-	v.SetDefault("storage.retention_days", uint(0))  // 0 = infinite retention
+	v.SetDefault("storage.max_size", 10485760)      // 10MB
+	v.SetDefault("storage.retention_days", uint(0)) // 0 = infinite retention
 	v.SetDefault("storage.auto_backup", true)
 
 	// Documentation storage defaults

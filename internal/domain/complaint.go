@@ -89,11 +89,11 @@ type Complaint struct {
 	Timestamp       time.Time   `json:"timestamp"`
 	ProjectName     string      `json:"project_name" validate:"max=100"`
 
-	// Resolution tracking (prevents split-brain state)
-	// If Resolved is true, ResolvedAt MUST have a value
-	Resolved   bool       `json:"resolved"`
-	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // ✅ Pointer: nil when not resolved
-	ResolvedBy string     `json:"resolved_by,omitempty"` // ✅ NEW: Who resolved it
+	// Resolution tracking (single source of truth)
+	// ResolvedAt is nil when not resolved, non-nil when resolved
+	// This eliminates split-brain state - use IsResolved() to check status
+	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // nil = not resolved, non-nil = resolved
+	ResolvedBy string     `json:"resolved_by,omitempty"` // Who resolved it (empty when not resolved)
 
 	// Thread safety for concurrent resolution attempts
 	mu sync.RWMutex `json:"-"` // Don't serialize mutex
@@ -125,7 +125,7 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		Severity:        severity,
 		Timestamp:       now,
 		ProjectName:     projectName,
-		Resolved:        false,
+		// ResolvedAt is nil by default (not resolved)
 	}
 
 	// Validate the complaint (pure domain logic)
@@ -144,7 +144,7 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 	defer c.mu.Unlock()
 
 	// Check if already resolved (fixes issue #37)
-	if c.Resolved {
+	if c.ResolvedAt != nil {
 		return fmt.Errorf("complaint already resolved by %s at %s", c.ResolvedBy, c.ResolvedAt.Format(time.RFC3339))
 	}
 
@@ -153,22 +153,21 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 		return fmt.Errorf("resolver name cannot be empty")
 	}
 
-	// Set resolution with timestamp
+	// Set resolution with timestamp (single source of truth)
 	now := time.Now()
-	c.Resolved = true
 	c.ResolvedAt = &now       // Set resolution timestamp
 	c.ResolvedBy = resolvedBy // Set who resolved it
 
 	return nil
 }
 
-// IsResolved checks if the complaint is resolved
-// IsResolved checks if complaint is resolved - thread-safe
+// IsResolved checks if the complaint is resolved - thread-safe
+// Returns true if ResolvedAt is non-nil (single source of truth)
 func (c *Complaint) IsResolved() bool {
 	// Use read lock for thread-safe resolution status check
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.Resolved
+	return c.ResolvedAt != nil
 }
 
 // Validate checks if the complaint data is valid using validator

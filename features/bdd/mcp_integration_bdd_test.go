@@ -109,7 +109,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 				"e2e-test-project")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.Resolved).To(BeFalse())
+			Expect(complaint.IsResolved()).To(BeFalse())
 
 			// Step 2: Retrieve the complaint
 			retrieved, err := complaintService.GetComplaint(ctx, complaint.ID)
@@ -134,7 +134,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			// Step 6: Verify resolution
 			resolved, err := complaintService.GetComplaint(ctx, complaint.ID)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(resolved.Resolved).To(BeTrue())
+			Expect(resolved.IsResolved()).To(BeTrue())
 
 			// Step 7: List unresolved complaints (should be empty)
 			unresolved, err := complaintService.ListUnresolvedComplaints(ctx, 10)

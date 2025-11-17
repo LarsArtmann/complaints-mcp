@@ -258,7 +258,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(len(unresolvedComplaints)).To(Equal(4)) // All test complaints are unresolved
 
 			for _, complaint := range unresolvedComplaints {
-				Expect(complaint.Resolved).To(BeFalse())
+				Expect(complaint.IsResolved()).To(BeFalse())
 			}
 		})
 
@@ -275,7 +275,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			// Verify resolved complaint is not in list
 			for _, complaint := range unresolvedComplaints {
 				Expect(complaint.ID.Value).NotTo(Equal(testComplaints[0].ID.Value))
-				Expect(complaint.Resolved).To(BeFalse())
+				Expect(complaint.IsResolved()).To(BeFalse())
 			}
 		})
 
@@ -285,7 +285,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(len(limitedComplaints)).To(Equal(2))
 
 			for _, complaint := range limitedComplaints {
-				Expect(complaint.Resolved).To(BeFalse())
+				Expect(complaint.IsResolved()).To(BeFalse())
 			}
 		})
 	})
