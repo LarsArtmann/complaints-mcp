@@ -33,10 +33,10 @@ func TestProjectFilter(t *testing.T) {
 	ctx := context.Background()
 
 	complaint1 := createTestComplaint(t, "low")
-	complaint1.ProjectName = "project-a"
+	complaint1.ProjectName = domain.MustNewProjectName("project-a")
 
 	complaint2 := createTestComplaint(t, "high")
-	complaint2.ProjectName = "project-b"
+	complaint2.ProjectName = domain.MustNewProjectName("project-b")
 
 	complaints := []*domain.Complaint{complaint1, complaint2}
 
@@ -47,8 +47,8 @@ func TestProjectFilter(t *testing.T) {
 		t.Errorf("Expected 1 complaint for project-a, got %d", len(filtered))
 	}
 
-	if filtered[0].ProjectName != "project-a" {
-		t.Errorf("Expected project-a, got %s", filtered[0].ProjectName)
+	if filtered[0].ProjectName.String() != "project-a" {
+		t.Errorf("Expected project-a, got %s", filtered[0].ProjectName.String())
 	}
 }
 

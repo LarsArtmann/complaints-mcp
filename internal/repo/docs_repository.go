@@ -66,7 +66,7 @@ func (d *DocsRepository) ExportToDocs(complaint *domain.Complaint) error {
 
 // GenerateDocsFilename generates human-readable documentation filename using strong types
 func (d *DocsRepository) GenerateDocsFilename(complaint *domain.Complaint) string {
-	return types.GenerateFilename(complaint.Timestamp, complaint.SessionName, d.format)
+	return types.GenerateFilename(complaint.Timestamp, complaint.SessionName.String(), d.format)
 }
 
 // exportToMarkdown exports complaint to markdown format

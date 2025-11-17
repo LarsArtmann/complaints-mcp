@@ -76,10 +76,11 @@ func (id ComplaintID) IsEmpty() bool {
 }
 
 // Complaint represents a complaint filed by an AI agent
+// Uses value objects for type safety and validation
 type Complaint struct {
 	ID              ComplaintID `json:"id" validate:"required"`
-	AgentName       string      `json:"agent_name" validate:"required,min=1,max=100"`
-	SessionName     string      `json:"session_name" validate:"max=100"`
+	AgentName       AgentName   `json:"agent_name"`    // Value object: required, max 100 chars
+	SessionName     SessionName `json:"session_name"`  // Value object: optional, max 100 chars
 	TaskDescription string      `json:"task_description" validate:"required,min=1,max=1000"`
 	ContextInfo     string      `json:"context_info" validate:"max=2000000"`
 	MissingInfo     string      `json:"missing_info" validate:"max=2000000"`
@@ -87,7 +88,7 @@ type Complaint struct {
 	FutureWishes    string      `json:"future_wishes" validate:"max=2000000"`
 	Severity        Severity    `json:"severity" validate:"required,oneof=low medium high critical"`
 	Timestamp       time.Time   `json:"timestamp"`
-	ProjectName     string      `json:"project_name" validate:"max=100"`
+	ProjectName     ProjectName `json:"project_name"` // Value object: optional, max 100 chars
 
 	// Resolution tracking (single source of truth)
 	// ResolvedAt is nil when not resolved, non-nil when resolved
@@ -100,6 +101,7 @@ type Complaint struct {
 }
 
 // NewComplaint creates a new complaint with the given parameters
+// Accepts strings and converts them to value objects for type safety
 func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity Severity, projectName string) (*Complaint, error) {
 	// Domain layer is now pure - no external dependencies
 
@@ -112,11 +114,27 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		return nil, fmt.Errorf("invalid severity: %s", severity)
 	}
 
+	// Create value objects with validation
+	agentNameVO, err := NewAgentName(agentName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid agent name: %w", err)
+	}
+
+	sessionNameVO, err := NewSessionName(sessionName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid session name: %w", err)
+	}
+
+	projectNameVO, err := NewProjectName(projectName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid project name: %w", err)
+	}
+
 	now := time.Now()
 	complaint := &Complaint{
 		ID:              id,
-		AgentName:       agentName,
-		SessionName:     sessionName,
+		AgentName:       agentNameVO,
+		SessionName:     sessionNameVO,
 		TaskDescription: taskDescription,
 		ContextInfo:     contextInfo,
 		MissingInfo:     missingInfo,
@@ -124,7 +142,7 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		FutureWishes:    futureWishes,
 		Severity:        severity,
 		Timestamp:       now,
-		ProjectName:     projectName,
+		ProjectName:     projectNameVO,
 		// ResolvedAt is nil by default (not resolved)
 	}
 
@@ -172,6 +190,11 @@ func (c *Complaint) IsResolved() bool {
 
 // Validate checks if the complaint data is valid using validator
 func (c *Complaint) Validate() error {
+	// Check value objects first (they have their own validation)
+	if c.AgentName.IsEmpty() {
+		return fmt.Errorf("agent name is required")
+	}
+
 	// Initialize validator once using sync.Once (thread-safe singleton pattern)
 	validateOnce.Do(func() {
 		validate = validator.New()
@@ -181,7 +204,7 @@ func (c *Complaint) Validate() error {
 
 // GetSummary returns a summary of the complaint
 func (c *Complaint) GetSummary() string {
-	return fmt.Sprintf("[%s] %s - %s", c.Severity, c.AgentName, c.TaskDescription)
+	return fmt.Sprintf("[%s] %s - %s", c.Severity, c.AgentName.String(), c.TaskDescription)
 }
 
 // GetDuration returns how long the complaint has been open

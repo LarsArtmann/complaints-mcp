@@ -80,8 +80,8 @@ func TestNewComplaint(t *testing.T) {
 		t.Fatal("NewComplaint() returned nil")
 	}
 
-	if complaint.AgentName != "test-agent" {
-		t.Errorf("NewComplaint().AgentName = %v, want %v", complaint.AgentName, "test-agent")
+	if complaint.AgentName.String() != "test-agent" {
+		t.Errorf("NewComplaint().AgentName = %v, want %v", complaint.AgentName.String(), "test-agent")
 	}
 
 	if complaint.Severity != "high" {
@@ -162,7 +162,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "valid complaint",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
 				TaskDescription: "test task",
 				Severity:        "high",
 			},
@@ -179,7 +179,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "missing task description",
 			complaint: &Complaint{
-				AgentName: "test-agent",
+				AgentName: MustNewAgentName("test-agent"),
 				Severity:  "high",
 			},
 			wantErr: true,
@@ -187,7 +187,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "missing severity",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
 				TaskDescription: "test task",
 			},
 			wantErr: true,
@@ -195,7 +195,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "invalid severity",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
 				TaskDescription: "test task",
 				Severity:        "invalid",
 			},

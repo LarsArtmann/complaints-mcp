@@ -48,7 +48,7 @@ func SeverityFilter(severity domain.Severity) FilterStrategy {
 // ProjectFilter creates a filter for a specific project name
 func ProjectFilter(projectName string) FilterStrategy {
 	return func(c *domain.Complaint) bool {
-		return c.ProjectName == projectName
+		return c.ProjectName.String() == projectName
 	}
 }
 
@@ -90,17 +90,17 @@ func SearchFilter(query string) FilterStrategy {
 		}
 
 		// Search in agent name
-		if strings.Contains(strings.ToLower(c.AgentName), queryLower) {
+		if strings.Contains(strings.ToLower(c.AgentName.String()), queryLower) {
 			return true
 		}
 
 		// Search in session name
-		if strings.Contains(strings.ToLower(c.SessionName), queryLower) {
+		if strings.Contains(strings.ToLower(c.SessionName.String()), queryLower) {
 			return true
 		}
 
 		// Search in project name
-		if strings.Contains(strings.ToLower(c.ProjectName), queryLower) {
+		if strings.Contains(strings.ToLower(c.ProjectName.String()), queryLower) {
 			return true
 		}
 
