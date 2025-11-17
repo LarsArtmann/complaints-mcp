@@ -193,7 +193,7 @@ func TestRepositoryTypePriority(t *testing.T) {
 	config := RepositoryConfig{
 		BaseDir: t.TempDir(),
 		StorageConfig: config.StorageConfig{
-			CacheEnabled: true, // This should be ignored
+			CacheEnabled: true,         // This should be ignored
 			CacheMaxSize: uint32(1000), // This should be ignored
 		},
 		Type: "file", // This should win

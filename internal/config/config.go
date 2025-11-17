@@ -42,7 +42,7 @@ type StorageConfig struct {
 	BaseDir    string `mapstructure:"base_dir" validate:"required"`
 	GlobalDir  string `mapstructure:"global_dir"`
 	MaxSize    uint64 `mapstructure:"max_size" validate:"min=1024"` // uint64: file sizes cannot be negative
-	Retention  uint   `mapstructure:"retention_days"` // 0 = infinite retention
+	Retention  uint   `mapstructure:"retention_days"`               // 0 = infinite retention
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
 	// Documentation storage configuration
@@ -53,7 +53,7 @@ type StorageConfig struct {
 	// Cache configuration - JSON fields for Viper
 	CacheEnabled  bool   `mapstructure:"cache_enabled"`
 	CacheMaxSize  uint32 `mapstructure:"cache_max_size" validate:"min=1,max=100000"` // uint32: cache sizes cannot be negative
-	CacheEviction string `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
+	CacheEviction string `mapstructure:"cache_eviction"`                             // "lru", "fifo", "none"
 
 	// Type-safe fields for internal use (populated in postProcessConfig)
 	CacheSize      types.CacheSize           `mapstructure:"-"` // derived from CacheMaxSize
