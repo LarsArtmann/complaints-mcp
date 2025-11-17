@@ -182,7 +182,7 @@ func NewRepositoryError(message string, cause error) *AppError {
 }
 
 // NewFileIOError creates a file I/O error
-func NewFileIOError(operation string, path string, cause error) *AppError {
+func NewFileIOError(operation, path string, cause error) *AppError {
 	message := fmt.Sprintf("failed to %s file: %s", operation, path)
 	return NewAppErrorWithCause(ErrCodeFileIO, message, cause)
 }

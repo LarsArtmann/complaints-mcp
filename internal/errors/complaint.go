@@ -8,7 +8,7 @@ const (
 )
 
 // NewComplaintValidationError creates a validation error for complaint fields
-func NewComplaintValidationError(message string, field string) *AppError {
+func NewComplaintValidationError(message, field string) *AppError {
 	return NewValidationError(message)
 }
 
