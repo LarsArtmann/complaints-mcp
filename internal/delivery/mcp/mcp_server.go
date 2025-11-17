@@ -253,8 +253,7 @@ type SearchComplaintsInput struct {
 	Limit int    `json:"limit"`
 }
 
-type GetCacheStatsInput struct {
-}
+type GetCacheStatsInput struct{}
 
 // Output types for tool handlers
 type FileComplaintOutput struct {
