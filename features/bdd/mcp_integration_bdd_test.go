@@ -47,12 +47,12 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			Server: config.ServerConfig{
 				Name: "test-server",
 				Host: "localhost",
-				Port: 8080,
+				Port: uint16(8080),
 			},
 			Storage: config.StorageConfig{
 				BaseDir:    tempDir,
 				GlobalDir:  tempDir,
-				MaxSize:    10485760, // 10MB
+				MaxSize:    uint64(10485760), // 10MB
 				Retention:  uint(30),
 				AutoBackup: true,
 			},
@@ -88,7 +88,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		It("should have valid configuration", func() {
 			// Verify configuration is properly set
 			Expect(testConfig.Server.Host).To(Equal("localhost"))
-			Expect(testConfig.Server.Port).To(Equal(8080))
+			Expect(testConfig.Server.Port).To(Equal(uint16(8080)))
 			Expect(testConfig.Storage.BaseDir).To(Equal(tempDir))
 			Expect(testConfig.Log.Level).To(Equal("info"))
 		})
@@ -157,12 +157,12 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 				Server: config.ServerConfig{
 					Name: "updated-server",
 					Host: "127.0.0.1",
-					Port: 9090,
+					Port: uint16(9090),
 				},
 				Storage: config.StorageConfig{
 					BaseDir:    tempDir,
 					GlobalDir:  tempDir,
-					MaxSize:    20971520, // 20MB
+					MaxSize:    uint64(20971520), // 20MB
 					Retention:  uint(60),
 					AutoBackup: false,
 				},

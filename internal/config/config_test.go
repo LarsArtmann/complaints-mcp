@@ -31,7 +31,7 @@ func TestConfig_ServerConfig(t *testing.T) {
 	serverConfig := config.ServerConfig{
 		Name: "test-server",
 		Host: "localhost",
-		Port: 8080,
+		Port: uint16(8080),
 	}
 
 	// Test Address method
@@ -49,7 +49,7 @@ func TestConfig_StorageConfig(t *testing.T) {
 	storageConfig := config.StorageConfig{
 		BaseDir:    "/tmp/complaints",
 		GlobalDir:  "/tmp/global",
-		MaxSize:    1024 * 1024, // 1MB
+		MaxSize:    uint64(1024 * 1024), // 1MB
 		Retention:  uint(30),
 		AutoBackup: true,
 	}
@@ -57,7 +57,7 @@ func TestConfig_StorageConfig(t *testing.T) {
 	// Test that fields are set correctly
 	require.Equal(t, "/tmp/complaints", storageConfig.BaseDir)
 	require.Equal(t, "/tmp/global", storageConfig.GlobalDir)
-	require.Equal(t, int64(1024*1024), storageConfig.MaxSize)
+	require.Equal(t, uint64(1024*1024), storageConfig.MaxSize)
 	require.Equal(t, uint(30), storageConfig.Retention)
 	require.True(t, storageConfig.AutoBackup)
 }
@@ -82,12 +82,12 @@ func TestConfig_CompleteConfig(t *testing.T) {
 		Server: config.ServerConfig{
 			Name: "complaints-mcp",
 			Host: "localhost",
-			Port: 8080,
+			Port: uint16(8080),
 		},
 		Storage: config.StorageConfig{
 			BaseDir:    "/data/complaints",
 			GlobalDir:  "/data/global",
-			MaxSize:    10 * 1024 * 1024, // 10MB
+			MaxSize:    uint64(10 * 1024 * 1024), // 10MB
 			Retention:  uint(90),
 			AutoBackup: false,
 		},
@@ -101,11 +101,11 @@ func TestConfig_CompleteConfig(t *testing.T) {
 	// Test all components
 	require.Equal(t, "complaints-mcp", cfg.Server.Name)
 	require.Equal(t, "localhost", cfg.Server.Host)
-	require.Equal(t, 8080, cfg.Server.Port)
+	require.Equal(t, uint16(8080), cfg.Server.Port)
 
 	require.Equal(t, "/data/complaints", cfg.Storage.BaseDir)
 	require.Equal(t, "/data/global", cfg.Storage.GlobalDir)
-	require.Equal(t, int64(10*1024*1024), cfg.Storage.MaxSize)
+	require.Equal(t, uint64(10*1024*1024), cfg.Storage.MaxSize)
 	require.Equal(t, uint(90), cfg.Storage.Retention)
 	require.False(t, cfg.Storage.AutoBackup)
 
@@ -145,7 +145,7 @@ func TestConfig_ServerAddress(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			serverConfig := config.ServerConfig{
 				Host: tt.host,
-				Port: tt.port,
+				Port: uint16(tt.port),
 			}
 
 			address := serverConfig.Address()
