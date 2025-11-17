@@ -75,7 +75,7 @@ func (d *DocsRepository) exportToMarkdown(complaint *domain.Complaint) error {
 	filepath := filepath.Join(d.docsDir, filename)
 
 	// Ensure directory exists
-	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
+	if err := os.MkdirAll(d.docsDir, 0o755); err != nil {
 		d.logger.Error("Failed to create docs directory", "error", err, "path", d.docsDir)
 		return fmt.Errorf("failed to create docs directory: %w", err)
 	}
@@ -163,7 +163,7 @@ func (d *DocsRepository) exportToHTML(complaint *domain.Complaint) error {
 	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatHTML.FileExtension(), 1))
 
 	// Ensure directory exists
-	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
+	if err := os.MkdirAll(d.docsDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create docs directory: %w", err)
 	}
 
@@ -267,7 +267,7 @@ func (d *DocsRepository) exportToText(complaint *domain.Complaint) error {
 	filepath := filepath.Join(d.docsDir, strings.Replace(filename, types.DocsFormatMarkdown.FileExtension(), types.DocsFormatText.FileExtension(), 1))
 
 	// Ensure directory exists
-	if err := os.MkdirAll(d.docsDir, 0755); err != nil {
+	if err := os.MkdirAll(d.docsDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create docs directory: %w", err)
 	}
 

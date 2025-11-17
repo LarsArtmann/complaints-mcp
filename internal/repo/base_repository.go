@@ -47,7 +47,7 @@ func (b BaseRepository) Tracer() tracing.Tracer {
 
 // EnsureDir creates the base directory if it doesn't exist
 func (b BaseRepository) EnsureDir() error {
-	if err := os.MkdirAll(b.baseDir, 0755); err != nil {
+	if err := os.MkdirAll(b.baseDir, 0o755); err != nil {
 		return fmt.Errorf("failed to create base directory: %w", err)
 	}
 	return nil
@@ -158,7 +158,7 @@ func (b BaseRepository) SaveComplaintToFile(ctx context.Context, complaint *doma
 	}
 
 	// Write to file
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0o644); err != nil {
 		logger.Error("Failed to write complaint file", "error", err, "path", filePath)
 		return fmt.Errorf("failed to write complaint file: %w", err)
 	}

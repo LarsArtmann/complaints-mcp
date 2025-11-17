@@ -39,7 +39,7 @@ func (f *FileOperations) SaveComplaintToFile(ctx context.Context, complaint *dom
 	dir := filepath.Dir(filePath)
 
 	// Create directory if it doesn't exist
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		logger.Error("Failed to create directory", "dir", dir, "error", err)
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
@@ -53,7 +53,7 @@ func (f *FileOperations) SaveComplaintToFile(ctx context.Context, complaint *dom
 
 	// Write to file atomically (write to temp file, then rename)
 	tempFilePath := filePath + ".tmp"
-	if err := os.WriteFile(tempFilePath, data, 0644); err != nil {
+	if err := os.WriteFile(tempFilePath, data, 0o644); err != nil {
 		logger.Error("Failed to write to temporary file", "file", tempFilePath, "error", err)
 		return fmt.Errorf("failed to write temporary file: %w", err)
 	}
@@ -117,7 +117,7 @@ func (f *FileOperations) LoadAllComplaints(ctx context.Context) ([]*domain.Compl
 	// Check if base directory exists
 	if _, err := os.Stat(f.baseDir); os.IsNotExist(err) {
 		logger.Info("Base directory does not exist, creating it", "dir", f.baseDir)
-		if err := os.MkdirAll(f.baseDir, 0755); err != nil {
+		if err := os.MkdirAll(f.baseDir, 0o755); err != nil {
 			logger.Error("Failed to create base directory", "dir", f.baseDir, "error", err)
 			return nil, fmt.Errorf("failed to create base directory: %w", err)
 		}
@@ -146,7 +146,6 @@ func (f *FileOperations) LoadAllComplaints(ctx context.Context) ([]*domain.Compl
 		complaints = append(complaints, complaint)
 		return nil
 	})
-
 	if err != nil {
 		logger.Error("Failed to walk directory", "dir", f.baseDir, "error", err)
 		return nil, fmt.Errorf("failed to walk directory: %w", err)
