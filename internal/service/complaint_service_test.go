@@ -177,7 +177,6 @@ func TestComplaintService_CreateComplaint(t *testing.T) {
 		"future wishes",
 		domain.SeverityHigh,
 		"test-project")
-
 	// Verify
 	if err != nil {
 		t.Errorf("CreateComplaint error = %v, want nil", err)
@@ -271,7 +270,6 @@ func TestComplaintService_GetComplaint(t *testing.T) {
 
 	// Test retrieving it
 	retrieved, err := svc.GetComplaint(ctx, created.ID)
-
 	// Verify
 	if err != nil {
 		t.Errorf("GetComplaint error = %v, want nil", err)

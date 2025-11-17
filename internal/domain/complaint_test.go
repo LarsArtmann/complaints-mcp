@@ -70,7 +70,6 @@ func TestNewComplaint(t *testing.T) {
 		SeverityHigh, // ✅ Use domain.Severity type instead of string
 		"test-project",
 	)
-
 	if err != nil {
 		t.Errorf("NewComplaint() returned error: %v", err)
 	}
