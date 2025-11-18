@@ -18,4 +18,9 @@ type Repository interface {
 	Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error)
 	GetCacheStats() CacheStats           // Optional - only CachedRepository implements
 	WarmCache(ctx context.Context) error // Optional - warm cache with context support
+	
+	// GetFilePath returns the actual file path where the complaint is stored
+	GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error)
+	// GetDocsPath returns the documentation path (if applicable) for the complaint
+	GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error)
 }

@@ -144,6 +144,26 @@ func (m *mockRepository) WarmCache(ctx context.Context) error {
 	return nil
 }
 
+func (m *mockRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	// Mock implementation - return a mock file path
+	for _, c := range m.complaints {
+		if c.ID.Value == id.Value {
+			return fmt.Sprintf("/mock/path/%s.json", id.String()), nil
+		}
+	}
+	return "", errors.NewNotFoundError("complaint not found")
+}
+
+func (m *mockRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	// Mock implementation - return a mock docs path
+	for _, c := range m.complaints {
+		if c.ID.Value == id.Value {
+			return fmt.Sprintf("/mock/docs/%s.md", id.String()), nil
+		}
+	}
+	return "", errors.NewNotFoundError("complaint not found")
+}
+
 func TestNewComplaintService(t *testing.T) {
 	// ✅ Test with correct constructor signature
 	mockRepo := &mockRepository{}

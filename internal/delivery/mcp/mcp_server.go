@@ -316,10 +316,17 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 
 	logger.Info("Complaint filed successfully", "complaint_id", complaint.ID.String())
 
+	// Get file paths for the complaint
+	filePath, docsPath, err := m.service.GetFilePaths(ctx, complaint.ID)
+	if err != nil {
+		logger.Warn("Failed to get file paths for complaint", "error", err, "complaint_id", complaint.ID.String())
+		// Continue without file paths - not a fatal error
+	}
+
 	output := FileComplaintOutput{
 		Success:   true,
 		Message:   "Complaint filed successfully",
-		Complaint: ToDTO(complaint),
+		Complaint: ToDTOWithPaths(complaint, filePath, docsPath),
 	}
 
 	return nil, output, nil

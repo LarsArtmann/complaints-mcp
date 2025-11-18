@@ -3,6 +3,9 @@ package repo
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -194,4 +197,100 @@ func (r *CachedRepository) WarmCache(ctx context.Context) error {
 // GetCacheStats returns current LRU cache performance statistics
 func (r *CachedRepository) GetCacheStats() CacheStats {
 	return r.cache.GetStats()
+}
+
+// GetFilePath returns the actual file path where the complaint is stored
+func (r *CachedRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	ctx, span := r.GetTracer().Start(ctx, "GetFilePath")
+	defer span.End()
+
+	logger := r.GetLogger().With("component", "cached-repository", "complaint_id", id.String())
+	logger.Debug("Getting file path for complaint")
+
+	// Use UUID-only filename for consistent file updates
+	filename := fmt.Sprintf("%s.json", id.String())
+	filePath := filepath.Join(r.GetBaseDir(), filename)
+	
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		logger.Warn("Complaint file not found", "path", filePath)
+		return "", fmt.Errorf("complaint file not found: %s", id.String())
+	}
+	
+	logger.Info("File path retrieved", "path", filePath)
+	return filePath, nil
+}
+
+// GetDocsPath returns the documentation path (if applicable) for the complaint
+func (r *CachedRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	ctx, span := r.GetTracer().Start(ctx, "GetDocsPath")
+	defer span.End()
+
+	logger := r.GetLogger().With("component", "cached-repository", "complaint_id", id.String())
+	logger.Debug("Getting docs path for complaint")
+
+	// First, find complaint to get its timestamp and session name
+	// Try cache first for O(1) lookup
+	complaint, exists := r.cache.Get(id.String())
+	if !exists {
+		return "", fmt.Errorf("complaint not found: %s", id.String())
+	}
+
+	// Default docs directory and format (this should be configurable)
+	// For now, we'll use default values from the config
+	docsDir := "docs/complaints" 
+	format := "markdown" // Default format
+	
+	// Generate filename using the same logic as DocsRepository
+	sessionName := complaint.SessionName.String()
+	if sessionName == "" {
+		sessionName = "no-session"
+	}
+	
+	// Sanitize session name for filename
+	sessionName = strings.ReplaceAll(sessionName, " ", "_")
+	sessionName = strings.ReplaceAll(sessionName, "/", "_")
+	sessionName = strings.ReplaceAll(sessionName, "..", "_")
+	sessionName = strings.ReplaceAll(sessionName, ":", "-")
+	sessionName = strings.ReplaceAll(sessionName, "\"", "")
+	sessionName = strings.ReplaceAll(sessionName, "'", "")
+	sessionName = strings.ReplaceAll(sessionName, "\\", "_")
+	sessionName = strings.ReplaceAll(sessionName, "<", "")
+	sessionName = strings.ReplaceAll(sessionName, ">", "")
+	sessionName = strings.ReplaceAll(sessionName, "|", "")
+	sessionName = strings.ReplaceAll(sessionName, "?", "")
+	sessionName = strings.ReplaceAll(sessionName, "*", "")
+	
+	// Remove multiple underscores
+	for strings.Contains(sessionName, "__") {
+		sessionName = strings.ReplaceAll(sessionName, "__", "_")
+	}
+	
+	// Trim underscores
+	sessionName = strings.Trim(sessionName, "_")
+	
+	// Limit length
+	if len(sessionName) > 50 {
+		sessionName = sessionName[:50]
+	}
+	
+	// Format timestamp
+	timeStr := complaint.Timestamp.Format("2006-01-02_15-04-05")
+	
+	// Generate filename with appropriate extension
+	var extension string
+	switch format {
+	case "html":
+		extension = ".html"
+	case "text":
+		extension = ".txt"
+	default:
+		extension = ".md" // markdown
+	}
+	
+	filename := fmt.Sprintf("%s-%s%s", timeStr, sessionName, extension)
+	docsPath := filepath.Join(docsDir, filename)
+	
+	logger.Info("Docs path retrieved", "path", docsPath)
+	return docsPath, nil
 }

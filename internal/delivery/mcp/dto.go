@@ -22,10 +22,17 @@ type ComplaintDTO struct {
 	Resolved        bool       `json:"resolved"`
 	ResolvedAt      *time.Time `json:"resolved_at,omitempty"`
 	ResolvedBy      string     `json:"resolved_by,omitempty"`
+	FilePath        string     `json:"file_path,omitempty"`
+	DocsPath        string     `json:"docs_path,omitempty"`
 }
 
 // ToDTO converts a domain Complaint to a type-safe DTO (standalone function)
 func ToDTO(c *domain.Complaint) ComplaintDTO {
+	return ToDTOWithPaths(c, "", "")
+}
+
+// ToDTOWithPaths converts a domain Complaint to a type-safe DTO with optional file paths
+func ToDTOWithPaths(c *domain.Complaint, filePath, docsPath string) ComplaintDTO {
 	return ComplaintDTO{
 		ID:              c.ID.String(),
 		AgentName:       c.AgentName.String(),
@@ -41,5 +48,7 @@ func ToDTO(c *domain.Complaint) ComplaintDTO {
 		Resolved:        c.IsResolved(),
 		ResolvedAt:      c.ResolvedAt,
 		ResolvedBy:      c.ResolvedBy,
+		FilePath:        filePath,
+		DocsPath:        docsPath,
 	}
 }

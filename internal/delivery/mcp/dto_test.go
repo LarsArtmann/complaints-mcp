@@ -30,6 +30,7 @@ func TestToDTO(t *testing.T) {
 		ProjectName:     domain.MustNewProjectName("test-project"),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
+		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Convert to DTO
@@ -130,6 +131,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 		Severity:        domain.SeverityLow,
 		Timestamp:       time.Now(),
 		ResolvedAt:      &resolvedAt,
+		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Create output with type-safe DTOs
@@ -196,6 +198,7 @@ func TestResolveComplaintOutput_TypeSafety(t *testing.T) {
 		Timestamp:       time.Now(),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
+		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Create output with type-safe DTO

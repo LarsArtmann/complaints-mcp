@@ -223,3 +223,31 @@ func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit i
 func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 	return s.repo.GetCacheStats()
 }
+
+// GetFilePaths returns the file paths for a complaint (both storage and documentation)
+func (s *ComplaintService) GetFilePaths(ctx context.Context, complaintID domain.ComplaintID) (filePath, docsPath string, err error) {
+	ctx, span := s.tracer.Start(ctx, "GetFilePaths")
+	defer span.End()
+
+	logger := s.logger.With("operation", "get_file_paths", "complaint_id", complaintID.String())
+	logger.Debug("Getting file paths for complaint")
+
+	// Get file path from repository
+	filePath, err = s.repo.GetFilePath(ctx, complaintID)
+	if err != nil {
+		logger.Warn("Failed to get file path", "error", err)
+		// Don't fail the operation, just log warning
+		filePath = ""
+	}
+
+	// Get docs path from repository
+	docsPath, err = s.repo.GetDocsPath(ctx, complaintID)
+	if err != nil {
+		logger.Warn("Failed to get docs path", "error", err)
+		// Don't fail the operation, just log warning
+		docsPath = ""
+	}
+
+	logger.Info("File paths retrieved", "file_path", filePath, "docs_path", docsPath)
+	return filePath, docsPath, nil
+}
