@@ -2,293 +2,451 @@ package repo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
-// FileRepository implements Repository using file system storage
+const defaultComplaintsDir = "complaints"
+const defaultDocsDir = "docs/complaints"
+
+// FileRepository implements Repository interface using file system
 type FileRepository struct {
-	BaseRepository
+	complaintsDir string
+	docsDir       string
+	cache         map[domain.ComplaintID]*domain.Complaint
+	mutex         sync.RWMutex
+	tracer        tracing.Tracer
 }
 
-// NewFileRepository creates a new file-based repository
-func NewFileRepository(baseDir string, tracer tracing.Tracer) Repository {
+// NewFileRepository creates a new file repository
+func NewFileRepository(baseDir string, tracer tracing.Tracer) *FileRepository {
+	complaintsDir := filepath.Join(baseDir, defaultComplaintsDir)
+	docsDir := filepath.Join(baseDir, defaultDocsDir)
+
 	return &FileRepository{
-		BaseRepository: NewBaseRepository(baseDir, tracer),
+		complaintsDir: complaintsDir,
+		docsDir:       docsDir,
+		cache:         make(map[domain.ComplaintID]*domain.Complaint),
+		tracer:        tracer,
 	}
 }
 
-// WarmCache is a no-op for FileRepository (no cache to warm)
-func (r *FileRepository) WarmCache(ctx context.Context) error {
-	// FileRepository doesn't have a cache, so this is a no-op
-	return nil
-}
-
-// Save saves a complaint to the file system
+// Save saves a complaint to file system
 func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
-	ctx, span := r.GetTracer().Start(ctx, "Save")
-	defer span.End()
+	if err := complaint.Validate(); err != nil {
+		return fmt.Errorf("invalid complaint: %w", err)
+	}
 
-	logger := r.GetLogger().With("component", "file-repository", "complaint_id", complaint.ID.String())
-	logger.Info("Saving complaint")
+	// Serialize with flat JSON structure (phantom type)
+	data, err := json.Marshal(complaint)
+	if err != nil {
+		return fmt.Errorf("failed to marshal complaint: %w", err)
+	}
 
-	return r.SaveComplaintToFile(complaint)
+	// Use phantom type ID for file naming
+	fileName := fmt.Sprintf("%s.json", complaint.ID.String())
+	return r.writeFile(ctx, fileName, data)
 }
 
-// FindByID retrieves a complaint by ID from the file system
+// FindByID finds a complaint by ID
 func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "FindByID")
-	defer span.End()
+	if err := id.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid ComplaintID: %w", err)
+	}
 
-	logger := r.GetLogger().With("component", "file-repository", "complaint_id", id.String())
-	logger.Debug("Finding complaint by ID")
+	// Check cache first
+	r.mutex.RLock()
+	if cached, exists := r.cache[id]; exists {
+		r.mutex.RUnlock()
+		return cached, nil
+	}
+	r.mutex.RUnlock()
 
-	// Search through files
-	complaints, err := r.LoadAllComplaintsFromDisk()
+	// Load from file using phantom type ID
+	fileName := fmt.Sprintf("%s.json", id.String())
+	data, err := r.readFile(ctx, fileName)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, complaint := range complaints {
-		if complaint.ID.String() == id.String() {
-			logger.Info("Complaint found by ID")
-			return complaint, nil
+	var complaint domain.Complaint
+	if err := json.Unmarshal(data, &complaint); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal complaint: %w", err)
+	}
+
+	// Update cache
+	r.mutex.Lock()
+	r.cache[id] = &complaint
+	r.mutex.Unlock()
+
+	return &complaint, nil
+}
+
+// FindAll finds all complaints with pagination
+func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+	files, err := r.listComplaintFiles(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list complaint files: %w", err)
+	}
+
+	// Sort files by modification time (newest first)
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].ModTime().After(files[j].ModTime())
+	})
+
+	var complaints []*domain.Complaint
+	count := 0
+
+	// Apply pagination
+	for i := range files {
+		if count < offset {
+			count++
+			continue
+		}
+
+		if len(complaints) >= limit {
+			break
+		}
+
+		fileName := files[i].Name()
+		if !strings.HasSuffix(fileName, ".json") {
+			continue
+		}
+
+		// Extract ID from filename (remove .json)
+		idStr := fileName[:len(fileName)-5]
+		id, err := domain.ParseComplaintID(idStr)
+		if err != nil {
+			continue // Skip invalid file names
+		}
+
+		complaint, err := r.FindByID(ctx, id)
+		if err != nil {
+			continue // Skip invalid complaints
+		}
+
+		complaints = append(complaints, complaint)
+	}
+
+	return complaints, nil
+}
+
+// FindBySeverity finds complaints by severity
+func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	all, err := r.FindAll(ctx, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	for _, complaint := range all {
+		if complaint.Severity == severity {
+			filtered = append(filtered, complaint)
+		}
+
+		if len(filtered) >= limit {
+			break
 		}
 	}
 
-	logger.Warn("Complaint not found", "complaint_id", id.String())
-	return nil, fmt.Errorf("complaint not found: %s", id.String())
-}
-
-// FindAll retrieves all complaints with pagination
-func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "FindAll")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "limit", limit, "offset", offset)
-	logger.Debug("Finding all complaints")
-
-	complaints, err := r.LoadAllComplaintsFromDisk()
-	if err != nil {
-		return nil, err
-	}
-
-	result := r.ApplyPagination(complaints, limit, offset)
-	logger.Info("Complaints retrieved", "count", len(result))
-	return result, nil
-}
-
-// FindBySeverity retrieves complaints by severity level
-func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "FindBySeverity")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "severity", string(severity), "limit", limit)
-	logger.Debug("Finding complaints by severity")
-
-	complaints, err := r.LoadAllComplaintsFromDisk()
-	if err != nil {
-		return nil, err
-	}
-
-	filtered := filterComplaints(ctx, complaints, SeverityFilter(severity), limit)
-	logger.Info("Complaints filtered by severity", "severity", string(severity), "count", len(filtered))
 	return filtered, nil
 }
 
-// FindByProject retrieves complaints by project name
-func (r *FileRepository) FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "FindByProject")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "project_name", projectName, "limit", limit)
-	logger.Debug("Finding complaints by project")
-
-	complaints, err := r.LoadAllComplaintsFromDisk()
-	if err != nil {
-		return nil, err
-	}
-
-	filtered := filterComplaints(ctx, complaints, ProjectFilter(projectName), limit)
-	logger.Info("Complaints filtered by project", "project_name", projectName, "count", len(filtered))
-	return filtered, nil
-}
-
-// FindUnresolved retrieves unresolved complaints
+// FindUnresolved finds unresolved complaints
 func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "FindUnresolved")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "limit", limit)
-	logger.Debug("Finding unresolved complaints")
-
-	complaints, err := r.LoadAllComplaintsFromDisk()
+	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	filtered := filterComplaints(ctx, complaints, UnresolvedFilter(), limit)
-	logger.Info("Unresolved complaints filtered", "count", len(filtered))
-	return filtered, nil
+	var unresolved []*domain.Complaint
+	for _, complaint := range all {
+		if !complaint.ResolutionState.IsResolved() {
+			unresolved = append(unresolved, complaint)
+		}
+
+		if len(unresolved) >= limit {
+			break
+		}
+	}
+
+	return unresolved, nil
 }
 
-// Search searches complaints by text content
+// Update updates a complaint
+func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
+	if err := complaint.Validate(); err != nil {
+		return fmt.Errorf("invalid complaint: %w", err)
+	}
+
+	// Save with phantom type ID
+	data, err := json.Marshal(complaint)
+	if err != nil {
+		return fmt.Errorf("failed to marshal complaint: %w", err)
+	}
+
+	fileName := fmt.Sprintf("%s.json", complaint.ID.String())
+	if err := r.writeFile(ctx, fileName, data); err != nil {
+		return err
+	}
+
+	// Update cache
+	r.mutex.Lock()
+	r.cache[complaint.ID] = complaint
+	r.mutex.Unlock()
+
+	return nil
+}
+
+// Delete deletes a complaint by ID
+func (r *FileRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
+	if err := id.Validate(); err != nil {
+		return fmt.Errorf("invalid ComplaintID: %w", err)
+	}
+
+	fileName := fmt.Sprintf("%s.json", id.String())
+	err := os.Remove(filepath.Join(r.complaintsDir, fileName))
+	if err != nil {
+		return fmt.Errorf("failed to delete complaint file: %w", err)
+	}
+
+	// Remove from cache
+	r.mutex.Lock()
+	delete(r.cache, id)
+	r.mutex.Unlock()
+
+	return nil
+}
+
+// Search searches complaints by text
 func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
-	ctx, span := r.GetTracer().Start(ctx, "Search")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "query", query, "limit", limit)
-	logger.Debug("Searching complaints")
-
-	complaints, err := r.LoadAllComplaintsFromDisk()
+	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	results := filterComplaints(ctx, complaints, SearchFilter(query), limit)
-	logger.Info("Complaints searched", "query", query, "count", len(results))
+	query = strings.ToLower(query)
+	var results []*domain.Complaint
+
+	for _, complaint := range all {
+		// Search in all text fields
+		if strings.Contains(strings.ToLower(complaint.TaskDescription), query) ||
+			strings.Contains(strings.ToLower(complaint.ContextInfo), query) ||
+			strings.Contains(strings.ToLower(complaint.MissingInfo), query) ||
+			strings.Contains(strings.ToLower(complaint.ConfusedBy), query) ||
+			strings.Contains(strings.ToLower(complaint.FutureWishes), query) ||
+			strings.Contains(strings.ToLower(complaint.AgentID), query) ||
+			strings.Contains(strings.ToLower(complaint.ProjectName), query) {
+			results = append(results, complaint)
+		}
+
+		if len(results) >= limit {
+			break
+		}
+	}
+
 	return results, nil
 }
 
-// Update updates an existing complaint in-place
-func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
-	ctx, span := r.GetTracer().Start(ctx, "Update")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "complaint_id", complaint.ID.String())
-	logger.Info("Updating complaint")
-
-	// Find existing complaint
-	existing, err := r.FindByID(ctx, complaint.ID)
+// WarmCache loads all complaints into cache
+func (r *FileRepository) WarmCache(ctx context.Context) error {
+	files, err := r.listComplaintFiles(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to find existing complaint: %w", err)
+		return fmt.Errorf("failed to list complaint files: %w", err)
 	}
 
-	// Update fields with new data
-	existing.Timestamp = complaint.Timestamp
-	existing.TaskDescription = complaint.TaskDescription
-	existing.ContextInfo = complaint.ContextInfo
-	existing.MissingInfo = complaint.MissingInfo
-	existing.ConfusedBy = complaint.ConfusedBy
-	existing.FutureWishes = complaint.FutureWishes
-	// Update resolution fields (ResolvedAt is single source of truth)
-	existing.ResolvedAt = complaint.ResolvedAt
-	existing.ResolvedBy = complaint.ResolvedBy
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
-	// Save updated complaint (updates existing file in-place)
-	return r.Save(ctx, existing)
+	for _, file := range files {
+		fileName := file.Name()
+		if !strings.HasSuffix(fileName, ".json") {
+			continue
+		}
+
+		idStr := fileName[:len(fileName)-5]
+		id, err := domain.ParseComplaintID(idStr)
+		if err != nil {
+			continue
+		}
+
+		data, err := r.readFile(ctx, fileName)
+		if err != nil {
+			continue
+		}
+
+		var complaint domain.Complaint
+		if err := json.Unmarshal(data, &complaint); err != nil {
+			continue
+		}
+
+		r.cache[id] = &complaint
+	}
+
+	return nil
 }
 
-// GetCacheStats returns "not available" for FileRepository (no cache)
+// GetCacheStats returns cache statistics
 func (r *FileRepository) GetCacheStats() CacheStats {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
 	return CacheStats{
-		Hits:        0,
-		Misses:      0,
-		Evictions:   0,
-		CurrentSize: 0,
-		MaxSize:     0,
-		HitRate:     0.0,
+		CachedComplaints: len(r.cache),
+		MaxCacheSize:     1000, // Default max cache size
 	}
 }
 
-// GetFilePath returns the actual file path where the complaint is stored
+// GetFilePath returns the file path for a complaint
 func (r *FileRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
-	ctx, span := r.GetTracer().Start(ctx, "GetFilePath")
-	defer span.End()
-
-	logger := r.GetLogger().With("component", "file-repository", "complaint_id", id.String())
-	logger.Debug("Getting file path for complaint")
-
-	// Use UUID-only filename for consistent file updates
-	filename := fmt.Sprintf("%s.json", id.String())
-	filePath := filepath.Join(r.GetBaseDir(), filename)
-	
-	// Check if file exists
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logger.Warn("Complaint file not found", "path", filePath)
-		return "", fmt.Errorf("complaint file not found: %s", id.String())
+	if err := id.Validate(); err != nil {
+		return "", fmt.Errorf("invalid ComplaintID: %w", err)
 	}
-	
-	logger.Info("File path retrieved", "path", filePath)
-	return filePath, nil
+
+	fileName := fmt.Sprintf("%s.json", id.String())
+	return filepath.Join(r.complaintsDir, fileName), nil
 }
 
-// GetDocsPath returns the documentation path (if applicable) for the complaint
-// Note: This is a basic implementation - in a full implementation, this would need
-// access to the DocsRepository configuration and format settings
+// GetDocsPath returns the documentation path for a complaint
 func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
-	ctx, span := r.GetTracer().Start(ctx, "GetDocsPath")
-	defer span.End()
+	if err := id.Validate(); err != nil {
+		return "", fmt.Errorf("invalid ComplaintID: %w", err)
+	}
 
-	logger := r.GetLogger().With("component", "file-repository", "complaint_id", id.String())
-	logger.Debug("Getting docs path for complaint")
-
-	// First, find the complaint to get its timestamp and session name
+	// Create timestamp-based documentation path
 	complaint, err := r.FindByID(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf("failed to find complaint: %w", err)
 	}
 
-	// Default docs directory and format (this should be configurable)
-	// For now, we'll use the default values from the config
-	docsDir := "docs/complaints" 
-	format := "markdown" // Default format
+	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
+	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID, complaint.TaskDescription[:20])
 	
-	// Generate filename using the same logic as DocsRepository
-	sessionName := complaint.SessionName.String()
-	if sessionName == "" {
-		sessionName = "no-session"
+	// Truncate and sanitize filename
+	if len(fileName) > 100 {
+		fileName = fileName[:100]
 	}
 	
-	// Sanitize session name for filename
-	sessionName = strings.ReplaceAll(sessionName, " ", "_")
-	sessionName = strings.ReplaceAll(sessionName, "/", "_")
-	sessionName = strings.ReplaceAll(sessionName, "..", "_")
-	sessionName = strings.ReplaceAll(sessionName, ":", "-")
-	sessionName = strings.ReplaceAll(sessionName, "\"", "")
-	sessionName = strings.ReplaceAll(sessionName, "'", "")
-	sessionName = strings.ReplaceAll(sessionName, "\\", "_")
-	sessionName = strings.ReplaceAll(sessionName, "<", "")
-	sessionName = strings.ReplaceAll(sessionName, ">", "")
-	sessionName = strings.ReplaceAll(sessionName, "|", "")
-	sessionName = strings.ReplaceAll(sessionName, "?", "")
-	sessionName = strings.ReplaceAll(sessionName, "*", "")
+	fileName = strings.ReplaceAll(fileName, " ", "-")
+	fileName = strings.ReplaceAll(fileName, "/", "-")
 	
-	// Remove multiple underscores
-	for strings.Contains(sessionName, "__") {
-		sessionName = strings.ReplaceAll(sessionName, "__", "_")
+	return filepath.Join(r.docsDir, fileName), nil
+}
+
+// CacheStats represents cache statistics
+type CacheStats struct {
+	CachedComplaints int `json:"cached_complaints"`
+	MaxCacheSize     int `json:"max_cache_size"`
+}
+
+// listComplaintFiles lists all complaint files
+func (r *FileRepository) listComplaintFiles(ctx context.Context) ([]fs.FileInfo, error) {
+	entries, err := os.ReadDir(r.complaintsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []fs.FileInfo{}, nil
+		}
+		return nil, fmt.Errorf("failed to read complaints directory: %w", err)
 	}
-	
-	// Trim underscores
-	sessionName = strings.Trim(sessionName, "_")
-	
-	// Limit length
-	if len(sessionName) > 50 {
-		sessionName = sessionName[:50]
+
+	var files []fs.FileInfo
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		files = append(files, entry)
 	}
-	
-	// Format timestamp
-	timeStr := complaint.Timestamp.Format("2006-01-02_15-04-05")
-	
-	// Generate filename with appropriate extension
-	var extension string
-	switch format {
-	case "html":
-		extension = ".html"
-	case "text":
-		extension = ".txt"
-	default:
-		extension = ".md" // markdown
+
+	return files, nil
+}
+
+// writeFile writes data to a file
+func (r *FileRepository) writeFile(ctx context.Context, fileName string, data []byte) error {
+	if err := os.MkdirAll(r.complaintsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create complaints directory: %w", err)
 	}
-	
-	filename := fmt.Sprintf("%s-%s%s", timeStr, sessionName, extension)
-	docsPath := filepath.Join(docsDir, filename)
-	
-	logger.Info("Docs path retrieved", "path", docsPath)
-	return docsPath, nil
+
+	filePath := filepath.Join(r.complaintsDir, fileName)
+	return os.WriteFile(filePath, data, 0644)
+}
+
+// readFile reads data from a file
+func (r *FileRepository) readFile(ctx context.Context, fileName string) ([]byte, error) {
+	filePath := filepath.Join(r.complaintsDir, fileName)
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("complaint not found: %s", fileName)
+		}
+		return nil, fmt.Errorf("failed to read complaint file: %w", err)
+	}
+	return data, nil
+}
+
+// Implement placeholder methods for compatibility
+func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, limit int) ([]*domain.Complaint, error) {
+	all, err := r.FindAll(ctx, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	for _, complaint := range all {
+		if complaint.SessionID == sessionID {
+			filtered = append(filtered, complaint)
+		}
+		if len(filtered) >= limit {
+			break
+		}
+	}
+
+	return filtered, nil
+}
+
+func (r *FileRepository) FindByProject(ctx context.Context, projectID string, limit int) ([]*domain.Complaint, error) {
+	all, err := r.FindAll(ctx, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	for _, complaint := range all {
+		if complaint.ProjectName == projectID {
+			filtered = append(filtered, complaint)
+		}
+		if len(filtered) >= limit {
+			break
+		}
+	}
+
+	return filtered, nil
+}
+
+func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error) {
+	all, err := r.FindAll(ctx, 1000, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+	for _, complaint := range all {
+		if complaint.AgentID == agentID {
+			filtered = append(filtered, complaint)
+		}
+		if len(filtered) >= limit {
+			break
+		}
+	}
+
+	return filtered, nil
 }
