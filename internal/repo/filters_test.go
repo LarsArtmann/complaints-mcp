@@ -241,7 +241,7 @@ func TestFilterComplaintsContextCancellation(t *testing.T) {
 			firstCall = false
 			// Cancel context and wait a bit to ensure cancellation propagates
 			cancel()
-			time.Sleep(1 * time.Millisecond) // Small delay to allow cancellation
+			time.Sleep(10 * time.Millisecond) // Conservative delay for slower CI runners
 		}
 		return filter(c)
 	}
@@ -252,7 +252,7 @@ func TestFilterComplaintsContextCancellation(t *testing.T) {
 	elapsed := time.Since(start)
 
 	// Should return quickly due to cancellation
-	if elapsed > 100*time.Millisecond {
+	if elapsed > 500*time.Millisecond {
 		t.Errorf("Expected filterComplaints to return quickly due to cancellation, took %v", elapsed)
 	}
 

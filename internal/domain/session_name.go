@@ -51,12 +51,10 @@ func (s SessionName) IsEmpty() bool {
 }
 
 // Validate checks if the session name is valid
-// For SessionName, empty values are allowed, so this always returns nil
-// Use IsEmpty() to check if a session name is set
+// Calls constructor to enforce runtime invariants matching construction rules
 func (s SessionName) Validate() error {
-	// SessionName allows empty values (optional field)
-	// Length validation is handled during construction
-	return nil
+	_, err := NewSessionName(s.value)
+	return err
 }
 
 // MarshalJSON implements json.Marshaler for JSON serialization

@@ -33,25 +33,20 @@ func (tsc *ThreadSafeComplaint) Resolve(resolvedBy string) error {
 	tsc.mu.Lock()
 	defer tsc.mu.Unlock()
 	
-	// Check if already resolved
+	// Check if already resolved for better error message
 	if tsc.complaint.IsResolved() {
+		var ts string
+		if tsc.complaint.ResolvedAt != nil {
+			ts = tsc.complaint.ResolvedAt.Format(time.RFC3339)
+		} else {
+			ts = "<unknown>"
+		}
 		return fmt.Errorf("complaint already resolved by %s at %s", 
-			tsc.complaint.ResolvedBy, 
-			tsc.complaint.ResolvedAt.Format(time.RFC3339))
+			tsc.complaint.ResolvedBy, ts)
 	}
 	
-	// Validate resolver name
-	if resolvedBy == "" {
-		return fmt.Errorf("resolver name cannot be empty")
-	}
-	
-	// Perform resolution
-	now := time.Now()
-	tsc.complaint.ResolvedAt = &now
-	tsc.complaint.ResolvedBy = resolvedBy
-	tsc.complaint.ResolutionState = ResolutionStateResolved
-	
-	return nil
+	// Delegate to domain method to enforce state machine rules
+	return tsc.complaint.Resolve(resolvedBy)
 }
 
 // TransitionState performs a state transition - thread-safe
