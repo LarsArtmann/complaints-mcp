@@ -1,0 +1,88 @@
+package service
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/repo"
+	"github.com/larsartmann/complaints-mcp/internal/tracing"
+)
+
+// ComplaintService handles complaint business logic
+type ComplaintService struct {
+	repo   repo.Repository
+	tracer tracing.Tracer
+}
+
+// NewComplaintService creates a new complaint service
+func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *ComplaintService {
+	return &ComplaintService{
+		repo:   repository,
+		tracer: tracer,
+	}
+}
+
+// CreateComplaint creates a new complaint
+func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity domain.Severity, projectName string) (*domain.Complaint, error) {
+	// Generate phantom type ID
+	id, err := domain.NewComplaintID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate complaint ID: %w", err)
+	}
+
+	// Create complaint with phantom type ID
+	complaint := &domain.Complaint{
+		ID:              id,
+		AgentID:         agentName,
+		SessionID:       sessionName,
+		ProjectName:     projectName,
+		TaskDescription: taskDescription,
+		ContextInfo:     contextInfo,
+		MissingInfo:     missingInfo,
+		ConfusedBy:      confusedBy,
+		FutureWishes:    futureWishes,
+		Severity:        severity,
+		Timestamp:       time.Now(),
+		ResolutionState: domain.ResolutionStateOpen,
+	}
+
+	if err := complaint.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid complaint: %w", err)
+	}
+
+	if err := s.repo.Save(ctx, complaint); err != nil {
+		return nil, fmt.Errorf("failed to save complaint: %w", err)
+	}
+
+	return complaint, nil
+}
+
+// GetComplaint retrieves a complaint by ID
+func (s *ComplaintService) GetComplaint(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+	return s.repo.FindByID(ctx, id)
+}
+
+// ListComplaints retrieves a list of complaints
+func (s *ComplaintService) ListComplaints(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+	return s.repo.FindAll(ctx, limit, offset)
+}
+
+// ResolveComplaint marks a complaint as resolved
+func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID, resolvedBy string) (*domain.Complaint, error) {
+	complaint, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find complaint: %w", err)
+	}
+
+	if err := complaint.Resolve(resolvedBy); err != nil {
+		return nil, fmt.Errorf("failed to resolve complaint: %w", err)
+	}
+
+	if err := s.repo.Update(ctx, complaint); err != nil {
+		return nil, fmt.Errorf("failed to update complaint: %w", err)
+	}
+
+	return complaint, nil
+}
