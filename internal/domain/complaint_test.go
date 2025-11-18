@@ -98,7 +98,8 @@ func TestNewComplaint(t *testing.T) {
 }
 
 func TestComplaint_Resolve(t *testing.T) {
-	id, _ := NewComplaintID()
+	// Use a fixed ComplaintID for deterministic testing
+	id := ComplaintID{Value: "550e8400-e29b-41d4-a716-446655440000"}
 	complaint := &Complaint{
 		ID: id,
 	}
@@ -121,7 +122,8 @@ func TestComplaint_Resolve(t *testing.T) {
 }
 
 func TestComplaint_IsResolved(t *testing.T) {
-	now := time.Now()
+	// Use a fixed time for deterministic testing
+	fixedTime := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name      string
 		complaint *Complaint
@@ -130,7 +132,7 @@ func TestComplaint_IsResolved(t *testing.T) {
 		{
 			name: "resolved complaint",
 			complaint: &Complaint{
-				ResolvedAt: &now,
+				ResolvedAt: &fixedTime,
 			},
 			want: true,
 		},

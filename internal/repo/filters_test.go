@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -216,6 +217,44 @@ func TestNotFilter(t *testing.T) {
 	}
 }
 
+func TestFilterComplaintsContextCancellation(t *testing.T) {
+	// Create a context that will be cancelled after a short time
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	// Create many complaints to ensure we have time to cancel
+	complaints := make([]*domain.Complaint, 100)
+	for i := 0; i < 100; i++ {
+		complaints[i] = createTestComplaint(t, "low")
+	}
+
+	// Use a filter that would match all complaints (no early termination via limit)
+	filter := SeverityFilter(domain.SeverityLow)
+	
+	// Add a small delay in the filter to make cancellation more likely
+	slowFilter := func(c *domain.Complaint) bool {
+		time.Sleep(1 * time.Millisecond) // Small delay to ensure cancellation can happen
+		return filter(c)
+	}
+
+	// This should return early due to context cancellation
+	start := time.Now()
+	filtered := filterComplaints(ctx, complaints, slowFilter, 0)
+	elapsed := time.Since(start)
+
+	// Should return very quickly due to cancellation (less than 100ms)
+	if elapsed > 100*time.Millisecond {
+		t.Errorf("Expected filterComplaints to return early due to cancellation, took %v", elapsed)
+	}
+
+	// Should return fewer than all complaints due to cancellation
+	if len(filtered) >= 100 {
+		t.Errorf("Expected early return due to cancellation, got %d complaints", len(filtered))
+	}
+
+	t.Logf("Context cancellation test: filtered %d complaints in %v", len(filtered), elapsed)
+}
+
 // Helper function to create test complaints
 func createTestComplaint(t *testing.T, severityStr string) *domain.Complaint {
 	t.Helper()
@@ -239,4 +278,75 @@ func createTestComplaint(t *testing.T, severityStr string) *domain.Complaint {
 	}
 
 	return complaint
+}
+
+func BenchmarkSearchFilter(b *testing.B) {
+	ctx := context.Background()
+	
+	// Create a large test dataset
+	complaints := make([]*domain.Complaint, 10000)
+	for i := 0; i < 10000; i++ {
+		severity := domain.SeverityLow
+		if i%100 == 0 {
+			severity = domain.SeverityHigh
+		}
+		
+		complaint, err := domain.NewComplaint(
+			ctx,
+			"test-agent",
+			"test-session",
+			fmt.Sprintf("Test task %d with specific search term", i),
+			"test context information",
+			"test missing functionality",
+			"test confused by behavior",
+			"test wishes for improvement",
+			severity,
+			"test-project",
+		)
+		if err != nil {
+			b.Fatalf("Failed to create test complaint: %v", err)
+		}
+		complaints[i] = complaint
+	}
+
+	// Benchmark search term that will match only a few items (early exit)
+	filter := SearchFilter("specific search term")
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = filterComplaints(ctx, complaints, filter, 10)
+	}
+}
+
+func BenchmarkSearchFilterNoMatch(b *testing.B) {
+	ctx := context.Background()
+	
+	// Create a large test dataset
+	complaints := make([]*domain.Complaint, 10000)
+	for i := 0; i < 10000; i++ {
+		complaint, err := domain.NewComplaint(
+			ctx,
+			"test-agent",
+			"test-session",
+			fmt.Sprintf("Test task %d", i),
+			"test context information",
+			"test missing functionality",
+			"test confused by behavior",
+			"test wishes for improvement",
+			domain.SeverityLow,
+			"test-project",
+		)
+		if err != nil {
+			b.Fatalf("Failed to create test complaint: %v", err)
+		}
+		complaints[i] = complaint
+	}
+
+	// Benchmark search term that will match nothing (worst case)
+	filter := SearchFilter("nonexistent term that will never match")
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = filterComplaints(ctx, complaints, filter, 10)
+	}
 }

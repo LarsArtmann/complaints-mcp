@@ -23,6 +23,13 @@ func filterComplaints(
 	count := 0
 
 	for _, complaint := range complaints {
+		// Check for context cancellation
+		select {
+		case <-ctx.Done():
+			return filtered
+		default:
+		}
+
 		// Apply the filter strategy
 		if filter(complaint) {
 			filtered = append(filtered, complaint)
@@ -64,43 +71,53 @@ func SearchFilter(query string) FilterStrategy {
 	queryLower := strings.ToLower(query)
 
 	return func(c *domain.Complaint) bool {
+		// Pre-compute lowercase versions of all fields once per complaint
+		taskDescLower := strings.ToLower(c.TaskDescription)
+		contextInfoLower := strings.ToLower(c.ContextInfo)
+		missingInfoLower := strings.ToLower(c.MissingInfo)
+		confusedByLower := strings.ToLower(c.ConfusedBy)
+		futureWishesLower := strings.ToLower(c.FutureWishes)
+		agentNameLower := strings.ToLower(c.AgentName.String())
+		sessionNameLower := strings.ToLower(c.SessionName.String())
+		projectNameLower := strings.ToLower(c.ProjectName.String())
+
 		// Search in task description
-		if strings.Contains(strings.ToLower(c.TaskDescription), queryLower) {
+		if strings.Contains(taskDescLower, queryLower) {
 			return true
 		}
 
 		// Search in context info
-		if strings.Contains(strings.ToLower(c.ContextInfo), queryLower) {
+		if strings.Contains(contextInfoLower, queryLower) {
 			return true
 		}
 
 		// Search in missing info
-		if strings.Contains(strings.ToLower(c.MissingInfo), queryLower) {
+		if strings.Contains(missingInfoLower, queryLower) {
 			return true
 		}
 
 		// Search in confused by
-		if strings.Contains(strings.ToLower(c.ConfusedBy), queryLower) {
+		if strings.Contains(confusedByLower, queryLower) {
 			return true
 		}
 
 		// Search in future wishes
-		if strings.Contains(strings.ToLower(c.FutureWishes), queryLower) {
+		if strings.Contains(futureWishesLower, queryLower) {
 			return true
 		}
 
 		// Search in agent name
-		if strings.Contains(strings.ToLower(c.AgentName.String()), queryLower) {
+		if strings.Contains(agentNameLower, queryLower) {
 			return true
 		}
 
 		// Search in session name
-		if strings.Contains(strings.ToLower(c.SessionName.String()), queryLower) {
+		if strings.Contains(sessionNameLower, queryLower) {
 			return true
 		}
 
 		// Search in project name
-		if strings.Contains(strings.ToLower(c.ProjectName.String()), queryLower) {
+		if strings.Contains(projectNameLower, queryLower) {
 			return true
 		}
 

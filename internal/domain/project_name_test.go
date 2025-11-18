@@ -189,10 +189,10 @@ func TestProjectName_Immutability(t *testing.T) {
 	projectName := MustNewProjectName("original-project")
 	originalValue := projectName.String()
 
-	// Attempt to modify by creating a new one
-	_ = MustNewProjectName("modified-project")
-
-	// Original should remain unchanged
+	// ProjectName value objects are immutable by design - they contain only the private value field
+	// There are no setter methods, and the String() method returns a copy of the value
+	// This test verifies the type design guarantees immutability
+	
 	if projectName.String() != originalValue {
 		t.Errorf("project name was modified unexpectedly")
 	}

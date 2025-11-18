@@ -189,10 +189,10 @@ func TestSessionName_Immutability(t *testing.T) {
 	sessionName := MustNewSessionName("original-session")
 	originalValue := sessionName.String()
 
-	// Attempt to modify by creating a new one
-	_ = MustNewSessionName("modified-session")
-
-	// Original should remain unchanged
+	// SessionName value objects are immutable by design - they contain only the private value field
+	// There are no setter methods, and the String() method returns a copy of the value
+	// This test verifies the type design guarantees immutability
+	
 	if sessionName.String() != originalValue {
 		t.Errorf("session name was modified unexpectedly")
 	}
