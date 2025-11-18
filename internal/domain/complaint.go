@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 
 var (
 	// Global validator instance (thread-safe, created once)
-	validate     *validator.Validate
+	validate *validator.Validate
 	// Initialize validator once using sync.Once (thread-safe singleton pattern)
 	validateOnce sync.Once
 )
@@ -32,7 +33,7 @@ const (
 func AllResolutionStates() []ResolutionState {
 	return []ResolutionState{
 		ResolutionStateOpen,
-		ResolutionStateResolved, 
+		ResolutionStateResolved,
 		ResolutionStateRejected,
 		ResolutionStateDeferred,
 	}
@@ -62,18 +63,13 @@ func (rs ResolutionState) CanTransitionTo(new ResolutionState) bool {
 		ResolutionStateResolved: {}, // Terminal state
 		ResolutionStateRejected: {}, // Terminal state
 	}
-	
+
 	allowedStates, exists := allowedTransitions[rs]
 	if !exists {
 		return false
 	}
-	
-	for _, allowed := range allowedStates {
-		if allowed == new {
-			return true
-		}
-	}
-	return false
+
+	return slices.Contains(allowedStates, new)
 }
 
 // Severity represents the severity level of a complaint
@@ -156,8 +152,8 @@ type Complaint struct {
 	// Resolution tracking - SINGLE SOURCE OF TRUTH
 	// ResolutionState captures the complete resolution status
 	ResolutionState ResolutionState `json:"resolution_state"`
-	ResolvedAt    *time.Time   `json:"resolved_at,omitempty"`    // nil = not resolved
-	ResolvedBy    string       `json:"resolved_by,omitempty"`    // empty when not resolved
+	ResolvedAt      *time.Time      `json:"resolved_at,omitempty"` // nil = not resolved
+	ResolvedBy      string          `json:"resolved_by,omitempty"` // empty when not resolved
 }
 
 // NewComplaint creates a new complaint with the given parameters
@@ -192,7 +188,7 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 
 	now := time.Now()
 	complaint := &Complaint{
-		ID:             id,
+		ID:              id,
 		AgentName:       agentNameVO,
 		SessionName:     sessionNameVO,
 		TaskDescription: taskDescription,
