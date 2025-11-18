@@ -59,9 +59,10 @@ func TestUnresolvedFilter(t *testing.T) {
 	unresolvedComplaint := createTestComplaint(t, "low")
 
 	resolvedComplaint := createTestComplaint(t, "high")
-	now := time.Now()
-	resolvedComplaint.ResolvedAt = &now
-	resolvedComplaint.ResolvedBy = "test-agent"
+	err := resolvedComplaint.Resolve("test-agent")
+	if err != nil {
+		t.Fatalf("Failed to resolve test complaint: %v", err)
+	}
 
 	complaints := []*domain.Complaint{unresolvedComplaint, resolvedComplaint}
 
@@ -197,9 +198,10 @@ func TestNotFilter(t *testing.T) {
 	unresolvedComplaint := createTestComplaint(t, "low")
 
 	resolvedComplaint := createTestComplaint(t, "high")
-	now := time.Now()
-	resolvedComplaint.ResolvedAt = &now
-	resolvedComplaint.ResolvedBy = "test-agent"
+	err := resolvedComplaint.Resolve("test-agent")
+	if err != nil {
+		t.Fatalf("Failed to resolve test complaint: %v", err)
+	}
 
 	complaints := []*domain.Complaint{unresolvedComplaint, resolvedComplaint}
 

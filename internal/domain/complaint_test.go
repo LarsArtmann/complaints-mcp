@@ -98,26 +98,52 @@ func TestNewComplaint(t *testing.T) {
 }
 
 func TestComplaint_Resolve(t *testing.T) {
-	// Use a fixed ComplaintID for deterministic testing
-	id := ComplaintID{Value: "550e8400-e29b-41d4-a716-446655440000"}
-	complaint := &Complaint{
-		ID: id,
+	// Create a valid complaint for testing
+	complaint, err := NewComplaint(
+		context.Background(),
+		"Test Agent",
+		"test-session",
+		"Test task description",
+		"Test context info",
+		"Test missing info",
+		"Test confused by",
+		"Test future wishes",
+		"high",
+		"test-project",
+	)
+	if err != nil {
+		t.Fatalf("Failed to create test complaint: %v", err)
 	}
 
-	complaint.Resolve("test-agent") // Pure domain method - no context
+	// Verify initial state
+	if complaint.IsResolved() {
+		t.Error("New complaint should not be resolved")
+	}
 
+	// Resolve the complaint
+	err = complaint.Resolve("test-agent")
+	if err != nil {
+		t.Fatalf("Failed to resolve complaint: %v", err)
+	}
+
+	// Verify resolved state
 	if !complaint.IsResolved() {
 		t.Error("Complaint.Resolve() did not set resolved state to true")
 	}
 
-	// ✅ Verify ResolvedAt timestamp is set (prevents split-brain)
+	// Verify ResolvedAt timestamp is set (prevents split-brain)
 	if complaint.ResolvedAt == nil {
 		t.Error("Complaint.Resolve() did not set ResolvedAt timestamp")
 	}
 
-	// ✅ NEW: Verify ResolvedBy field is set
+	// Verify ResolvedBy is set correctly
 	if complaint.ResolvedBy != "test-agent" {
 		t.Errorf("Complaint.Resolve() did not set ResolvedBy correctly. Expected 'test-agent', got '%s'", complaint.ResolvedBy)
+	}
+
+	// Verify ResolutionState is updated
+	if complaint.ResolutionState != ResolutionStateResolved {
+		t.Errorf("Complaint.Resolve() did not update ResolutionState correctly. Expected 'resolved', got '%s'", complaint.ResolutionState)
 	}
 }
 
@@ -132,14 +158,18 @@ func TestComplaint_IsResolved(t *testing.T) {
 		{
 			name: "resolved complaint",
 			complaint: &Complaint{
-				ResolvedAt: &fixedTime,
+				ResolutionState: ResolutionStateResolved,
+				ResolvedAt:    &fixedTime,
+				ResolvedBy:    "test-agent",
 			},
 			want: true,
 		},
 		{
 			name: "unresolved complaint",
 			complaint: &Complaint{
-				ResolvedAt: nil,
+				ResolutionState: ResolutionStateOpen,
+				ResolvedAt:    nil,
+				ResolvedBy:    "",
 			},
 			want: false,
 		},
@@ -165,8 +195,12 @@ func TestComplaint_Validate(t *testing.T) {
 			name: "valid complaint",
 			complaint: &Complaint{
 				AgentName:       MustNewAgentName("test-agent"),
+				SessionName:     MustNewSessionName("test-session"),
 				TaskDescription: "test task",
-				Severity:        "high",
+				Severity:        SeverityHigh,
+				ResolutionState: ResolutionStateOpen,
+				Timestamp:       time.Now(),
+				ProjectName:     MustNewProjectName("test-project"),
 			},
 			wantErr: false,
 		},
