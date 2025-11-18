@@ -35,7 +35,7 @@ func TestNewAgentName(t *testing.T) {
 				if err == nil {
 					t.Errorf("expected error but got none")
 				}
-				if !agentName.IsEmpty() && tt.input == "" {
+				if !agentName.IsEmpty() {
 					t.Errorf("expected empty agent name for invalid input")
 				}
 			} else {
