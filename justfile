@@ -30,6 +30,24 @@ test-bdd:
         echo "⚠️  BDD step definitions not yet implemented - skipping BDD tests"; \
     fi
 
+# Run integration tests
+test-integration:
+    @echo "Running integration tests..."
+    @if [ -f "test/integration/test.sh" ]; then \
+        cd test/integration && chmod +x *.sh && ./test.sh; \
+    else \
+        echo "⚠️  Integration tests not found"; \
+    fi
+
+# Run cache integration tests
+test-cache:
+    @echo "Running cache integration tests..."
+    @if [ -f "test/integration/test_cache_complete.sh" ]; then \
+        cd test/integration && chmod +x test_cache_complete.sh && ./test_cache_complete.sh; \
+    else \
+        echo "⚠️  Cache integration tests not found"; \
+    fi
+
 # Lint code with go vet and formatting checks
 lint:
     go vet ./...
@@ -87,7 +105,7 @@ fd-golangci:
 quality: fmt lint test fd
 
 # Run full CI pipeline
-ci: deps fmt lint test-bdd fd
+ci: deps fmt lint test-bdd test-integration fd
     @echo "✅ All CI checks passed!"
 
 # Development server (run in background)
@@ -116,6 +134,8 @@ help:
     @echo "  clean          - Clean build artifacts"
     @echo "  test           - Run Go tests"
     @echo "  test-bdd       - Run BDD tests with godog"
+    @echo "  test-integration - Run integration tests"
+    @echo "  test-cache     - Run cache integration tests"
     @echo "  lint           - Run go vet and formatting checks"
     @echo "  fmt            - Format code with gofmt"
     @echo "  deps           - Install dependencies"

@@ -400,26 +400,20 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 	logger := m.logger.With("component", "mcp-server", "tool", "resolve_complaint")
 	logger.Info("Handling resolve complaint request")
 
-	complaintID := domain.ComplaintID{Value: input.ComplaintID}
+	complaintID := domain.ComplaintID(input.ComplaintID)
 
-	if err := m.service.ResolveComplaint(ctx, complaintID, input.ResolvedBy); err != nil {
+	complaint, err := m.service.ResolveComplaint(ctx, complaintID, input.ResolvedBy)
+	if err != nil {
 		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
 		return nil, ResolveComplaintOutput{}, err
 	}
 
 	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
 
-	// Get updated complaint for response
-	updatedComplaint, err := m.service.GetComplaint(ctx, complaintID)
-	if err != nil {
-		logger.Error("Failed to get updated complaint", "error", err, "complaint_id", input.ComplaintID)
-		return nil, ResolveComplaintOutput{}, err
-	}
-
 	output := ResolveComplaintOutput{
 		Success:   true,
 		Message:   "Complaint resolved successfully",
-		Complaint: ToDTO(updatedComplaint),
+		Complaint: ToDTO(complaint),
 	}
 
 	return nil, output, nil
@@ -471,7 +465,7 @@ func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRe
 	stats := m.service.GetCacheStats()
 
 	// Determine if cache is enabled (non-zero max size indicates cached repository)
-	cacheEnabled := stats.MaxSize > 0
+	cacheEnabled := stats.MaxCacheSize > 0
 	message := "Cache statistics retrieved successfully"
 	if !cacheEnabled {
 		message = "Cache disabled (using FileRepository)"
@@ -487,7 +481,7 @@ func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRe
 		"cache_enabled", cacheEnabled,
 		"hit_rate", stats.HitRate,
 		"current_size", stats.CurrentSize,
-		"max_size", stats.MaxSize)
+		"max_size", stats.MaxCacheSize)
 
 	return nil, output, nil
 }

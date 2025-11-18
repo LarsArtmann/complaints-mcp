@@ -3,6 +3,10 @@
 # Test complete cache stats workflow
 echo "=== Testing Cache Statistics Tool ==="
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # Test 1: File a complaint to generate cache data
 echo "1. Filing a complaint to populate cache..."
 cat << 'EOF' > /tmp/file_complaint.json
@@ -44,7 +48,7 @@ echo "Sending batch request..."
   sleep 1  
   cat /tmp/get_cache_stats.json
   sleep 1
-) | timeout 15s ./complaints-mcp 2>&1 | grep -E "(Cache stats retrieved|get_cache_stats|cache_enabled|hit_rate|current_size)" || echo "No cache stats output found"
+) | timeout 15s "$PROJECT_ROOT/complaints-mcp" 2>&1 | grep -E "(Cache stats retrieved|get_cache_stats|cache_enabled|hit_rate|current_size)" || echo "No cache stats output found"
 
 # Cleanup
 rm -f /tmp/file_complaint.json /tmp/get_cache_stats.json
@@ -66,7 +70,7 @@ cat << 'EOF' > /tmp/get_cache_stats_no_cache.json
 }
 EOF
 
-timeout 10s ./complaints-mcp --cache-enabled=false < /tmp/get_cache_stats_no_cache.json 2>&1 | grep -E "(Cache stats retrieved|Cache disabled|cache_enabled)" || echo "No cache disabled output found"
+timeout 10s "$PROJECT_ROOT/complaints-mcp" --cache-enabled=false < /tmp/get_cache_stats_no_cache.json 2>&1 | grep -E "(Cache stats retrieved|Cache disabled|cache_enabled)" || echo "No cache disabled output found"
 
 rm -f /tmp/get_cache_stats_no_cache.json
 

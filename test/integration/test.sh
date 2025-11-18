@@ -3,9 +3,13 @@
 # Test the complaints-mcp server
 echo "Testing complaints-mcp server..."
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # Start the server in background
 echo "Starting server..."
-./complaints-mcp &
+"$PROJECT_ROOT/complaints-mcp" &
 SERVER_PID=$!
 
 # Wait a moment for server to start

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
@@ -213,7 +214,15 @@ func (r *FileRepository) WarmCache(ctx context.Context) error {
 
 // GetCacheStats returns cache statistics
 func (r *FileRepository) GetCacheStats() CacheStats {
-	return CacheStats{CachedComplaints: 0, MaxCacheSize: 0}
+	return CacheStats{
+		CachedComplaints: 0,
+		MaxCacheSize:     0,
+		Hits:             0,
+		Misses:           0,
+		Evictions:        0,
+		CurrentSize:      0,
+		HitRate:          0.0,
+	}
 }
 
 // GetFilePath returns file path for a complaint
@@ -292,8 +301,13 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 
 // CacheStats represents cache statistics
 type CacheStats struct {
-	CachedComplaints int `json:"cached_complaints"`
-	MaxCacheSize     int `json:"max_cache_size"`
+	CachedComplaints int     `json:"cached_complaints"`
+	MaxCacheSize     int     `json:"max_cache_size"`
+	Hits             int     `json:"hits"`
+	Misses           int     `json:"misses"`
+	Evictions        int     `json:"evictions"`
+	CurrentSize      int     `json:"current_size"`
+	HitRate          float64 `json:"hit_rate_percent"`
 }
 
 // listComplaintFiles lists all complaint files
@@ -321,6 +335,13 @@ func (r *FileRepository) writeFile(fileName string, data []byte) error {
 	}
 	filePath := filepath.Join(r.complaintsDir, fileName)
 	return os.WriteFile(filePath, data, 0644)
+}
+
+// NewRepositoryFromConfig creates a repository based on configuration
+func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Repository {
+	// For now, always return a FileRepository
+	// In the future, this could check cfg.Storage.CacheEnabled to return a cached repository
+	return NewFileRepository(cfg.Storage.BaseDir, tracer)
 }
 
 // readFile reads data from a file

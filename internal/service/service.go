@@ -86,3 +86,33 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 
 	return complaint, nil
 }
+
+// GetFilePaths returns file and docs paths for a complaint
+func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.ComplaintID) (filePath, docsPath string, err error) {
+	filePath, err = s.repo.GetFilePath(ctx, id)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get file path: %w", err)
+	}
+	
+	docsPath, err = s.repo.GetDocsPath(ctx, id)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get docs path: %w", err)
+	}
+	
+	return filePath, docsPath, nil
+}
+
+// GetComplaintsBySeverity retrieves complaints by severity level
+func (s *ComplaintService) GetComplaintsBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	return s.repo.FindBySeverity(ctx, severity, limit)
+}
+
+// SearchComplaints searches complaints by text query
+func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+	return s.repo.Search(ctx, query, limit)
+}
+
+// GetCacheStats returns cache statistics
+func (s *ComplaintService) GetCacheStats() repo.CacheStats {
+	return s.repo.GetCacheStats()
+}

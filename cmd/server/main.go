@@ -100,11 +100,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	// Initialize dependencies
 	tracerConfig := tracing.DefaultTracerConfig()
 	tracer := tracing.NewTracer(tracerConfig)
-	complaintRepo := repo.NewRepositoryFromConfig(cfg)
-	complaintService := service.NewComplaintService(complaintRepo, tracer, logger)
-
-	// Configure documentation repository with settings from config
-	complaintService.UpdateConfig(cfg.Storage.DocsDir, cfg.Storage.DocsFormat, cfg.Storage.DocsEnabled)
+	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
+	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
 	mcpServer := mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
