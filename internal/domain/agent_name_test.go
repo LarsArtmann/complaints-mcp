@@ -127,7 +127,10 @@ func TestAgentName_JSON(t *testing.T) {
 
 	t.Run("unmarshal too long name fails", func(t *testing.T) {
 		longName := strings.Repeat("a", MaxAgentNameLength+1)
-		data, _ := json.Marshal(longName)
+		data, err := json.Marshal(longName)
+		if err != nil {
+			t.Fatalf("failed to marshal long name: %v", err)
+		}
 		var agentName AgentName
 		if err := json.Unmarshal(data, &agentName); err == nil {
 			t.Errorf("expected error when unmarshaling name exceeding max length")
