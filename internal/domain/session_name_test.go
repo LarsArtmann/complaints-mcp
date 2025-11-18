@@ -192,7 +192,7 @@ func TestSessionName_Immutability(t *testing.T) {
 	// SessionName value objects are immutable by design - they contain only the private value field
 	// There are no setter methods, and the String() method returns a copy of the value
 	// This test verifies the type design guarantees immutability
-	
+
 	if sessionName.String() != originalValue {
 		t.Errorf("session name was modified unexpectedly")
 	}

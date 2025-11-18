@@ -79,8 +79,8 @@ func (id ComplaintID) IsEmpty() bool {
 // Uses value objects for type safety and validation
 type Complaint struct {
 	ID              ComplaintID `json:"id" validate:"required"`
-	AgentName       AgentName   `json:"agent_name"`    // Value object: required, max 100 chars
-	SessionName     SessionName `json:"session_name"`  // Value object: optional, max 100 chars
+	AgentName       AgentName   `json:"agent_name"`   // Value object: required, max 100 chars
+	SessionName     SessionName `json:"session_name"` // Value object: optional, max 100 chars
 	TaskDescription string      `json:"task_description" validate:"required,min=1,max=1000"`
 	ContextInfo     string      `json:"context_info" validate:"max=2000000"`
 	MissingInfo     string      `json:"missing_info" validate:"max=2000000"`

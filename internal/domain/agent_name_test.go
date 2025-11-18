@@ -160,7 +160,7 @@ func TestAgentName_Immutability(t *testing.T) {
 	// AgentName value objects are immutable by design - they contain only the private value field
 	// There are no setter methods, and the String() method returns a copy of the value
 	// This test verifies the type design guarantees immutability
-	
+
 	if agentName.String() != originalValue {
 		t.Errorf("agent name was modified unexpectedly")
 	}

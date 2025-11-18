@@ -192,7 +192,7 @@ func TestProjectName_Immutability(t *testing.T) {
 	// ProjectName value objects are immutable by design - they contain only the private value field
 	// There are no setter methods, and the String() method returns a copy of the value
 	// This test verifies the type design guarantees immutability
-	
+
 	if projectName.String() != originalValue {
 		t.Errorf("project name was modified unexpectedly")
 	}
