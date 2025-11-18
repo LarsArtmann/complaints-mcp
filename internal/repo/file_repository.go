@@ -254,19 +254,8 @@ func (r *CachedRepository) FindBySeverity(ctx context.Context, severity domain.S
 	logger := r.logger.With("component", "cached-repository", "severity", string(severity), "limit", limit)
 	logger.Debug("Finding complaints by severity from LRU cache")
 
-	// Filter from LRU cache (O(n) but on cached data, no file I/O)
 	allComplaints := r.cache.GetAll()
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range allComplaints {
-		if complaint.Severity == severity {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, allComplaints, SeverityFilter(severity), limit)
 
 	logger.Info("Complaints filtered by severity from LRU cache", "severity", string(severity), "count", len(filtered))
 	return filtered, nil
@@ -285,17 +274,7 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 		return nil, err
 	}
 
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range complaints {
-		if complaint.Severity == severity {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, complaints, SeverityFilter(severity), limit)
 
 	logger.Info("Complaints filtered by severity", "severity", string(severity), "count", len(filtered))
 	return filtered, nil
@@ -316,12 +295,12 @@ func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complai
 	}
 
 	// Update fields with new data
-	existing.Resolved = complaint.Resolved
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
+	// Update resolution fields (ResolvedAt is single source of truth)
 	existing.ResolvedAt = complaint.ResolvedAt
 	existing.ResolvedBy = complaint.ResolvedBy
 
@@ -344,13 +323,13 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	}
 
 	// Update fields with new data
-	existing.Resolved = complaint.Resolved
 	existing.Timestamp = complaint.Timestamp
 	existing.TaskDescription = complaint.TaskDescription
 	existing.ContextInfo = complaint.ContextInfo
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
+	// Update resolution fields (ResolvedAt is single source of truth)
 	existing.ResolvedAt = complaint.ResolvedAt
 	existing.ResolvedBy = complaint.ResolvedBy
 
@@ -366,29 +345,8 @@ func (r *CachedRepository) Search(ctx context.Context, query string, limit int) 
 	logger := r.logger.With("component", "cached-repository", "query", query, "limit", limit)
 	logger.Debug("Searching complaints from LRU cache")
 
-	// Search from LRU cache (O(n) but on cached data, no file I/O)
 	allComplaints := r.cache.GetAll()
-	queryLower := strings.ToLower(query)
-	var results []*domain.Complaint
-	count := 0
-
-	for _, complaint := range allComplaints {
-		// Simple text search in relevant fields
-		if strings.Contains(strings.ToLower(complaint.TaskDescription), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ContextInfo), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.MissingInfo), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ConfusedBy), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.FutureWishes), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.AgentName), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ProjectName), queryLower) {
-
-			results = append(results, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	results := filterComplaints(ctx, allComplaints, SearchFilter(query), limit)
 
 	logger.Info("Complaints searched from LRU cache", "query", query, "count", len(results))
 	return results, nil
@@ -407,27 +365,7 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 		return nil, err
 	}
 
-	queryLower := strings.ToLower(query)
-	var results []*domain.Complaint
-	count := 0
-
-	for _, complaint := range complaints {
-		// Simple text search in relevant fields
-		if strings.Contains(strings.ToLower(complaint.TaskDescription), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ContextInfo), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.MissingInfo), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ConfusedBy), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.FutureWishes), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.AgentName), queryLower) ||
-			strings.Contains(strings.ToLower(complaint.ProjectName), queryLower) {
-
-			results = append(results, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	results := filterComplaints(ctx, complaints, SearchFilter(query), limit)
 
 	logger.Info("Complaints searched", "query", query, "count", len(results))
 	return results, nil
@@ -577,19 +515,8 @@ func (r *CachedRepository) FindByProject(ctx context.Context, projectName string
 	logger := r.logger.With("component", "cached-repository", "project_name", projectName, "limit", limit)
 	logger.Debug("Finding complaints by project from LRU cache")
 
-	// Filter from LRU cache (O(n) but on cached data, no file I/O)
 	allComplaints := r.cache.GetAll()
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range allComplaints {
-		if complaint.ProjectName == projectName {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, allComplaints, ProjectFilter(projectName), limit)
 
 	logger.Info("Complaints filtered by project from LRU cache", "project_name", projectName, "count", len(filtered))
 	return filtered, nil
@@ -608,17 +535,7 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectName string, 
 		return nil, err
 	}
 
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range complaints {
-		if complaint.ProjectName == projectName {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, complaints, ProjectFilter(projectName), limit)
 
 	logger.Info("Complaints filtered by project", "project_name", projectName, "count", len(filtered))
 	return filtered, nil
@@ -632,19 +549,8 @@ func (r *CachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*do
 	logger := r.logger.With("component", "cached-repository", "limit", limit)
 	logger.Debug("Finding unresolved complaints from LRU cache")
 
-	// Filter from LRU cache (O(n) but on cached data, no file I/O)
 	allComplaints := r.cache.GetAll()
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range allComplaints {
-		if !complaint.Resolved {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, allComplaints, UnresolvedFilter(), limit)
 
 	logger.Info("Unresolved complaints filtered from LRU cache", "count", len(filtered))
 	return filtered, nil
@@ -663,17 +569,7 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 		return nil, err
 	}
 
-	var filtered []*domain.Complaint
-	count := 0
-	for _, complaint := range complaints {
-		if !complaint.Resolved {
-			filtered = append(filtered, complaint)
-			count++
-			if limit > 0 && count >= limit {
-				break
-			}
-		}
-	}
+	filtered := filterComplaints(ctx, complaints, UnresolvedFilter(), limit)
 
 	logger.Info("Unresolved complaints filtered", "count", len(filtered))
 	return filtered, nil

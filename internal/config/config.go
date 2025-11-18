@@ -26,7 +26,7 @@ type Config struct {
 type ServerConfig struct {
 	Name string `mapstructure:"name" validate:"required"`
 	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port" validate:"min=1,max=65535"`
+	Port uint16 `mapstructure:"port" validate:"min=1,max=65535"` // uint16: ports are 0-65535
 }
 
 // Address returns the full server address
@@ -41,8 +41,8 @@ func (s ServerConfig) Address() string {
 type StorageConfig struct {
 	BaseDir    string `mapstructure:"base_dir" validate:"required"`
 	GlobalDir  string `mapstructure:"global_dir"`
-	MaxSize    int64  `mapstructure:"max_size" validate:"min=1024"`
-	Retention  uint   `mapstructure:"retention_days"` // 0 = infinite retention
+	MaxSize    uint64 `mapstructure:"max_size" validate:"min=1024"` // uint64: file sizes cannot be negative
+	Retention  uint   `mapstructure:"retention_days"`               // 0 = infinite retention
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
 	// Documentation storage configuration
@@ -52,8 +52,8 @@ type StorageConfig struct {
 
 	// Cache configuration - JSON fields for Viper
 	CacheEnabled  bool   `mapstructure:"cache_enabled"`
-	CacheMaxSize  int64  `mapstructure:"cache_max_size" validate:"min=1,max=100000"`
-	CacheEviction string `mapstructure:"cache_eviction"` // "lru", "fifo", "none"
+	CacheMaxSize  uint32 `mapstructure:"cache_max_size" validate:"min=1,max=100000"` // uint32: cache sizes cannot be negative
+	CacheEviction string `mapstructure:"cache_eviction"`                             // "lru", "fifo", "none"
 
 	// Type-safe fields for internal use (populated in postProcessConfig)
 	CacheSize      types.CacheSize           `mapstructure:"-"` // derived from CacheMaxSize

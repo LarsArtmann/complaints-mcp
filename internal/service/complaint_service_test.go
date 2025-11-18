@@ -68,7 +68,7 @@ func (m *mockRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 func (m *mockRepository) FindByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	for _, c := range m.complaints {
-		if c.ProjectName == projectName {
+		if c.ProjectName.String() == projectName {
 			result = append(result, c)
 			if len(result) >= limit {
 				break
@@ -81,7 +81,7 @@ func (m *mockRepository) FindByProject(ctx context.Context, projectName string, 
 func (m *mockRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	var result []*domain.Complaint
 	for _, c := range m.complaints {
-		if !c.Resolved {
+		if !c.IsResolved() {
 			result = append(result, c)
 			if len(result) >= limit {
 				break
@@ -188,20 +188,20 @@ func TestComplaintService_CreateComplaint(t *testing.T) {
 		return
 	}
 
-	if complaint.AgentName != "test-agent" {
-		t.Errorf("AgentName = %v, want %v", complaint.AgentName, "test-agent")
+	if complaint.AgentName.String() != "test-agent" {
+		t.Errorf("AgentName = %v, want %v", complaint.AgentName.String(), "test-agent")
 	}
 
-	if complaint.ProjectName != "test-project" {
-		t.Errorf("ProjectName = %v, want %v", complaint.ProjectName, "test-project")
+	if complaint.ProjectName.String() != "test-project" {
+		t.Errorf("ProjectName = %v, want %v", complaint.ProjectName.String(), "test-project")
 	}
 
 	if complaint.Severity != domain.SeverityHigh {
 		t.Errorf("Severity = %v, want %v", complaint.Severity, domain.SeverityHigh)
 	}
 
-	if complaint.Resolved != false {
-		t.Errorf("Resolved = %v, want %v", complaint.Resolved, false)
+	if complaint.IsResolved() {
+		t.Error("Complaint should not be resolved")
 	}
 
 	if complaint.Timestamp.IsZero() {
@@ -240,8 +240,8 @@ func TestComplaintService_CreateComplaint_ValidationError(t *testing.T) {
 		return
 	}
 
-	if !strings.Contains(err.Error(), "AgentName") && !strings.Contains(err.Error(), "required") {
-		t.Errorf("Error should mention AgentName or required, got: %v", err)
+	if !strings.Contains(err.Error(), "AgentName") && !strings.Contains(err.Error(), "required") && !strings.Contains(err.Error(), "agent name") {
+		t.Errorf("Error should mention AgentName, agent name, or required, got: %v", err)
 	}
 }
 
@@ -346,7 +346,7 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 		t.Fatalf("Failed to create complaint: %v", err)
 	}
 
-	if created.Resolved {
+	if created.IsResolved() {
 		t.Fatal("Complaint should start as unresolved")
 	}
 
@@ -367,7 +367,7 @@ func TestComplaintService_ResolveComplaint(t *testing.T) {
 		return
 	}
 
-	if !resolved.Resolved {
+	if !resolved.IsResolved() {
 		t.Error("Complaint should be marked as resolved")
 	}
 

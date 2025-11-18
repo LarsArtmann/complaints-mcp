@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -12,9 +13,64 @@ import (
 
 var (
 	// Global validator instance (thread-safe, created once)
-	validate     *validator.Validate
+	validate *validator.Validate
+	// Initialize validator once using sync.Once (thread-safe singleton pattern)
 	validateOnce sync.Once
 )
+
+// ResolutionState represents the resolution status of a complaint
+// Provides single source of truth for resolution state
+type ResolutionState string
+
+const (
+	ResolutionStateOpen     ResolutionState = "open"
+	ResolutionStateResolved ResolutionState = "resolved"
+	ResolutionStateRejected ResolutionState = "rejected"
+	ResolutionStateDeferred ResolutionState = "deferred"
+)
+
+// AllResolutionStates returns all valid resolution states
+func AllResolutionStates() []ResolutionState {
+	return []ResolutionState{
+		ResolutionStateOpen,
+		ResolutionStateResolved,
+		ResolutionStateRejected,
+		ResolutionStateDeferred,
+	}
+}
+
+// IsValid checks if the resolution state is valid
+func (rs ResolutionState) IsValid() bool {
+	switch rs {
+	case ResolutionStateOpen, ResolutionStateResolved, ResolutionStateRejected, ResolutionStateDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsResolved returns true if the complaint is in a resolved state
+func (rs ResolutionState) IsResolved() bool {
+	return rs == ResolutionStateResolved
+}
+
+// CanTransitionTo checks if state transition is allowed
+func (rs ResolutionState) CanTransitionTo(new ResolutionState) bool {
+	// Define allowed transitions for state machine
+	allowedTransitions := map[ResolutionState][]ResolutionState{
+		ResolutionStateOpen:     {ResolutionStateResolved, ResolutionStateRejected, ResolutionStateDeferred},
+		ResolutionStateDeferred: {ResolutionStateResolved, ResolutionStateRejected},
+		ResolutionStateResolved: {}, // Terminal state
+		ResolutionStateRejected: {}, // Terminal state
+	}
+
+	allowedStates, exists := allowedTransitions[rs]
+	if !exists {
+		return false
+	}
+
+	return slices.Contains(allowedStates, new)
+}
 
 // Severity represents the severity level of a complaint
 type Severity string
@@ -76,10 +132,14 @@ func (id ComplaintID) IsEmpty() bool {
 }
 
 // Complaint represents a complaint filed by an AI agent
+// Uses value objects for type safety and validation
+//
+// NOTE: The mutex now lives in ThreadSafeComplaint. Using *Complaint is recommended only for
+// size/identity semantics, not for thread safety.
 type Complaint struct {
 	ID              ComplaintID `json:"id" validate:"required"`
-	AgentName       string      `json:"agent_name" validate:"required,min=1,max=100"`
-	SessionName     string      `json:"session_name" validate:"max=100"`
+	AgentName       AgentName   `json:"agent_name"`   // Value object: required, max 100 chars
+	SessionName     SessionName `json:"session_name"` // Value object: optional, max 100 chars
 	TaskDescription string      `json:"task_description" validate:"required,min=1,max=1000"`
 	ContextInfo     string      `json:"context_info" validate:"max=2000000"`
 	MissingInfo     string      `json:"missing_info" validate:"max=2000000"`
@@ -87,19 +147,17 @@ type Complaint struct {
 	FutureWishes    string      `json:"future_wishes" validate:"max=2000000"`
 	Severity        Severity    `json:"severity" validate:"required,oneof=low medium high critical"`
 	Timestamp       time.Time   `json:"timestamp"`
-	ProjectName     string      `json:"project_name" validate:"max=100"`
+	ProjectName     ProjectName `json:"project_name"` // Value object: optional, max 100 chars
 
-	// Resolution tracking (prevents split-brain state)
-	// If Resolved is true, ResolvedAt MUST have a value
-	Resolved   bool       `json:"resolved"`
-	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // ✅ Pointer: nil when not resolved
-	ResolvedBy string     `json:"resolved_by,omitempty"` // ✅ NEW: Who resolved it
-
-	// Thread safety for concurrent resolution attempts
-	mu sync.RWMutex `json:"-"` // Don't serialize mutex
+	// Resolution tracking - SINGLE SOURCE OF TRUTH
+	// ResolutionState captures the complete resolution status
+	ResolutionState ResolutionState `json:"resolution_state"`
+	ResolvedAt      *time.Time      `json:"resolved_at,omitempty"` // nil = not resolved
+	ResolvedBy      string          `json:"resolved_by,omitempty"` // empty when not resolved
 }
 
 // NewComplaint creates a new complaint with the given parameters
+// Accepts strings and converts them to value objects for type safety
 func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity Severity, projectName string) (*Complaint, error) {
 	// Domain layer is now pure - no external dependencies
 
@@ -112,11 +170,27 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		return nil, fmt.Errorf("invalid severity: %s", severity)
 	}
 
+	// Create value objects with validation
+	agentNameVO, err := NewAgentName(agentName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid agent name: %w", err)
+	}
+
+	sessionNameVO, err := NewSessionName(sessionName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid session name: %w", err)
+	}
+
+	projectNameVO, err := NewProjectName(projectName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid project name: %w", err)
+	}
+
 	now := time.Now()
 	complaint := &Complaint{
 		ID:              id,
-		AgentName:       agentName,
-		SessionName:     sessionName,
+		AgentName:       agentNameVO,
+		SessionName:     sessionNameVO,
 		TaskDescription: taskDescription,
 		ContextInfo:     contextInfo,
 		MissingInfo:     missingInfo,
@@ -124,8 +198,9 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 		FutureWishes:    futureWishes,
 		Severity:        severity,
 		Timestamp:       now,
-		ProjectName:     projectName,
-		Resolved:        false,
+		ProjectName:     projectNameVO,
+		ResolutionState: ResolutionStateOpen, // Start as open
+		// ResolvedAt/ResolvedBy are nil/empty by default
 	}
 
 	// Validate the complaint (pure domain logic)
@@ -137,15 +212,13 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 	return complaint, nil
 }
 
-// Resolve marks a complaint as resolved - thread-safe with proper error handling
+// Resolve marks a complaint as resolved - NOT THREAD SAFE
+// Use ThreadSafeComplaint wrapper for concurrent operations
 func (c *Complaint) Resolve(resolvedBy string) error {
-	// Use write lock to ensure thread-safe resolution
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Check if already resolved (fixes issue #37)
-	if c.Resolved {
-		return fmt.Errorf("complaint already resolved by %s at %s", c.ResolvedBy, c.ResolvedAt.Format(time.RFC3339))
+	// Check if state transition is allowed
+	if !c.ResolutionState.CanTransitionTo(ResolutionStateResolved) {
+		currentState := string(c.ResolutionState)
+		return fmt.Errorf("cannot resolve complaint in state '%s', already resolved or invalid transition", currentState)
 	}
 
 	// Validate resolver name
@@ -153,26 +226,46 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 		return fmt.Errorf("resolver name cannot be empty")
 	}
 
-	// Set resolution with timestamp
+	// Set resolution with timestamp and update state
 	now := time.Now()
-	c.Resolved = true
-	c.ResolvedAt = &now       // Set resolution timestamp
-	c.ResolvedBy = resolvedBy // Set who resolved it
+	c.ResolvedAt = &now
+	c.ResolvedBy = resolvedBy
+	c.ResolutionState = ResolutionStateResolved // Update state machine
 
 	return nil
 }
 
-// IsResolved checks if the complaint is resolved
-// IsResolved checks if complaint is resolved - thread-safe
+// IsResolved checks if the complaint is resolved - NOT THREAD SAFE
+// Returns true if ResolutionState is resolved (single source of truth)
 func (c *Complaint) IsResolved() bool {
-	// Use read lock for thread-safe resolution status check
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.Resolved
+	return c.ResolutionState.IsResolved()
 }
 
 // Validate checks if the complaint data is valid using validator
 func (c *Complaint) Validate() error {
+	// Validate all value objects to enforce their invariants
+	if err := c.AgentName.Validate(); err != nil {
+		return fmt.Errorf("agent name validation failed: %w", err)
+	}
+
+	if err := c.SessionName.Validate(); err != nil {
+		return fmt.Errorf("session name validation failed: %w", err)
+	}
+
+	if err := c.ProjectName.Validate(); err != nil {
+		return fmt.Errorf("project name validation failed: %w", err)
+	}
+
+	// Validate resolution state
+	if !c.ResolutionState.IsValid() {
+		return fmt.Errorf("invalid resolution state: %s", c.ResolutionState)
+	}
+
+	// Validate consistency between ResolutionState and ResolvedAt
+	if c.ResolutionState.IsResolved() != (c.ResolvedAt != nil) {
+		return fmt.Errorf("resolution state inconsistent with resolved timestamp")
+	}
+
 	// Initialize validator once using sync.Once (thread-safe singleton pattern)
 	validateOnce.Do(func() {
 		validate = validator.New()
@@ -182,7 +275,7 @@ func (c *Complaint) Validate() error {
 
 // GetSummary returns a summary of the complaint
 func (c *Complaint) GetSummary() string {
-	return fmt.Sprintf("[%s] %s - %s", c.Severity, c.AgentName, c.TaskDescription)
+	return fmt.Sprintf("[%s] %s - %s", c.Severity, c.AgentName.String(), c.TaskDescription)
 }
 
 // GetDuration returns how long the complaint has been open

@@ -25,7 +25,7 @@ func TestNewRepository(t *testing.T) {
 				BaseDir: t.TempDir(),
 				StorageConfig: config.StorageConfig{
 					CacheEnabled: true,
-					CacheMaxSize: 500,
+					CacheMaxSize: uint32(500),
 				},
 				Type: "cached",
 			},
@@ -38,7 +38,7 @@ func TestNewRepository(t *testing.T) {
 				BaseDir: t.TempDir(),
 				StorageConfig: config.StorageConfig{
 					CacheEnabled: false,
-					CacheMaxSize: 1000,
+					CacheMaxSize: uint32(1000),
 				},
 				Type: "cached",
 			},
@@ -51,7 +51,7 @@ func TestNewRepository(t *testing.T) {
 				BaseDir: t.TempDir(),
 				StorageConfig: config.StorageConfig{
 					CacheEnabled: true, // Even if enabled, explicit "file" type should win
-					CacheMaxSize: 1000,
+					CacheMaxSize: uint32(1000),
 				},
 				Type: "file",
 			},
@@ -64,7 +64,7 @@ func TestNewRepository(t *testing.T) {
 				BaseDir: t.TempDir(),
 				StorageConfig: config.StorageConfig{
 					CacheEnabled: true,
-					CacheMaxSize: 1000, // Default size
+					CacheMaxSize: uint32(1000), // Default size
 				},
 				Type: "cached",
 			},
@@ -89,7 +89,7 @@ func TestNewRepository(t *testing.T) {
 			stats := repo.GetCacheStats()
 			if tt.expectedCached {
 				assert.NotEqual(t, int64(0), stats.MaxSize, "Cached repository should have non-zero max cache size")
-				assert.Equal(t, tt.config.StorageConfig.CacheMaxSize, stats.MaxSize, "Cache size should match config")
+				assert.Equal(t, int64(tt.config.StorageConfig.CacheMaxSize), stats.MaxSize, "Cache size should match config")
 			} else {
 				assert.Equal(t, int64(0), stats.MaxSize, "File repository should have zero cache size")
 			}
@@ -113,7 +113,7 @@ func TestNewRepositoryFromConfig(t *testing.T) {
 				Storage: config.StorageConfig{
 					BaseDir:      t.TempDir(),
 					CacheEnabled: true,
-					CacheMaxSize: 750,
+					CacheMaxSize: uint32(750),
 				},
 			},
 			expectedType:   &CachedRepository{},
@@ -125,7 +125,7 @@ func TestNewRepositoryFromConfig(t *testing.T) {
 				Storage: config.StorageConfig{
 					BaseDir:      t.TempDir(),
 					CacheEnabled: false,
-					CacheMaxSize: 1000,
+					CacheMaxSize: uint32(1000),
 				},
 			},
 			expectedType:   &FileRepository{},
@@ -146,7 +146,7 @@ func TestNewRepositoryFromConfig(t *testing.T) {
 			stats := repo.GetCacheStats()
 			if tt.expectedCached {
 				assert.NotEqual(t, 0, stats.MaxSize, "Cached repository should have non-zero max cache size")
-				assert.Equal(t, tt.config.Storage.CacheMaxSize, stats.MaxSize, "Cache size should match config")
+				assert.Equal(t, int64(tt.config.Storage.CacheMaxSize), stats.MaxSize, "Cache size should match config")
 			} else {
 				assert.Equal(t, int64(0), stats.MaxSize, "File repository should have zero cache size")
 			}
@@ -167,7 +167,7 @@ func TestRepositoryConfigValidation(t *testing.T) {
 				BaseDir: t.TempDir(),
 				StorageConfig: config.StorageConfig{
 					CacheEnabled: true,
-					CacheMaxSize: cacheSize,
+					CacheMaxSize: uint32(cacheSize),
 				},
 				Type: "cached",
 			}
@@ -193,8 +193,8 @@ func TestRepositoryTypePriority(t *testing.T) {
 	config := RepositoryConfig{
 		BaseDir: t.TempDir(),
 		StorageConfig: config.StorageConfig{
-			CacheEnabled: true, // This should be ignored
-			CacheMaxSize: 1000, // This should be ignored
+			CacheEnabled: true,         // This should be ignored
+			CacheMaxSize: uint32(1000), // This should be ignored
 		},
 		Type: "file", // This should win
 	}
@@ -233,7 +233,7 @@ func TestCacheSizeValidation(t *testing.T) {
 				Storage: config.StorageConfig{
 					BaseDir:      t.TempDir(),
 					CacheEnabled: true,
-					CacheMaxSize: tt.cacheSize,
+					CacheMaxSize: uint32(tt.cacheSize),
 				},
 			}
 
@@ -262,7 +262,7 @@ func TestCacheConfigurationIntegration(t *testing.T) {
 				Storage: config.StorageConfig{
 					BaseDir:       t.TempDir(),
 					CacheEnabled:  true,
-					CacheMaxSize:  cacheSize,
+					CacheMaxSize:  uint32(cacheSize),
 					CacheEviction: "lru",
 				},
 			}

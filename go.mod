@@ -1,6 +1,8 @@
 module github.com/larsartmann/complaints-mcp
 
-go 1.25.4
+go 1.24.2
+
+toolchain go1.24.7
 
 require (
 	github.com/adrg/xdg v0.5.3

@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestNewComplaintID(t *testing.T) {
@@ -78,16 +79,16 @@ func TestNewComplaint(t *testing.T) {
 		t.Fatal("NewComplaint() returned nil")
 	}
 
-	if complaint.AgentName != "test-agent" {
-		t.Errorf("NewComplaint().AgentName = %v, want %v", complaint.AgentName, "test-agent")
+	if complaint.AgentName.String() != "test-agent" {
+		t.Errorf("NewComplaint().AgentName = %v, want %v", complaint.AgentName.String(), "test-agent")
 	}
 
 	if complaint.Severity != "high" {
 		t.Errorf("NewComplaint().Severity = %v, want %v", complaint.Severity, "high")
 	}
 
-	if complaint.Resolved {
-		t.Error("NewComplaint().Resolved should be false")
+	if complaint.IsResolved() {
+		t.Error("NewComplaint().IsResolved() should be false")
 	}
 
 	if complaint.Timestamp.IsZero() {
@@ -96,30 +97,58 @@ func TestNewComplaint(t *testing.T) {
 }
 
 func TestComplaint_Resolve(t *testing.T) {
-	id, _ := NewComplaintID()
-	complaint := &Complaint{
-		ID:       id,
-		Resolved: false,
+	// Create a valid complaint for testing
+	complaint, err := NewComplaint(
+		context.Background(),
+		"Test Agent",
+		"test-session",
+		"Test task description",
+		"Test context info",
+		"Test missing info",
+		"Test confused by",
+		"Test future wishes",
+		"high",
+		"test-project",
+	)
+	if err != nil {
+		t.Fatalf("Failed to create test complaint: %v", err)
 	}
 
-	complaint.Resolve("test-agent") // Pure domain method - no context
-
-	if !complaint.Resolved {
-		t.Error("Complaint.Resolve() did not set Resolved to true")
+	// Verify initial state
+	if complaint.IsResolved() {
+		t.Error("New complaint should not be resolved")
 	}
 
-	// ✅ Verify ResolvedAt timestamp is set (prevents split-brain)
+	// Resolve the complaint
+	err = complaint.Resolve("test-agent")
+	if err != nil {
+		t.Fatalf("Failed to resolve complaint: %v", err)
+	}
+
+	// Verify resolved state
+	if !complaint.IsResolved() {
+		t.Error("Complaint.Resolve() did not set resolved state to true")
+	}
+
+	// Verify ResolvedAt timestamp is set (prevents split-brain)
 	if complaint.ResolvedAt == nil {
 		t.Error("Complaint.Resolve() did not set ResolvedAt timestamp")
 	}
 
-	// ✅ NEW: Verify ResolvedBy field is set
+	// Verify ResolvedBy is set correctly
 	if complaint.ResolvedBy != "test-agent" {
 		t.Errorf("Complaint.Resolve() did not set ResolvedBy correctly. Expected 'test-agent', got '%s'", complaint.ResolvedBy)
+	}
+
+	// Verify ResolutionState is updated
+	if complaint.ResolutionState != ResolutionStateResolved {
+		t.Errorf("Complaint.Resolve() did not update ResolutionState correctly. Expected 'resolved', got '%s'", complaint.ResolutionState)
 	}
 }
 
 func TestComplaint_IsResolved(t *testing.T) {
+	// Use a fixed time for deterministic testing
+	fixedTime := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name      string
 		complaint *Complaint
@@ -128,14 +157,18 @@ func TestComplaint_IsResolved(t *testing.T) {
 		{
 			name: "resolved complaint",
 			complaint: &Complaint{
-				Resolved: true,
+				ResolutionState: ResolutionStateResolved,
+				ResolvedAt:    &fixedTime,
+				ResolvedBy:    "test-agent",
 			},
 			want: true,
 		},
 		{
 			name: "unresolved complaint",
 			complaint: &Complaint{
-				Resolved: false,
+				ResolutionState: ResolutionStateOpen,
+				ResolvedAt:    nil,
+				ResolvedBy:    "",
 			},
 			want: false,
 		},
@@ -160,9 +193,13 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "valid complaint",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
+				SessionName:     MustNewSessionName("test-session"),
 				TaskDescription: "test task",
-				Severity:        "high",
+				Severity:        SeverityHigh,
+				ResolutionState: ResolutionStateOpen,
+				Timestamp:       time.Now(),
+				ProjectName:     MustNewProjectName("test-project"),
 			},
 			wantErr: false,
 		},
@@ -177,7 +214,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "missing task description",
 			complaint: &Complaint{
-				AgentName: "test-agent",
+				AgentName: MustNewAgentName("test-agent"),
 				Severity:  "high",
 			},
 			wantErr: true,
@@ -185,7 +222,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "missing severity",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
 				TaskDescription: "test task",
 			},
 			wantErr: true,
@@ -193,7 +230,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{
 			name: "invalid severity",
 			complaint: &Complaint{
-				AgentName:       "test-agent",
+				AgentName:       MustNewAgentName("test-agent"),
 				TaskDescription: "test task",
 				Severity:        "invalid",
 			},

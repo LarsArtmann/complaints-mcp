@@ -35,9 +35,9 @@ func TestLoadConfigSuccess(t *testing.T) {
 
 	assert.Equal(t, "test-server", cfg.Server.Name)
 	assert.Equal(t, "localhost", cfg.Server.Host)
-	assert.Equal(t, 8080, cfg.Server.Port)
+	assert.Equal(t, uint16(8080), cfg.Server.Port)
 	assert.True(t, cfg.Storage.CacheEnabled)
-	assert.Equal(t, int64(100), cfg.Storage.CacheMaxSize)
+	assert.Equal(t, uint32(100), cfg.Storage.CacheMaxSize)
 }
 
 func TestValidateConfigMissingRequired(t *testing.T) {
@@ -48,21 +48,21 @@ func TestValidateConfigMissingRequired(t *testing.T) {
 		{
 			name: "missing server name",
 			cfg: Config{
-				Server:  ServerConfig{Port: 8080},
+				Server:  ServerConfig{Port: uint16(8080)},
 				Storage: StorageConfig{BaseDir: "/tmp"},
 			},
 		},
 		{
 			name: "invalid port",
 			cfg: Config{
-				Server:  ServerConfig{Name: "test", Port: 0},
+				Server:  ServerConfig{Name: "test", Port: uint16(0)},
 				Storage: StorageConfig{BaseDir: "/tmp"},
 			},
 		},
 		{
 			name: "missing base dir",
 			cfg: Config{
-				Server:  ServerConfig{Name: "test", Port: 8080},
+				Server:  ServerConfig{Name: "test", Port: uint16(8080)},
 				Storage: StorageConfig{},
 			},
 		},
@@ -79,12 +79,12 @@ func TestValidateConfigMissingRequired(t *testing.T) {
 func TestCacheSizeConversion(t *testing.T) {
 	cfg := &Config{
 		Storage: StorageConfig{
-			CacheMaxSize: 500,
+			CacheMaxSize: uint32(500),
 		},
 	}
 
-	// Test that int64 gets converted to CacheSize properly
-	assert.Equal(t, int64(500), cfg.Storage.CacheMaxSize)
+	// Test that uint32 gets converted to CacheSize properly
+	assert.Equal(t, uint32(500), cfg.Storage.CacheMaxSize)
 }
 
 func TestCacheEvictionPolicyValidation(t *testing.T) {
@@ -120,14 +120,14 @@ func TestCacheEvictionPolicyValidation(t *testing.T) {
 			cfg := &Config{
 				Server: ServerConfig{
 					Name: "test",
-					Port: 8080,
+					Port: uint16(8080),
 				},
 				Storage: StorageConfig{
 					BaseDir:       "/tmp",
-					MaxSize:       1048576,
+					MaxSize:       uint64(1048576),
 					Retention:     uint(30),
 					CacheEviction: tt.policy,
-					CacheMaxSize:  100,
+					CacheMaxSize:  uint32(100),
 				},
 			}
 
@@ -169,14 +169,14 @@ func TestConfigIntegration(t *testing.T) {
 	// Verify all values
 	assert.Equal(t, "integration-test", cfg.Server.Name)
 	assert.Equal(t, "127.0.0.1", cfg.Server.Host)
-	assert.Equal(t, 9090, cfg.Server.Port)
+	assert.Equal(t, uint16(9090), cfg.Server.Port)
 	assert.Equal(t, "/tmp/integration", cfg.Storage.BaseDir)
 	assert.Equal(t, "/tmp/integration-global", cfg.Storage.GlobalDir)
-	assert.Equal(t, int64(5242880), cfg.Storage.MaxSize)
+	assert.Equal(t, uint64(5242880), cfg.Storage.MaxSize)
 	assert.Equal(t, uint(60), cfg.Storage.Retention)
 	assert.True(t, cfg.Storage.AutoBackup)
 	assert.True(t, cfg.Storage.CacheEnabled)
-	assert.Equal(t, int64(200), cfg.Storage.CacheMaxSize)
+	assert.Equal(t, uint32(200), cfg.Storage.CacheMaxSize)
 	assert.Equal(t, "fifo", cfg.Storage.CacheEviction)
 }
 
@@ -185,12 +185,12 @@ func BenchmarkConfigValidation(b *testing.B) {
 		Server: ServerConfig{
 			Name: "bench-server",
 			Host: "localhost",
-			Port: 8080,
+			Port: uint16(8080),
 		},
 		Storage: StorageConfig{
 			BaseDir:       "/tmp/bench",
 			CacheEnabled:  true,
-			CacheMaxSize:  1000,
+			CacheMaxSize:  uint32(1000),
 			CacheEviction: "lru",
 		},
 	}

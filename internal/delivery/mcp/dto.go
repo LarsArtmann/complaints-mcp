@@ -28,8 +28,8 @@ type ComplaintDTO struct {
 func ToDTO(c *domain.Complaint) ComplaintDTO {
 	return ComplaintDTO{
 		ID:              c.ID.String(),
-		AgentName:       c.AgentName,
-		SessionName:     c.SessionName,
+		AgentName:       c.AgentName.String(),
+		SessionName:     c.SessionName.String(),
 		TaskDescription: c.TaskDescription,
 		ContextInfo:     c.ContextInfo,
 		MissingInfo:     c.MissingInfo,
@@ -37,8 +37,8 @@ func ToDTO(c *domain.Complaint) ComplaintDTO {
 		FutureWishes:    c.FutureWishes,
 		Severity:        string(c.Severity),
 		Timestamp:       c.Timestamp,
-		ProjectName:     c.ProjectName,
-		Resolved:        c.Resolved,
+		ProjectName:     c.ProjectName.String(),
+		Resolved:        c.IsResolved(),
 		ResolvedAt:      c.ResolvedAt,
 		ResolvedBy:      c.ResolvedBy,
 	}

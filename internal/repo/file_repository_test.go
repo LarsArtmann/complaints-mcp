@@ -42,16 +42,15 @@ var _ = Describe("FileRepository", func() {
 
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityHigh,
-				ProjectName:     "test-project",
-				Resolved:        false,
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			// Test saving complaint
@@ -71,8 +70,8 @@ var _ = Describe("FileRepository", func() {
 			now := time.Now()
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task description",
 				ContextInfo:     "Test context information",
 				MissingInfo:     "Missing information",
@@ -80,8 +79,7 @@ var _ = Describe("FileRepository", func() {
 				FutureWishes:    "Future improvements",
 				Severity:        domain.SeverityMedium,
 				Timestamp:       now,
-				ProjectName:     "test-project",
-				Resolved:        false,
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, complaint)
@@ -101,7 +99,7 @@ var _ = Describe("FileRepository", func() {
 			Expect(stored.TaskDescription).To(Equal(complaint.TaskDescription))
 			Expect(stored.Severity).To(Equal(complaint.Severity))
 			Expect(stored.ProjectName).To(Equal(complaint.ProjectName))
-			Expect(stored.Resolved).To(BeFalse())
+			Expect(stored.IsResolved()).To(BeFalse())
 		})
 	})
 
@@ -114,16 +112,15 @@ var _ = Describe("FileRepository", func() {
 
 			savedComplaint = &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityLow,
-				ProjectName:     "test-project",
-				Resolved:        false,
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, savedComplaint)
@@ -159,16 +156,15 @@ var _ = Describe("FileRepository", func() {
 
 				complaint := &domain.Complaint{
 					ID:              complaintID,
-					AgentName:       "Test Agent",
-					SessionName:     "test-session",
+					AgentName:       domain.MustNewAgentName("Test Agent"),
+					SessionName:     domain.MustNewSessionName("test-session"),
 					TaskDescription: "Test task",
 					ContextInfo:     "Test context",
 					MissingInfo:     "Test missing info",
 					ConfusedBy:      "Test confusion",
 					FutureWishes:    "Test wishes",
 					Severity:        domain.SeverityMedium,
-					ProjectName:     "test-project",
-					Resolved:        false,
+					ProjectName:     domain.MustNewProjectName("test-project"),
 				}
 
 				err = repository.Save(ctx, complaint)
@@ -201,16 +197,15 @@ var _ = Describe("FileRepository", func() {
 
 			savedComplaint = &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityLow,
-				ProjectName:     "test-project",
-				Resolved:        false,
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, savedComplaint)
@@ -219,7 +214,6 @@ var _ = Describe("FileRepository", func() {
 
 		It("should update an existing complaint", func() {
 			// Modify complaint
-			savedComplaint.Resolved = true
 			resolveTime := time.Now()
 			savedComplaint.ResolvedAt = &resolveTime
 
@@ -229,7 +223,7 @@ var _ = Describe("FileRepository", func() {
 			// Verify update
 			found, err := repository.FindByID(ctx, savedComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(found.Resolved).To(BeTrue())
+			Expect(found.IsResolved()).To(BeTrue())
 			Expect(found.ResolvedAt).NotTo(BeNil())
 			Expect(found.ResolvedAt.Format(time.RFC3339)).To(Equal(resolveTime.Format(time.RFC3339)))
 		})
@@ -240,10 +234,9 @@ var _ = Describe("FileRepository", func() {
 
 			nonExistentComplaint := &domain.Complaint{
 				ID:              nonExistentID,
-				AgentName:       "Test Agent",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
 				TaskDescription: "Non-existent",
 				Severity:        domain.SeverityLow,
-				Resolved:        false,
 			}
 
 			err = repository.Update(ctx, nonExistentComplaint)
@@ -264,7 +257,12 @@ var _ = Describe("FileRepository", func() {
 			// Update complaint multiple times
 			for i := range 3 {
 				savedComplaint.TaskDescription = fmt.Sprintf("Updated task %d", i)
-				savedComplaint.Resolved = (i%2 == 0)
+				if i%2 == 0 {
+					resolveTime := time.Now()
+					savedComplaint.ResolvedAt = &resolveTime
+				} else {
+					savedComplaint.ResolvedAt = nil
+				}
 
 				err := repository.Update(ctx, savedComplaint)
 				Expect(err).NotTo(HaveOccurred(), "Update %d should succeed", i)
@@ -283,7 +281,7 @@ var _ = Describe("FileRepository", func() {
 			found, err := repository.FindByID(ctx, savedComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(found.TaskDescription).To(Equal("Updated task 2"))
-			Expect(found.Resolved).To(BeTrue())
+			Expect(found.IsResolved()).To(BeTrue())
 		})
 
 		It("should update existing file in-place", func() {
@@ -298,7 +296,6 @@ var _ = Describe("FileRepository", func() {
 
 			// Update the complaint
 			savedComplaint.TaskDescription = "Updated in-place"
-			savedComplaint.Resolved = true
 			resolveTime := time.Now()
 			savedComplaint.ResolvedAt = &resolveTime
 
@@ -314,7 +311,7 @@ var _ = Describe("FileRepository", func() {
 			found, err := repository.FindByID(ctx, savedComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(found.TaskDescription).To(Equal("Updated in-place"))
-			Expect(found.Resolved).To(BeTrue())
+			Expect(found.IsResolved()).To(BeTrue())
 			Expect(found.ResolvedAt).NotTo(BeNil())
 		})
 	})
@@ -340,16 +337,15 @@ var _ = Describe("FileRepository", func() {
 
 				complaint := &domain.Complaint{
 					ID:              complaintID,
-					AgentName:       "Test Agent",
-					SessionName:     "test-session",
+					AgentName:       domain.MustNewAgentName("Test Agent"),
+					SessionName:     domain.MustNewSessionName("test-session"),
 					TaskDescription: content.task,
 					ContextInfo:     "Test context",
 					MissingInfo:     "Test missing info",
 					ConfusedBy:      "Test confusion",
 					FutureWishes:    "Test wishes",
 					Severity:        content.severity,
-					ProjectName:     content.proj,
-					Resolved:        false,
+					ProjectName:     domain.MustNewProjectName(content.proj),
 				}
 
 				err = repository.Save(ctx, complaint)
@@ -403,7 +399,7 @@ var _ = Describe("FileRepository", func() {
 			Expect(len(results)).To(Equal(5)) // All are unresolved
 
 			for _, result := range results {
-				Expect(result.Resolved).To(BeFalse())
+				Expect(result.IsResolved()).To(BeFalse())
 			}
 		})
 	})
@@ -416,10 +412,9 @@ var _ = Describe("FileRepository", func() {
 
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
 				TaskDescription: "Test task",
 				Severity:        domain.SeverityLow,
-				Resolved:        false,
 			}
 
 			err := testRepo.Save(ctx, complaint)
