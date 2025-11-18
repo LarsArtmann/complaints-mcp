@@ -15,7 +15,7 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 		data, err := json.Marshal(id)
 		require.NoError(t, err)
 		
-		// CRITICAL: Verify flat structure - the main bug fix
+		// CRITICAL: Verify flat structure - main bug fix
 		// The JSON should be a flat string, not a nested object
 		var flatResult string
 		err = json.Unmarshal(data, &flatResult)
@@ -23,8 +23,8 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 		
 		assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", flatResult)
 		
-		// CRITICAL: Ensure no nested "Value" objects in the JSON
-		assert.NotContains(t, string(data), `"Value"`, "JSON should not contain nested Value objects")
+		// CRITICAL: Ensure no nested "Value" objects
+		assert.NotContains(t, string(data), `"Value"`)
 	})
 	
 	t.Run("marshal produces flat JSON string", func(t *testing.T) {
@@ -74,9 +74,6 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("complete flat JSON structure test", func(t *testing.T) {
 		id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
 		
-		data, err := json.Marshal(id)
-		require.NoError(t, err)
-		
 		// Verify the complete JSON structure is flat
 		type ComplaintWrapper struct {
 			ID ComplaintID `json:"id"`
@@ -98,7 +95,7 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 		assert.True(t, isString, "id should be flat string, got %T", idValue)
 		assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", idStr)
 		
-		// CRITICAL: Ensure no nesting in the final structure
+		// CRITICAL: Ensure no nesting in final structure
 		assert.NotContains(t, string(wrapperData), `"Value"`)
 	})
 }
