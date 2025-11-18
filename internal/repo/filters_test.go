@@ -136,13 +136,13 @@ func TestAndFilter(t *testing.T) {
 	ctx := context.Background()
 
 	complaint1 := createTestComplaint(t, "high")
-	complaint1.ProjectName = "project-a"
+	complaint1.ProjectName = domain.MustNewProjectName("project-a")
 
 	complaint2 := createTestComplaint(t, "high")
-	complaint2.ProjectName = "project-b"
+	complaint2.ProjectName = domain.MustNewProjectName("project-b")
 
 	complaint3 := createTestComplaint(t, "low")
-	complaint3.ProjectName = "project-a"
+	complaint3.ProjectName = domain.MustNewProjectName("project-a")
 
 	complaints := []*domain.Complaint{complaint1, complaint2, complaint3}
 
@@ -158,7 +158,7 @@ func TestAndFilter(t *testing.T) {
 		t.Errorf("Expected 1 complaint (high + project-a), got %d", len(filtered))
 	}
 
-	if filtered[0].Severity != domain.SeverityHigh || filtered[0].ProjectName != "project-a" {
+	if filtered[0].Severity != domain.SeverityHigh || filtered[0].ProjectName.String() != "project-a" {
 		t.Error("AndFilter failed to filter correctly")
 	}
 }
@@ -167,13 +167,13 @@ func TestOrFilter(t *testing.T) {
 	ctx := context.Background()
 
 	highComplaint := createTestComplaint(t, "high")
-	highComplaint.ProjectName = "project-other"
+	highComplaint.ProjectName = domain.MustNewProjectName("project-other")
 
 	mediumComplaint := createTestComplaint(t, "medium")
-	mediumComplaint.ProjectName = "project-a"
+	mediumComplaint.ProjectName = domain.MustNewProjectName("project-a")
 
 	lowComplaint := createTestComplaint(t, "low")
-	lowComplaint.ProjectName = "project-other"
+	lowComplaint.ProjectName = domain.MustNewProjectName("project-other")
 
 	complaints := []*domain.Complaint{highComplaint, mediumComplaint, lowComplaint}
 

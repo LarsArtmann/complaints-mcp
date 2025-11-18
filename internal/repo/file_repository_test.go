@@ -42,15 +42,15 @@ var _ = Describe("FileRepository", func() {
 
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityHigh,
-				ProjectName:     "test-project",
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			// Test saving complaint
@@ -70,8 +70,8 @@ var _ = Describe("FileRepository", func() {
 			now := time.Now()
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task description",
 				ContextInfo:     "Test context information",
 				MissingInfo:     "Missing information",
@@ -79,7 +79,7 @@ var _ = Describe("FileRepository", func() {
 				FutureWishes:    "Future improvements",
 				Severity:        domain.SeverityMedium,
 				Timestamp:       now,
-				ProjectName:     "test-project",
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, complaint)
@@ -112,15 +112,15 @@ var _ = Describe("FileRepository", func() {
 
 			savedComplaint = &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityLow,
-				ProjectName:     "test-project",
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, savedComplaint)
@@ -156,15 +156,15 @@ var _ = Describe("FileRepository", func() {
 
 				complaint := &domain.Complaint{
 					ID:              complaintID,
-					AgentName:       "Test Agent",
-					SessionName:     "test-session",
+					AgentName:       domain.MustNewAgentName("Test Agent"),
+					SessionName:     domain.MustNewSessionName("test-session"),
 					TaskDescription: "Test task",
 					ContextInfo:     "Test context",
 					MissingInfo:     "Test missing info",
 					ConfusedBy:      "Test confusion",
 					FutureWishes:    "Test wishes",
 					Severity:        domain.SeverityMedium,
-					ProjectName:     "test-project",
+					ProjectName:     domain.MustNewProjectName("test-project"),
 				}
 
 				err = repository.Save(ctx, complaint)
@@ -197,15 +197,15 @@ var _ = Describe("FileRepository", func() {
 
 			savedComplaint = &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
-				SessionName:     "test-session",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
+				SessionName:     domain.MustNewSessionName("test-session"),
 				TaskDescription: "Test task",
 				ContextInfo:     "Test context",
 				MissingInfo:     "Test missing info",
 				ConfusedBy:      "Test confusion",
 				FutureWishes:    "Test wishes",
 				Severity:        domain.SeverityLow,
-				ProjectName:     "test-project",
+				ProjectName:     domain.MustNewProjectName("test-project"),
 			}
 
 			err = repository.Save(ctx, savedComplaint)
@@ -234,7 +234,7 @@ var _ = Describe("FileRepository", func() {
 
 			nonExistentComplaint := &domain.Complaint{
 				ID:              nonExistentID,
-				AgentName:       "Test Agent",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
 				TaskDescription: "Non-existent",
 				Severity:        domain.SeverityLow,
 			}
@@ -337,15 +337,15 @@ var _ = Describe("FileRepository", func() {
 
 				complaint := &domain.Complaint{
 					ID:              complaintID,
-					AgentName:       "Test Agent",
-					SessionName:     "test-session",
+					AgentName:       domain.MustNewAgentName("Test Agent"),
+					SessionName:     domain.MustNewSessionName("test-session"),
 					TaskDescription: content.task,
 					ContextInfo:     "Test context",
 					MissingInfo:     "Test missing info",
 					ConfusedBy:      "Test confusion",
 					FutureWishes:    "Test wishes",
 					Severity:        content.severity,
-					ProjectName:     content.proj,
+					ProjectName:     domain.MustNewProjectName(content.proj),
 				}
 
 				err = repository.Save(ctx, complaint)
@@ -412,7 +412,7 @@ var _ = Describe("FileRepository", func() {
 
 			complaint := &domain.Complaint{
 				ID:              complaintID,
-				AgentName:       "Test Agent",
+				AgentName:       domain.MustNewAgentName("Test Agent"),
 				TaskDescription: "Test task",
 				Severity:        domain.SeverityLow,
 			}

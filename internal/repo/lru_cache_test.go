@@ -22,7 +22,7 @@ func TestLRUCache_BasicOperations(t *testing.T) {
 	// Test Put and Get
 	c1 := &domain.Complaint{
 		ID:              mustNewComplaintID(),
-		AgentName:       "Agent1",
+		AgentName:       domain.MustNewAgentName("Agent1"),
 		TaskDescription: "Task1",
 		Timestamp:       time.Now(),
 	}
@@ -32,7 +32,7 @@ func TestLRUCache_BasicOperations(t *testing.T) {
 	if !exists {
 		t.Fatal("Expected complaint to exist in cache")
 	}
-	if got.AgentName != "Agent1" {
+	if got.AgentName.String() != "Agent1" {
 		t.Errorf("Expected AgentName=Agent1, got %s", got.AgentName)
 	}
 
@@ -54,10 +54,10 @@ func TestLRUCache_BasicOperations(t *testing.T) {
 func TestLRUCache_EvictionOnMaxSize(t *testing.T) {
 	cache := NewLRUCache(3) // Max size = 3
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
-	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent2", TaskDescription: "Task2", Timestamp: time.Now()}
-	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent3", TaskDescription: "Task3", Timestamp: time.Now()}
-	c4 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent4", TaskDescription: "Task4", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
+	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent2"), TaskDescription: "Task2", Timestamp: time.Now()}
+	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent3"), TaskDescription: "Task3", Timestamp: time.Now()}
+	c4 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent4"), TaskDescription: "Task4", Timestamp: time.Now()}
 
 	// Add 3 items (at max capacity)
 	cache.Put("c1", c1)
@@ -112,10 +112,10 @@ func TestLRUCache_EvictionOnMaxSize(t *testing.T) {
 func TestLRUCache_LRUOrdering(t *testing.T) {
 	cache := NewLRUCache(3)
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
-	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent2", TaskDescription: "Task2", Timestamp: time.Now()}
-	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent3", TaskDescription: "Task3", Timestamp: time.Now()}
-	c4 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent4", TaskDescription: "Task4", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
+	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent2"), TaskDescription: "Task2", Timestamp: time.Now()}
+	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent3"), TaskDescription: "Task3", Timestamp: time.Now()}
+	c4 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent4"), TaskDescription: "Task4", Timestamp: time.Now()}
 
 	// Add c1, c2, c3
 	cache.Put("c1", c1)
@@ -149,19 +149,19 @@ func TestLRUCache_LRUOrdering(t *testing.T) {
 func TestLRUCache_Update(t *testing.T) {
 	cache := NewLRUCache(3)
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
 
 	cache.Put("c1", c1)
 
 	// Update c1
-	c1Updated := &domain.Complaint{ID: c1.ID, AgentName: "Agent1Updated", TaskDescription: "Task1Updated", Timestamp: time.Now()}
+	c1Updated := &domain.Complaint{ID: c1.ID, AgentName: domain.MustNewAgentName("Agent1Updated"), TaskDescription: "Task1Updated", Timestamp: time.Now()}
 	cache.Put("c1", c1Updated)
 
 	got, exists := cache.Get("c1")
 	if !exists {
 		t.Fatal("c1 should exist")
 	}
-	if got.AgentName != "Agent1Updated" {
+	if got.AgentName.String() != "Agent1Updated" {
 		t.Errorf("Expected AgentName=Agent1Updated, got %s", got.AgentName)
 	}
 
@@ -174,7 +174,7 @@ func TestLRUCache_Update(t *testing.T) {
 func TestLRUCache_Delete(t *testing.T) {
 	cache := NewLRUCache(3)
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
 	cache.Put("c1", c1)
 
 	if cache.Len() != 1 {
@@ -195,9 +195,9 @@ func TestLRUCache_Delete(t *testing.T) {
 func TestLRUCache_GetAll(t *testing.T) {
 	cache := NewLRUCache(10)
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
-	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent2", TaskDescription: "Task2", Timestamp: time.Now()}
-	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent3", TaskDescription: "Task3", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
+	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent2"), TaskDescription: "Task2", Timestamp: time.Now()}
+	c3 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent3"), TaskDescription: "Task3", Timestamp: time.Now()}
 
 	cache.Put("c1", c1)
 	cache.Put("c2", c2)
@@ -211,7 +211,7 @@ func TestLRUCache_GetAll(t *testing.T) {
 	// Verify all complaints are present (order doesn't matter for GetAll)
 	found := make(map[string]bool)
 	for _, c := range all {
-		found[c.AgentName] = true
+		found[c.AgentName.String()] = true
 	}
 
 	if !found["Agent1"] || !found["Agent2"] || !found["Agent3"] {
@@ -222,8 +222,8 @@ func TestLRUCache_GetAll(t *testing.T) {
 func TestLRUCache_Clear(t *testing.T) {
 	cache := NewLRUCache(10)
 
-	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent1", TaskDescription: "Task1", Timestamp: time.Now()}
-	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: "Agent2", TaskDescription: "Task2", Timestamp: time.Now()}
+	c1 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent1"), TaskDescription: "Task1", Timestamp: time.Now()}
+	c2 := &domain.Complaint{ID: mustNewComplaintID(), AgentName: domain.MustNewAgentName("Agent2"), TaskDescription: "Task2", Timestamp: time.Now()}
 
 	cache.Put("c1", c1)
 	cache.Put("c2", c2)
@@ -258,7 +258,7 @@ func TestLRUCache_ConcurrentAccess(t *testing.T) {
 			for range 100 {
 				c := &domain.Complaint{
 					ID:              mustNewComplaintID(),
-					AgentName:       "Agent",
+					AgentName:       domain.MustNewAgentName("Agent"),
 					TaskDescription: "Task",
 					Timestamp:       time.Now(),
 				}

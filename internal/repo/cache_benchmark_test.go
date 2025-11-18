@@ -286,13 +286,13 @@ func generateTestComplaints(count int) []*domain.Complaint {
 		id, _ := domain.NewComplaintID()
 		complaints[i] = &domain.Complaint{
 			ID:              id,
-			AgentName:       fmt.Sprintf("Test Agent %d", i),
-			SessionName:     fmt.Sprintf("test-session-%d", i),
+			AgentName:       domain.MustNewAgentName(fmt.Sprintf("Test Agent %d", i)),
+			SessionName:     domain.MustNewSessionName(fmt.Sprintf("test-session-%d", i)),
 			TaskDescription: fmt.Sprintf("Test task description %d", i),
 			ContextInfo:     fmt.Sprintf("Test context info %d", i),
 			Severity:        domain.SeverityMedium,
 			Timestamp:       time.Now().Add(-time.Duration(i) * time.Hour),
-			ProjectName:     fmt.Sprintf("test-project-%d", i%5),
+			ProjectName:     domain.MustNewProjectName(fmt.Sprintf("test-project-%d", i%5)),
 		}
 		// Every third complaint is resolved
 		if i%3 == 0 {

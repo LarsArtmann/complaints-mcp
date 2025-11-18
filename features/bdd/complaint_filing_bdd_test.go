@@ -54,15 +54,15 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
 			Expect(complaint.ID.Value).NotTo(BeEmpty())
-			Expect(complaint.AgentName).To(Equal("AI Assistant"))
-			Expect(complaint.SessionName).To(Equal("test-session"))
+			Expect(complaint.AgentName.String()).To(Equal("AI Assistant"))
+			Expect(complaint.SessionName.String()).To(Equal("test-session"))
 			Expect(complaint.TaskDescription).To(Equal("Implement authentication system"))
 			Expect(complaint.ContextInfo).To(Equal("Need to add JWT authentication to API endpoints"))
 			Expect(complaint.MissingInfo).To(Equal("Unclear error handling patterns"))
 			Expect(complaint.ConfusedBy).To(Equal("Documentation missing for error responses"))
 			Expect(complaint.FutureWishes).To(Equal("Add comprehensive error handling examples"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityHigh))
-			Expect(complaint.ProjectName).To(Equal("auth-project"))
+			Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
 			Expect(complaint.IsResolved()).To(BeFalse())
 			Expect(complaint.Timestamp).NotTo(BeZero())
 		})
@@ -81,10 +81,10 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.AgentName).To(Equal("A"))
+			Expect(complaint.AgentName.String()).To(Equal("A"))
 			Expect(complaint.TaskDescription).To(Equal("T"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityLow))
-			Expect(complaint.ProjectName).To(Equal("test"))
+			Expect(complaint.ProjectName.String()).To(Equal("test"))
 		})
 	})
 
@@ -124,6 +124,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(err.Error()).To(Or(
 				ContainSubstring("agent name is required"),
 				ContainSubstring("AgentName"),
+				ContainSubstring("agent name cannot be empty"),
 			))
 		})
 
@@ -221,7 +222,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.AgentName).To(Equal("AI Assistant 🤖"))
+			Expect(complaint.AgentName.String()).To(Equal("AI Assistant 🤖"))
 			Expect(complaint.TaskDescription).To(Equal("Test with special chars: quotes, newlines, tabs"))
 			Expect(complaint.ContextInfo).To(Equal("Content with \"quotes\" and \t\t tabs\nnewlines"))
 		})

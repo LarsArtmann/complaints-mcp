@@ -202,20 +202,20 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(len(authComplaints)).To(Equal(2))
 
 			for _, complaint := range authComplaints {
-				Expect(complaint.ProjectName).To(Equal("auth-project"))
+				Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
 			}
 
 			// Get complaints for api-project
 			apiComplaints, err := complaintService.ListComplaintsByProject(ctx, "api-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(apiComplaints)).To(Equal(1))
-			Expect(apiComplaints[0].ProjectName).To(Equal("api-project"))
+			Expect(apiComplaints[0].ProjectName.String()).To(Equal("api-project"))
 
 			// Get complaints for database-project
 			dbComplaints, err := complaintService.ListComplaintsByProject(ctx, "database-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(dbComplaints)).To(Equal(1))
-			Expect(dbComplaints[0].ProjectName).To(Equal("database-project"))
+			Expect(dbComplaints[0].ProjectName.String()).To(Equal("database-project"))
 		})
 
 		It("should return empty for non-existent project", func(ctx SpecContext) {
@@ -246,7 +246,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(len(limitedComplaints)).To(Equal(2))
 
 			for _, complaint := range limitedComplaints {
-				Expect(complaint.ProjectName).To(Equal("auth-project"))
+				Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
 			}
 		})
 	})

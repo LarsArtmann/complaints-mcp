@@ -18,8 +18,8 @@ func TestToDTO(t *testing.T) {
 
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       "Test Agent",
-		SessionName:     "test-session",
+		AgentName:       domain.MustNewAgentName("Test Agent"),
+		SessionName:     domain.MustNewSessionName("test-session"),
 		TaskDescription: "Test task description",
 		ContextInfo:     "Context information",
 		MissingInfo:     "Missing information",
@@ -27,7 +27,7 @@ func TestToDTO(t *testing.T) {
 		FutureWishes:    "Future wishes",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       now,
-		ProjectName:     "test-project",
+		ProjectName:     domain.MustNewProjectName("test-project"),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
 	}
@@ -61,7 +61,7 @@ func TestComplaintDTO_JSONSerialization(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       "Test Agent",
+		AgentName:       domain.MustNewAgentName("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityMedium,
 		Timestamp:       time.Date(2023, 1, 15, 12, 0, 0, 0, time.UTC),
@@ -86,7 +86,7 @@ func TestComplaintDTO_OptionalFields(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       "Test Agent",
+		AgentName:       domain.MustNewAgentName("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityLow,
 		Timestamp:       time.Now(),
@@ -116,7 +116,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	now := time.Now()
 	complaint1 := &domain.Complaint{
 		ID:              id1,
-		AgentName:       "Agent 1",
+		AgentName:       domain.MustNewAgentName("Agent 1"),
 		TaskDescription: "Task 1",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       time.Now(),
@@ -125,7 +125,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	resolvedAt := now.Add(time.Hour)
 	complaint2 := &domain.Complaint{
 		ID:              id2,
-		AgentName:       "Agent 2",
+		AgentName:       domain.MustNewAgentName("Agent 2"),
 		TaskDescription: "Task 2",
 		Severity:        domain.SeverityLow,
 		Timestamp:       time.Now(),
@@ -161,7 +161,7 @@ func TestFileComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       "Test Agent",
+		AgentName:       domain.MustNewAgentName("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityMedium,
 		Timestamp:       time.Now(),
@@ -190,7 +190,7 @@ func TestResolveComplaintOutput_TypeSafety(t *testing.T) {
 
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       "Test Agent",
+		AgentName:       domain.MustNewAgentName("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       time.Now(),
