@@ -8,10 +8,12 @@ complaints-mcp is a Model Context Protocol (MCP) server that allows AI agents to
 
 ## Build and Test Commands
 
+This project uses **Just** (justfile) as its modern task runner, providing better cross-platform support and more features than traditional Makefiles.
+
 ### Building
 ```bash
 # Build the binary
-make build
+just build
 
 # Or directly with go build
 go build -ldflags="-s -w" -o complaints-mcp ./cmd/server/main.go
@@ -20,16 +22,72 @@ go build -ldflags="-s -w" -o complaints-mcp ./cmd/server/main.go
 ### Testing
 ```bash
 # Run all tests
-make test
+just test
+
+# Run tests with verbose output
+just test-verbose
 
 # Run BDD tests specifically (uses Ginkgo/Gomega)
-go test ./features/bdd/... -v
+just test-bdd
+
+# Run tests with coverage report
+just test-coverage
 
 # Run unit tests for a specific package
 go test ./internal/domain -v
 go test ./internal/service -v
 go test ./internal/repo -v
+
+# Run benchmarks
+just bench
 ```
+
+### Development Workflow
+```bash
+# Run full CI pipeline locally
+just ci
+
+# Development with hot reload (requires air)
+just dev-watch
+
+# Format code
+just fmt
+
+# Lint code
+just lint
+
+# Run code quality checks
+just quality
+
+# Install development tools
+just install-tools
+
+# View all available commands
+just --list
+```
+
+### Why Just over Make?
+This project migrated from Makefile to Justfile for better cross-platform compatibility and modern development features:
+- **Cross-platform**: Works consistently on Windows, macOS, and Linux
+- **Better syntax**: No complex Makefile rules or tab/space issues
+- **Self-documenting**: Built-in help with `just --list`
+- **More features**: Enhanced error handling, private recipes, dependencies
+- **Modern**: Designed for contemporary development workflows
+
+**Installation**:
+```bash
+# macOS/Linux
+brew install just
+
+# Or from source
+cargo install just
+
+# Verify installation
+just --version
+```
+
+**Legacy Make Support**:
+The Makefile remains for backward compatibility but Just is recommended. All Make targets have equivalent Just commands.
 
 ### Running
 ```bash
