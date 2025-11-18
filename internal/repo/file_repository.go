@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -101,7 +100,9 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 
 	// Sort files by modification time (newest first)
 	sort.Slice(files, func(i, j int) bool {
-		return files[i].ModTime().After(files[j].ModTime())
+		infoI, _ := files[i].Info()
+		infoJ, _ := files[j].Info()
+		return infoI.ModTime().After(infoJ.ModTime())
 	})
 
 	var complaints []*domain.Complaint
@@ -245,8 +246,8 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 			strings.Contains(strings.ToLower(complaint.MissingInfo), query) ||
 			strings.Contains(strings.ToLower(complaint.ConfusedBy), query) ||
 			strings.Contains(strings.ToLower(complaint.FutureWishes), query) ||
-			strings.Contains(strings.ToLower(complaint.AgentID), query) ||
-			strings.Contains(strings.ToLower(complaint.ProjectName), query) {
+			strings.Contains(strings.ToLower(complaint.AgentID.String()), query) ||
+			strings.Contains(strings.ToLower(complaint.ProjectID.String()), query) {
 			results = append(results, complaint)
 		}
 
@@ -297,17 +298,17 @@ func (r *FileRepository) WarmCache(ctx context.Context) error {
 }
 
 // GetCacheStats returns cache statistics
-func (r *FileRepository) GetCacheStats() CacheStats {
+func (r *FileRepository) GetCacheStats() repo.CacheStats {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
-	return CacheStats{
+	return repo.CacheStats{
 		CachedComplaints: len(r.cache),
 		MaxCacheSize:     1000, // Default max cache size
 	}
 }
 
-// GetFilePath returns the file path for a complaint
+// GetFilePath returns file path for a complaint
 func (r *FileRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
 	if err := id.Validate(); err != nil {
 		return "", fmt.Errorf("invalid ComplaintID: %w", err)
@@ -317,7 +318,7 @@ func (r *FileRepository) GetFilePath(ctx context.Context, id domain.ComplaintID)
 	return filepath.Join(r.complaintsDir, fileName), nil
 }
 
-// GetDocsPath returns the documentation path for a complaint
+// GetDocsPath returns documentation path for a complaint
 func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
 	if err := id.Validate(); err != nil {
 		return "", fmt.Errorf("invalid ComplaintID: %w", err)
@@ -330,7 +331,11 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	}
 
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
-	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID, complaint.TaskDescription[:20])
+	taskDesc := complaint.TaskDescription
+	if len(taskDesc) > 20 {
+		taskDesc = taskDesc[:20]
+	}
+	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID.String(), taskDesc)
 	
 	// Truncate and sanitize filename
 	if len(fileName) > 100 {
@@ -343,23 +348,17 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	return filepath.Join(r.docsDir, fileName), nil
 }
 
-// CacheStats represents cache statistics
-type CacheStats struct {
-	CachedComplaints int `json:"cached_complaints"`
-	MaxCacheSize     int `json:"max_cache_size"`
-}
-
 // listComplaintFiles lists all complaint files
-func (r *FileRepository) listComplaintFiles(ctx context.Context) ([]fs.FileInfo, error) {
+func (r *FileRepository) listComplaintFiles(ctx context.Context) ([]os.DirEntry, error) {
 	entries, err := os.ReadDir(r.complaintsDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return []fs.FileInfo{}, nil
+			return []os.DirEntry{}, nil
 		}
 		return nil, fmt.Errorf("failed to read complaints directory: %w", err)
 	}
 
-	var files []fs.FileInfo
+	var files []os.DirEntry
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -402,7 +401,7 @@ func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, li
 
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.SessionID == sessionID {
+		if complaint.SessionID.String() == sessionID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
@@ -421,7 +420,7 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectID string, li
 
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.ProjectName == projectID {
+		if complaint.ProjectID.String() == projectID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
@@ -440,7 +439,7 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.AgentID == agentID {
+		if complaint.AgentID.String() == agentID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
