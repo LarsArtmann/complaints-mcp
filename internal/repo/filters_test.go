@@ -220,22 +220,29 @@ func TestNotFilter(t *testing.T) {
 }
 
 func TestFilterComplaintsContextCancellation(t *testing.T) {
-	// Create a context that will be cancelled after a short time
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	// Create a controlled cancellation scenario
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Create many complaints to ensure we have time to cancel
+	
+	// Create complaints
 	complaints := make([]*domain.Complaint, 100)
 	for i := range 100 {
 		complaints[i] = createTestComplaint(t, "low")
 	}
 
-	// Use a filter that would match all complaints (no early termination via limit)
+	// Use a filter that would match all complaints
 	filter := SeverityFilter(domain.SeverityLow)
 
-	// Add a small delay in the filter to make cancellation more likely
-	slowFilter := func(c *domain.Complaint) bool {
-		time.Sleep(1 * time.Millisecond) // Small delay to ensure cancellation can happen
+	// Create a filter that waits for cancellation signal before proceeding first time
+	firstCall := true
+	var slowFilter FilterStrategy
+	slowFilter = func(c *domain.Complaint) bool {
+		if firstCall {
+			firstCall = false
+			// Cancel context and wait a bit to ensure cancellation propagates
+			cancel()
+			time.Sleep(1 * time.Millisecond) // Small delay to allow cancellation
+		}
 		return filter(c)
 	}
 
@@ -244,9 +251,9 @@ func TestFilterComplaintsContextCancellation(t *testing.T) {
 	filtered := filterComplaints(ctx, complaints, slowFilter, 0)
 	elapsed := time.Since(start)
 
-	// Should return very quickly due to cancellation (less than 100ms)
+	// Should return quickly due to cancellation
 	if elapsed > 100*time.Millisecond {
-		t.Errorf("Expected filterComplaints to return early due to cancellation, took %v", elapsed)
+		t.Errorf("Expected filterComplaints to return quickly due to cancellation, took %v", elapsed)
 	}
 
 	// Should return fewer than all complaints due to cancellation

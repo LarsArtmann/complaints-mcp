@@ -66,61 +66,35 @@ func UnresolvedFilter() FilterStrategy {
 	}
 }
 
+// getSearchableFields extracts all searchable string fields from a complaint
+// This makes it easy to add new fields to search - just add them to this slice
+func getSearchableFields(c *domain.Complaint) []string {
+	return []string{
+		c.TaskDescription,
+		c.ContextInfo,
+		c.MissingInfo,
+		c.ConfusedBy,
+		c.FutureWishes,
+		c.AgentName.String(),
+		c.SessionName.String(),
+		c.ProjectName.String(),
+	}
+}
+
 // SearchFilter creates a filter for text search across complaint fields
 func SearchFilter(query string) FilterStrategy {
 	queryLower := strings.ToLower(query)
 
 	return func(c *domain.Complaint) bool {
-		// Pre-compute lowercase versions of all fields once per complaint
-		taskDescLower := strings.ToLower(c.TaskDescription)
-		contextInfoLower := strings.ToLower(c.ContextInfo)
-		missingInfoLower := strings.ToLower(c.MissingInfo)
-		confusedByLower := strings.ToLower(c.ConfusedBy)
-		futureWishesLower := strings.ToLower(c.FutureWishes)
-		agentNameLower := strings.ToLower(c.AgentName.String())
-		sessionNameLower := strings.ToLower(c.SessionName.String())
-		projectNameLower := strings.ToLower(c.ProjectName.String())
-
-		// Search in task description
-		if strings.Contains(taskDescLower, queryLower) {
-			return true
+		// Extract all searchable fields and check if any contain the query
+		searchableFields := getSearchableFields(c)
+		
+		for _, field := range searchableFields {
+			if strings.Contains(strings.ToLower(field), queryLower) {
+				return true
+			}
 		}
-
-		// Search in context info
-		if strings.Contains(contextInfoLower, queryLower) {
-			return true
-		}
-
-		// Search in missing info
-		if strings.Contains(missingInfoLower, queryLower) {
-			return true
-		}
-
-		// Search in confused by
-		if strings.Contains(confusedByLower, queryLower) {
-			return true
-		}
-
-		// Search in future wishes
-		if strings.Contains(futureWishesLower, queryLower) {
-			return true
-		}
-
-		// Search in agent name
-		if strings.Contains(agentNameLower, queryLower) {
-			return true
-		}
-
-		// Search in session name
-		if strings.Contains(sessionNameLower, queryLower) {
-			return true
-		}
-
-		// Search in project name
-		if strings.Contains(projectNameLower, queryLower) {
-			return true
-		}
-
+		
 		return false
 	}
 }

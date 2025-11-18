@@ -2,8 +2,10 @@ package domain
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestNewAgentName(t *testing.T) {
@@ -20,6 +22,9 @@ func TestNewAgentName(t *testing.T) {
 		{"valid with spaces", "Agent Name", false},
 		{"valid with numbers", "agent-123", false},
 		{"valid with special chars", "agent_name-v1.0", false},
+		{"valid non-ASCII name", "Jörn", false},
+		{"valid emoji name", "AI 🤖", false},
+		{"valid mixed non-ASCII", "Jörn-🤖-Agent", false},
 	}
 
 	for _, tt := range tests {
@@ -43,6 +48,58 @@ func TestNewAgentName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAgentName_RuneVsByteSemantics(t *testing.T) {
+	t.Run("agent name length measured in runes not bytes", func(t *testing.T) {
+		// Create a name where rune count is within limit but byte count exceeds
+		// Each emoji is 4 bytes but 1 rune
+		longByteName := strings.Repeat("🤖", MaxAgentNameLength) // 100 runes, 400 bytes
+		
+		// Should be valid because we count runes, not bytes
+		agentName, err := NewAgentName(longByteName)
+		if err != nil {
+			t.Errorf("expected name with %d runes to be valid, got error: %v", MaxAgentNameLength, err)
+		}
+		if agentName.String() != longByteName {
+			t.Errorf("name not preserved correctly")
+		}
+		
+		// Now exceed the rune limit (101 runes = 404 bytes)
+		tooManyRunes := strings.Repeat("🤖", MaxAgentNameLength+1)
+		_, err = NewAgentName(tooManyRunes)
+		if err == nil {
+			t.Errorf("expected name with %d runes to be invalid", MaxAgentNameLength+1)
+		}
+	})
+	
+	t.Run("mixed ASCII and multibyte characters", func(t *testing.T) {
+		// Create name that's exactly at the rune limit
+		name := "Jörn-" + strings.Repeat("a", MaxAgentNameLength-5) + "🤖" // 5 runes + 95 + 1 = 101 runes
+		if utf8.RuneCountInString(name) != MaxAgentNameLength+1 {
+			t.Fatalf("test setup error: expected %d runes, got %d", MaxAgentNameLength+1, utf8.RuneCountInString(name))
+		}
+		
+		_, err := NewAgentName(name)
+		if err == nil {
+			t.Errorf("expected name with %d runes to be invalid", MaxAgentNameLength+1)
+		}
+		
+		// Make it valid by removing one character (rune)
+		runes := []rune(name)
+		validName := string(runes[:len(runes)-1]) // Remove the emoji
+		if utf8.RuneCountInString(validName) != MaxAgentNameLength {
+			t.Fatalf("test setup error: expected %d runes, got %d", MaxAgentNameLength, utf8.RuneCountInString(validName))
+		}
+		
+		agentName, err := NewAgentName(validName)
+		if err != nil {
+			t.Errorf("expected name with %d runes to be valid, got error: %v", MaxAgentNameLength, err)
+		}
+		if agentName.String() != validName {
+			t.Errorf("valid name not preserved correctly")
+		}
+	})
 }
 
 func TestMustNewAgentName(t *testing.T) {
@@ -154,17 +211,62 @@ func TestAgentName_JSON(t *testing.T) {
 			t.Errorf("expected %q, got %q", original.String(), unmarshaled.String())
 		}
 	})
+
+	t.Run("round-trip with non-ASCII characters", func(t *testing.T) {
+		original := MustNewAgentName("Jörn 🤖 AI")
+		data, err := json.Marshal(original)
+		if err != nil {
+			t.Fatalf("failed to marshal non-ASCII name: %v", err)
+		}
+
+		var unmarshaled AgentName
+		if err := json.Unmarshal(data, &unmarshaled); err != nil {
+			t.Fatalf("failed to unmarshal non-ASCII name: %v", err)
+		}
+
+		if unmarshaled.String() != original.String() {
+			t.Errorf("expected %q, got %q", original.String(), unmarshaled.String())
+		}
+	})
 }
 
 func TestAgentName_Immutability(t *testing.T) {
-	agentName := MustNewAgentName("original")
-	originalValue := agentName.String()
-
-	// AgentName value objects are immutable by design - they contain only the private value field
-	// There are no setter methods, and the String() method returns a copy of the value
-	// This test verifies the type design guarantees immutability
-
-	if agentName.String() != originalValue {
-		t.Errorf("agent name was modified unexpectedly")
+	// Test 1: Verify AgentName type has no exported fields (ensuring structural immutability)
+	agentType := reflect.TypeOf(AgentName{})
+	
+	// Check that all fields are unexported (start with lowercase letter)
+	exportedFieldCount := 0
+	for i := 0; i < agentType.NumField(); i++ {
+		field := agentType.Field(i)
+		if field.IsExported() {
+			exportedFieldCount++
+			t.Errorf("AgentName has exported field: %s", field.Name)
+		}
+	}
+	
+	if exportedFieldCount > 0 {
+		t.Errorf("AgentName should have no exported fields for immutability, found %d", exportedFieldCount)
+	}
+	
+	// Test 2: Verify JSON round-trip preserves original value
+	original := MustNewAgentName("test-agent")
+	data, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("failed to marshal: %v", err)
+	}
+	
+	var copy AgentName
+	if err := json.Unmarshal(data, &copy); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+	
+	// The original should be unchanged
+	if original.String() != "test-agent" {
+		t.Errorf("original value changed: expected 'test-agent', got %q", original.String())
+	}
+	
+	// The copy should have the same value
+	if copy.String() != original.String() {
+		t.Errorf("round-trip changed value: expected %q, got %q", original.String(), copy.String())
 	}
 }
