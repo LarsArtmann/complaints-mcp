@@ -427,7 +427,7 @@ var _ = Describe("FileRepository", func() {
 
 			// Create a corrupted JSON file
 			filename := filepath.Join(tempDir, complaintID.String()+".json")
-			err = os.WriteFile(filename, []byte("invalid json content"), 0644)
+			err = os.WriteFile(filename, []byte("invalid json content"), 0o644)
 			Expect(err).NotTo(HaveOccurred())
 
 			// Try to read it

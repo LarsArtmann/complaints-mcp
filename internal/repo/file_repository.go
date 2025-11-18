@@ -89,7 +89,7 @@ func (r *CachedRepository) Save(ctx context.Context, complaint *domain.Complaint
 	filePath := filepath.Join(r.baseDir, filename)
 
 	// Ensure directory exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		logger.Error("Failed to create directory", "error", err, "path", filepath.Dir(filePath))
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
@@ -101,7 +101,7 @@ func (r *CachedRepository) Save(ctx context.Context, complaint *domain.Complaint
 		return fmt.Errorf("failed to marshal complaint: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0o644); err != nil {
 		logger.Error("Failed to write complaint file", "error", err, "path", filePath)
 		return fmt.Errorf("failed to write complaint file: %w", err)
 	}
@@ -129,7 +129,7 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 	filePath := filepath.Join(r.baseDir, filename)
 
 	// Ensure directory exists
-	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		logger.Error("Failed to create directory", "error", err, "path", filepath.Dir(filePath))
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
@@ -141,7 +141,7 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 		return fmt.Errorf("failed to marshal complaint: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0o644); err != nil {
 		logger.Error("Failed to write complaint file", "error", err, "path", filePath)
 		return fmt.Errorf("failed to write complaint file: %w", err)
 	}

@@ -91,7 +91,7 @@ func (s *ComplaintService) GetComplaint(ctx context.Context, id domain.Complaint
 }
 
 // ListComplaints retrieves all complaints
-func (s *ComplaintService) ListComplaints(ctx context.Context, limit int, offset int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) ListComplaints(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
 	ctx, span := s.tracer.Start(ctx, "ListComplaints")
 	defer span.End()
 
