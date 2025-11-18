@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 )
 
 // AgentName is a value object representing an AI agent's name
@@ -19,9 +20,9 @@ func NewAgentName(name string) (AgentName, error) {
 		return AgentName{}, fmt.Errorf("agent name cannot be empty")
 	}
 
-	// Validate: cannot exceed maximum length
-	if len(name) > MaxAgentNameLength {
-		return AgentName{}, fmt.Errorf("agent name exceeds maximum length of %d characters (got %d)", MaxAgentNameLength, len(name))
+	// Validate: cannot exceed maximum length in Unicode characters
+	if utf8.RuneCountInString(name) > MaxAgentNameLength {
+		return AgentName{}, fmt.Errorf("agent name exceeds maximum length of %d characters (got %d)", MaxAgentNameLength, utf8.RuneCountInString(name))
 	}
 
 	return AgentName{value: name}, nil
@@ -43,9 +44,23 @@ func (a AgentName) String() string {
 }
 
 // IsEmpty returns true if the agent name is empty
-// This should never be true for a properly constructed AgentName
+// Returns true only for the zero-value AgentName and is intended as a defensive check
+// for deserialization, reflection, or other cases where zero-values might occur
 func (a AgentName) IsEmpty() bool {
 	return a.value == ""
+}
+
+// Validate checks if the agent name is valid
+// For AgentName, this should never fail if constructed via NewAgentName()
+// Use IsEmpty() to check for zero-values from deserialization/reflection
+func (a AgentName) Validate() error {
+	// Check for zero-value case (shouldn't happen with proper construction)
+	if a.IsEmpty() {
+		return fmt.Errorf("agent name cannot be empty")
+	}
+
+	// Length validation is handled during construction
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler for JSON serialization

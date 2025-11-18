@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 )
 
 // SessionName is a value object representing a session identifier
@@ -21,9 +22,9 @@ func NewSessionName(name string) (SessionName, error) {
 		return SessionName{value: ""}, nil
 	}
 
-	// Validate: cannot exceed maximum length
-	if len(name) > MaxSessionNameLength {
-		return SessionName{}, fmt.Errorf("session name exceeds maximum length of %d characters (got %d)", MaxSessionNameLength, len(name))
+	// Validate: cannot exceed maximum length in Unicode characters
+	if utf8.RuneCountInString(name) > MaxSessionNameLength {
+		return SessionName{}, fmt.Errorf("session name exceeds maximum length of %d characters (got %d)", MaxSessionNameLength, utf8.RuneCountInString(name))
 	}
 
 	return SessionName{value: name}, nil
@@ -47,6 +48,15 @@ func (s SessionName) String() string {
 // IsEmpty returns true if the session name is empty
 func (s SessionName) IsEmpty() bool {
 	return s.value == ""
+}
+
+// Validate checks if the session name is valid
+// For SessionName, empty values are allowed, so this always returns nil
+// Use IsEmpty() to check if a session name is set
+func (s SessionName) Validate() error {
+	// SessionName allows empty values (optional field)
+	// Length validation is handled during construction
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler for JSON serialization

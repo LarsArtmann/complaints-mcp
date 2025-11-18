@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"unicode/utf8"
 )
 
 // ProjectName is a value object representing a project identifier
@@ -21,9 +22,9 @@ func NewProjectName(name string) (ProjectName, error) {
 		return ProjectName{value: ""}, nil
 	}
 
-	// Validate: cannot exceed maximum length
-	if len(name) > MaxProjectNameLength {
-		return ProjectName{}, fmt.Errorf("project name exceeds maximum length of %d characters (got %d)", MaxProjectNameLength, len(name))
+	// Validate: cannot exceed maximum length in Unicode characters
+	if utf8.RuneCountInString(name) > MaxProjectNameLength {
+		return ProjectName{}, fmt.Errorf("project name exceeds maximum length of %d characters (got %d)", MaxProjectNameLength, utf8.RuneCountInString(name))
 	}
 
 	return ProjectName{value: name}, nil
@@ -47,6 +48,15 @@ func (p ProjectName) String() string {
 // IsEmpty returns true if the project name is empty
 func (p ProjectName) IsEmpty() bool {
 	return p.value == ""
+}
+
+// Validate checks if the project name is valid
+// For ProjectName, empty values are allowed, so this always returns nil
+// Use IsEmpty() to check if a project name is set
+func (p ProjectName) Validate() error {
+	// ProjectName allows empty values (optional field)
+	// Length validation is handled during construction
+	return nil
 }
 
 // MarshalJSON implements json.Marshaler for JSON serialization

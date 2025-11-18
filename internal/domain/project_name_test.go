@@ -185,15 +185,5 @@ func TestProjectName_JSON(t *testing.T) {
 	})
 }
 
-func TestProjectName_Immutability(t *testing.T) {
-	projectName := MustNewProjectName("original-project")
-	originalValue := projectName.String()
-
-	// ProjectName value objects are immutable by design - they contain only the private value field
-	// There are no setter methods, and the String() method returns a copy of the value
-	// This test verifies the type design guarantees immutability
-
-	if projectName.String() != originalValue {
-		t.Errorf("project name was modified unexpectedly")
-	}
-}
+// Immutability of ProjectName is guaranteed by the private value field and lack of public setters.
+// Go's value semantics prevent external mutation of the struct.

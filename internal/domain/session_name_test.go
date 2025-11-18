@@ -185,15 +185,5 @@ func TestSessionName_JSON(t *testing.T) {
 	})
 }
 
-func TestSessionName_Immutability(t *testing.T) {
-	sessionName := MustNewSessionName("original-session")
-	originalValue := sessionName.String()
-
-	// SessionName value objects are immutable by design - they contain only the private value field
-	// There are no setter methods, and the String() method returns a copy of the value
-	// This test verifies the type design guarantees immutability
-
-	if sessionName.String() != originalValue {
-		t.Errorf("session name was modified unexpectedly")
-	}
-}
+// Immutability of SessionName is guaranteed by the private value field and lack of public setters.
+// Go's value semantics prevent external mutation of the struct.

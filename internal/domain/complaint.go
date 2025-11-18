@@ -77,6 +77,9 @@ func (id ComplaintID) IsEmpty() bool {
 
 // Complaint represents a complaint filed by an AI agent
 // Uses value objects for type safety and validation
+//
+// IMPORTANT: Complaint should only be used as a pointer (*Complaint) due to the embedded sync.RWMutex.
+// Copying Complaint by value is undefined behavior if the mutex has been used.
 type Complaint struct {
 	ID              ComplaintID `json:"id" validate:"required"`
 	AgentName       AgentName   `json:"agent_name"`   // Value object: required, max 100 chars
@@ -190,9 +193,17 @@ func (c *Complaint) IsResolved() bool {
 
 // Validate checks if the complaint data is valid using validator
 func (c *Complaint) Validate() error {
-	// Check value objects first (they have their own validation)
-	if c.AgentName.IsEmpty() {
-		return fmt.Errorf("agent name is required")
+	// Validate all value objects to enforce their invariants
+	if err := c.AgentName.Validate(); err != nil {
+		return fmt.Errorf("agent name validation failed: %w", err)
+	}
+
+	if err := c.SessionName.Validate(); err != nil {
+		return fmt.Errorf("session name validation failed: %w", err)
+	}
+
+	if err := c.ProjectName.Validate(); err != nil {
+		return fmt.Errorf("project name validation failed: %w", err)
 	}
 
 	// Initialize validator once using sync.Once (thread-safe singleton pattern)

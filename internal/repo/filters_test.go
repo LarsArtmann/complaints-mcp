@@ -121,7 +121,7 @@ func TestFilterComplaintsWithLimit(t *testing.T) {
 
 	// Create 5 high severity complaints
 	var complaints []*domain.Complaint
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		complaints = append(complaints, createTestComplaint(t, "high"))
 	}
 
@@ -224,7 +224,7 @@ func TestFilterComplaintsContextCancellation(t *testing.T) {
 
 	// Create many complaints to ensure we have time to cancel
 	complaints := make([]*domain.Complaint, 100)
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		complaints[i] = createTestComplaint(t, "low")
 	}
 
@@ -285,7 +285,7 @@ func BenchmarkSearchFilter(b *testing.B) {
 
 	// Create a large test dataset
 	complaints := make([]*domain.Complaint, 10000)
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		severity := domain.SeverityLow
 		if i%100 == 0 {
 			severity = domain.SeverityHigh
@@ -312,8 +312,7 @@ func BenchmarkSearchFilter(b *testing.B) {
 	// Benchmark search term that will match only a few items (early exit)
 	filter := SearchFilter("specific search term")
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = filterComplaints(ctx, complaints, filter, 10)
 	}
 }
@@ -323,7 +322,7 @@ func BenchmarkSearchFilterNoMatch(b *testing.B) {
 
 	// Create a large test dataset
 	complaints := make([]*domain.Complaint, 10000)
-	for i := 0; i < 10000; i++ {
+	for i := range 10000 {
 		complaint, err := domain.NewComplaint(
 			ctx,
 			"test-agent",
@@ -345,8 +344,7 @@ func BenchmarkSearchFilterNoMatch(b *testing.B) {
 	// Benchmark search term that will match nothing (worst case)
 	filter := SearchFilter("nonexistent term that will never match")
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = filterComplaints(ctx, complaints, filter, 10)
 	}
 }

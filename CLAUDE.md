@@ -11,6 +11,7 @@ complaints-mcp is a Model Context Protocol (MCP) server that allows AI agents to
 This project uses **Just** (justfile) as its modern task runner, providing better cross-platform support and more features than traditional Makefiles.
 
 ### Building
+
 ```bash
 # Build the binary
 just build
@@ -20,6 +21,7 @@ go build -ldflags="-s -w" -o complaints-mcp ./cmd/server/main.go
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 just test
@@ -43,6 +45,7 @@ just bench
 ```
 
 ### Development Workflow
+
 ```bash
 # Run full CI pipeline locally
 just ci
@@ -67,7 +70,9 @@ just --list
 ```
 
 ### Why Just over Make?
+
 This project migrated from Makefile to Justfile for better cross-platform compatibility and modern development features:
+
 - **Cross-platform**: Works consistently on Windows, macOS, and Linux
 - **Better syntax**: No complex Makefile rules or tab/space issues
 - **Self-documenting**: Built-in help with `just --list`
@@ -75,6 +80,7 @@ This project migrated from Makefile to Justfile for better cross-platform compat
 - **Modern**: Designed for contemporary development workflows
 
 **Installation**:
+
 ```bash
 # macOS/Linux
 brew install just
