@@ -134,8 +134,8 @@ func (id ComplaintID) IsEmpty() bool {
 // Complaint represents a complaint filed by an AI agent
 // Uses value objects for type safety and validation
 //
-// IMPORTANT: Complaint should only be used as a pointer (*Complaint) due to the embedded sync.RWMutex.
-// Copying Complaint by value is undefined behavior if the mutex has been used.
+// NOTE: The mutex now lives in ThreadSafeComplaint. Using *Complaint is recommended only for
+// size/identity semantics, not for thread safety.
 type Complaint struct {
 	ID              ComplaintID `json:"id" validate:"required"`
 	AgentName       AgentName   `json:"agent_name"`   // Value object: required, max 100 chars
