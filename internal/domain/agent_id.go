@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // AgentID represents an AI agent identifier using phantom type pattern
 type AgentID string
 
-// Agent name validation pattern
+// Agent ID validation pattern
 var agentIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-_\s\.]{1,100}$`)
 
 // NewAgentID creates a new valid AgentID
@@ -53,7 +54,7 @@ func (id AgentID) IsEmpty() bool {
 	return strings.TrimSpace(string(id)) == ""
 }
 
-// String returns the string representation of AgentID
+// String returns string representation of AgentID
 func (id AgentID) String() string {
 	return string(id)
 }
