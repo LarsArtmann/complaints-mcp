@@ -64,6 +64,19 @@ func (id *ComplaintID) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ParseComplaintID validates and creates a ComplaintID from string
+func ParseComplaintID(s string) (ComplaintID, error) {
+	if err := validateComplaintID(s); err != nil {
+		return ComplaintID(""), fmt.Errorf("invalid ComplaintID: %w", err)
+	}
+	return ComplaintID(s), nil
+}
+
+// IsEmpty returns true if ComplaintID is empty
+func (id ComplaintID) IsEmpty() bool {
+	return string(id) == ""
+}
+
 // validateComplaintID validates ComplaintID format
 func validateComplaintID(s string) error {
 	if s == "" {
@@ -80,7 +93,7 @@ type ResolutionState string
 
 const (
 	ResolutionStateOpen     ResolutionState = "open"
-	ResolutionStateResolved  ResolutionState = "resolved"
+	ResolutionStateResolved ResolutionState = "resolved"
 )
 
 // IsResolved returns true if the complaint is resolved
@@ -100,10 +113,10 @@ const (
 
 // Complaint represents a structured complaint with phantom type ID
 type Complaint struct {
-	ID              ComplaintID     `json:"id"`              // ✅ Phantom type - flat JSON
-	AgentID         string          `json:"agent_name"`       // Keep for API compatibility
-	SessionID       string          `json:"session_name"`     // Keep for API compatibility
-	ProjectName     string          `json:"project_name"`     // Keep for API compatibility
+	ID              ComplaintID     `json:"id"`           // ✅ Phantom type - flat JSON
+	AgentID         AgentID         `json:"agent_id"`     // ✅ Phantom type for consistency  
+	SessionID       SessionID       `json:"session_id"`   // ✅ Phantom type for consistency
+	ProjectName     ProjectID       `json:"project_id"`   // ✅ Phantom type for consistency
 	TaskDescription string          `json:"task_description"`
 	ContextInfo     string          `json:"context_info"`
 	MissingInfo     string          `json:"missing_info"`
@@ -112,7 +125,7 @@ type Complaint struct {
 	Severity        Severity        `json:"severity"`
 	Timestamp       time.Time       `json:"timestamp"`
 	ResolutionState ResolutionState `json:"resolution_state"`
-	ResolvedAt      *time.Time     `json:"resolved_at,omitempty"`
+	ResolvedAt      *time.Time      `json:"resolved_at,omitempty"`
 	ResolvedBy      string          `json:"resolved_by,omitempty"`
 }
 
@@ -122,7 +135,7 @@ func (c *Complaint) Validate() error {
 	if err := c.ID.Validate(); err != nil {
 		return fmt.Errorf("invalid ComplaintID: %w", err)
 	}
-	
+
 	// Validate severity
 	switch c.Severity {
 	case SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical:
@@ -130,15 +143,22 @@ func (c *Complaint) Validate() error {
 	default:
 		return fmt.Errorf("invalid severity: %s", c.Severity)
 	}
-	
-	// Validate required fields
-	if c.AgentID == "" {
-		return fmt.Errorf("agent_name cannot be empty")
+
+	// Validate required phantom types
+	if err := c.AgentID.Validate(); err != nil {
+		return fmt.Errorf("invalid AgentID: %w", err)
 	}
+	if err := c.SessionID.Validate(); err != nil {
+		return fmt.Errorf("invalid SessionID: %w", err)
+	}
+	if err := c.ProjectName.Validate(); err != nil {
+		return fmt.Errorf("invalid ProjectID: %w", err)
+	}
+
 	if c.TaskDescription == "" {
 		return fmt.Errorf("task_description cannot be empty")
 	}
-	
+
 	return nil
 }
 
@@ -155,12 +175,12 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 	if resolvedBy == "" {
 		return fmt.Errorf("resolver name cannot be empty")
 	}
-	
+
 	now := time.Now()
 	c.ResolvedAt = &now
 	c.ResolvedBy = resolvedBy
 	c.ResolutionState = ResolutionStateResolved
-	
+
 	return nil
 }
 
