@@ -14,8 +14,10 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
-const defaultComplaintsDir = "complaints"
-const defaultDocsDir = "docs/complaints"
+const (
+	defaultComplaintsDir = "complaints"
+	defaultDocsDir       = "docs/complaints"
+)
 
 // Repository interface for complaint storage
 type Repository interface {
@@ -197,7 +199,7 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 	for _, complaint := range all {
 		if strings.Contains(strings.ToLower(complaint.TaskDescription), query) ||
 			strings.Contains(strings.ToLower(complaint.ContextInfo), query) ||
-			strings.Contains(strings.ToLower(complaint.AgentID), query) {
+			strings.Contains(strings.ToLower(complaint.AgentID.String()), query) {
 			results = append(results, complaint)
 		}
 		if len(results) >= limit {
@@ -217,6 +219,7 @@ func (r *FileRepository) GetCacheStats() CacheStats {
 	return CacheStats{
 		CachedComplaints: 0,
 		MaxCacheSize:     0,
+		MaxSize:          0, // ✅ ADDED for test compatibility
 		Hits:             0,
 		Misses:           0,
 		Evictions:        0,
@@ -238,7 +241,7 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 		return "", err
 	}
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
-	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID, complaint.TaskDescription[:20])
+	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID.String(), complaint.TaskDescription[:20])
 	if len(fileName) > 100 {
 		fileName = fileName[:100]
 	}
@@ -253,7 +256,7 @@ func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, li
 	}
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.SessionID == sessionID {
+		if complaint.SessionID.String() == sessionID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
@@ -271,7 +274,7 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectID string, li
 	}
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.ProjectName == projectID {
+		if complaint.ProjectName.String() == projectID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
@@ -289,7 +292,7 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 	}
 	var filtered []*domain.Complaint
 	for _, complaint := range all {
-		if complaint.AgentID == agentID {
+		if complaint.AgentID.String() == agentID {
 			filtered = append(filtered, complaint)
 		}
 		if len(filtered) >= limit {
@@ -303,6 +306,7 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 type CacheStats struct {
 	CachedComplaints int     `json:"cached_complaints"`
 	MaxCacheSize     int     `json:"max_cache_size"`
+	MaxSize          int     `json:"max_size"`          // ✅ ADDED for test compatibility
 	Hits             int     `json:"hits"`
 	Misses           int     `json:"misses"`
 	Evictions        int     `json:"evictions"`
@@ -330,11 +334,11 @@ func (r *FileRepository) listComplaintFiles() ([]os.DirEntry, error) {
 
 // writeFile writes data to a file
 func (r *FileRepository) writeFile(fileName string, data []byte) error {
-	if err := os.MkdirAll(r.complaintsDir, 0755); err != nil {
+	if err := os.MkdirAll(r.complaintsDir, 0o755); err != nil {
 		return err
 	}
 	filePath := filepath.Join(r.complaintsDir, fileName)
-	return os.WriteFile(filePath, data, 0644)
+	return os.WriteFile(filePath, data, 0o644)
 }
 
 // NewRepositoryFromConfig creates a repository based on configuration
@@ -342,6 +346,12 @@ func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Reposito
 	// For now, always return a FileRepository
 	// In the future, this could check cfg.Storage.CacheEnabled to return a cached repository
 	return NewFileRepository(cfg.Storage.BaseDir, tracer)
+}
+
+// NewCachedRepository creates a cached repository (alias for compatibility)
+func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
+	// For now, return FileRepository (cache not implemented yet)
+	return NewFileRepository(baseDir, tracer)
 }
 
 // readFile reads data from a file

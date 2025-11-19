@@ -35,8 +35,8 @@ func ToDTO(c *domain.Complaint) ComplaintDTO {
 func ToDTOWithPaths(c *domain.Complaint, filePath, docsPath string) ComplaintDTO {
 	return ComplaintDTO{
 		ID:              c.ID.String(),
-		AgentName:       c.AgentID,
-		SessionName:     c.SessionID,
+		AgentName:       c.AgentID.String(),
+		SessionName:     c.SessionID.String(),
 		TaskDescription: c.TaskDescription,
 		ContextInfo:     c.ContextInfo,
 		MissingInfo:     c.MissingInfo,
@@ -44,7 +44,7 @@ func ToDTOWithPaths(c *domain.Complaint, filePath, docsPath string) ComplaintDTO
 		FutureWishes:    c.FutureWishes,
 		Severity:        string(c.Severity),
 		Timestamp:       c.Timestamp,
-		ProjectName:     c.ProjectName,
+		ProjectName:     c.ProjectName.String(),
 		Resolved:        c.IsResolved(),
 		ResolvedAt:      c.ResolvedAt,
 		ResolvedBy:      c.ResolvedBy,

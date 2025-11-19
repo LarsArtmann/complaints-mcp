@@ -18,8 +18,8 @@ func TestToDTO(t *testing.T) {
 
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       domain.MustNewAgentName("Test Agent"),
-		SessionName:     domain.MustNewSessionName("test-session"),
+		AgentID:         domain.MustParseAgentID("Test Agent"),
+		SessionID:       domain.MustParseSessionID("test-session"),
 		TaskDescription: "Test task description",
 		ContextInfo:     "Context information",
 		MissingInfo:     "Missing information",
@@ -27,10 +27,10 @@ func TestToDTO(t *testing.T) {
 		FutureWishes:    "Future wishes",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       now,
-		ProjectName:     domain.MustNewProjectName("test-project"),
+		ProjectName:     domain.MustParseProjectID("test-project"),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
-		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
+		ResolutionState: domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Convert to DTO
@@ -62,7 +62,7 @@ func TestComplaintDTO_JSONSerialization(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       domain.MustNewAgentName("Test Agent"),
+		AgentID:         domain.MustParseAgentID("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityMedium,
 		Timestamp:       time.Date(2023, 1, 15, 12, 0, 0, 0, time.UTC),
@@ -87,7 +87,7 @@ func TestComplaintDTO_OptionalFields(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       domain.MustNewAgentName("Test Agent"),
+		AgentID:         domain.MustParseAgentID("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityLow,
 		Timestamp:       time.Now(),
@@ -117,7 +117,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	now := time.Now()
 	complaint1 := &domain.Complaint{
 		ID:              id1,
-		AgentName:       domain.MustNewAgentName("Agent 1"),
+		AgentID:         domain.MustParseAgentID("Agent 1"),
 		TaskDescription: "Task 1",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       time.Now(),
@@ -126,12 +126,12 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	resolvedAt := now.Add(time.Hour)
 	complaint2 := &domain.Complaint{
 		ID:              id2,
-		AgentName:       domain.MustNewAgentName("Agent 2"),
+		AgentID:         domain.MustParseAgentID("Agent 2"),
 		TaskDescription: "Task 2",
 		Severity:        domain.SeverityLow,
 		Timestamp:       time.Now(),
 		ResolvedAt:      &resolvedAt,
-		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
+		ResolutionState: domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Create output with type-safe DTOs
@@ -163,7 +163,7 @@ func TestFileComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       domain.MustNewAgentName("Test Agent"),
+		AgentID:         domain.MustParseAgentID("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityMedium,
 		Timestamp:       time.Now(),
@@ -192,13 +192,13 @@ func TestResolveComplaintOutput_TypeSafety(t *testing.T) {
 
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentName:       domain.MustNewAgentName("Test Agent"),
+		AgentID:         domain.MustParseAgentID("Test Agent"),
 		TaskDescription: "Test task",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       time.Now(),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
-		ResolutionState:  domain.ResolutionStateResolved, // Set resolution state for consistency
+		ResolutionState: domain.ResolutionStateResolved, // Set resolution state for consistency
 	}
 
 	// Create output with type-safe DTO
