@@ -128,8 +128,9 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			Expect(len(searchResults)).To(BeNumerically(">=", 1))
 
 			// Step 5: Resolve the complaint
-			err = complaintService.ResolveComplaint(ctx, complaint.ID, "test-agent")
+			resolvedComplaint, err := complaintService.ResolveComplaint(ctx, complaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
+			Expect(resolvedComplaint).NotTo(BeNil())
 
 			// Step 6: Verify resolution
 			resolved, err := complaintService.GetComplaint(ctx, complaint.ID)

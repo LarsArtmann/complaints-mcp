@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
@@ -21,7 +20,6 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger           *log.Logger
 		tracer           tracing.Tracer
 		testComplaint    *domain.Complaint
 	)
@@ -133,7 +131,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 		It("should return specific error for empty complaint ID", func(ctx SpecContext) {
 			// Try to resolve with empty complaint ID
 			emptyID := domain.ComplaintID("")
-			_, err = complaintService.ResolveComplaint(ctx, emptyID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, emptyID, "test-agent")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("complaint not found"))
 		})
@@ -142,7 +140,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 	Context("Resolve already resolved complaints", func() {
 		It("should handle resolving already resolved complaint gracefully", func(ctx SpecContext) {
 			// First resolve the complaint
-			_, err = complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Verify it's resolved
@@ -171,7 +169,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			for range 3 {
 				go func() {
 					defer func() { done <- true }()
-					_, err = complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
+					_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 					errors <- err
 				}()
 			}
@@ -209,7 +207,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 	Context("Resolution persistence", func() {
 		It("should persist resolution across service restarts", func(ctx SpecContext) {
 			// Resolve the complaint
-			_, err = complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Verify it's resolved
@@ -228,7 +226,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 		It("should maintain resolution in file system", func(ctx SpecContext) {
 			// Resolve the complaint
-			_, err = complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Verify resolution is persisted by creating new repository instance
@@ -313,7 +311,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// In a real scenario, this might test file permission errors, disk full, etc.
 			// For now, we verify normal operation since we can't easily simulate file system errors
 
-			_, err = complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Verify the resolution succeeded

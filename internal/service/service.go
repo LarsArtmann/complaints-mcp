@@ -32,12 +32,28 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 		return nil, fmt.Errorf("failed to generate complaint ID: %w", err)
 	}
 
+	// Parse phantom types from strings
+	agentID, err := domain.ParseAgentID(agentName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid agent name: %w", err)
+	}
+	
+	sessionID, err := domain.ParseSessionID(sessionName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid session name: %w", err)
+	}
+	
+	projectID, err := domain.ParseProjectID(projectName)
+	if err != nil {
+		return nil, fmt.Errorf("invalid project name: %w", err)
+	}
+
 	// Create complaint with phantom type ID
 	complaint := &domain.Complaint{
 		ID:              id,
-		AgentID:         agentName,
-		SessionID:       sessionName,
-		ProjectName:     projectName,
+		AgentID:         agentID,
+		SessionID:       sessionID,
+		ProjectName:     projectID,
 		TaskDescription: taskDescription,
 		ContextInfo:     contextInfo,
 		MissingInfo:     missingInfo,
@@ -115,4 +131,14 @@ func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, l
 // GetCacheStats returns cache statistics
 func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 	return s.repo.GetCacheStats()
+}
+
+// ListComplaintsByProject retrieves complaints by project name
+func (s *ComplaintService) ListComplaintsByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
+	return s.repo.FindByProject(ctx, projectName, limit)
+}
+
+// ListUnresolvedComplaints retrieves unresolved complaints
+func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+	return s.repo.FindUnresolved(ctx, limit)
 }
