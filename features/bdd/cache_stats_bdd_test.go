@@ -19,14 +19,12 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger           *log.Logger
 		tracer           tracing.Tracer
 	)
 
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
-		logger = log.New(os.Stdout)
 		tracer = tracing.NewMockTracer("test")
 	})
 

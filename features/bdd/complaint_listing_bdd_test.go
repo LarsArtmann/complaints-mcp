@@ -20,7 +20,6 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		logger           *log.Logger
 		tracer           tracing.Tracer
 		testComplaints   []*domain.Complaint
 	)
@@ -28,7 +27,6 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
-		logger = log.New(os.Stdout)
 		tracer = tracing.NewMockTracer("test")
 
 		// Initialize repository and service
@@ -264,7 +262,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should exclude resolved complaints", func(ctx SpecContext) {
 			// Resolve one complaint
-			err := complaintService.ResolveComplaint(ctx, testComplaints[0].ID, "test-agent")
+			_, err := complaintService.ResolveComplaint(ctx, testComplaints[0].ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 
 			// List unresolved complaints
