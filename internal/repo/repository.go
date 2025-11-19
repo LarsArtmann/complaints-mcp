@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
@@ -217,13 +218,13 @@ func (r *FileRepository) WarmCache(ctx context.Context) error {
 // GetCacheStats returns cache statistics
 func (r *FileRepository) GetCacheStats() CacheStats {
 	return CacheStats{
-		CachedComplaints: 0,
-		MaxCacheSize:     0,
-		MaxSize:          0, // ✅ ADDED for test compatibility
-		Hits:             0,
-		Misses:           0,
-		Evictions:        0,
-		CurrentSize:      0,
+		CachedComplaints: int64(0),
+		MaxCacheSize:     int64(0),
+		MaxSize:          int64(0), // ✅ ADDED for test compatibility
+		Hits:             int64(0),
+		Misses:           int64(0),
+		Evictions:        int64(0),
+		CurrentSize:      int64(0),
 		HitRate:          0.0,
 	}
 }
@@ -304,13 +305,13 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 
 // CacheStats represents cache statistics
 type CacheStats struct {
-	CachedComplaints int     `json:"cached_complaints"`
-	MaxCacheSize     int     `json:"max_cache_size"`
-	MaxSize          int     `json:"max_size"`          // ✅ ADDED for test compatibility
-	Hits             int     `json:"hits"`
-	Misses           int     `json:"misses"`
-	Evictions        int     `json:"evictions"`
-	CurrentSize      int     `json:"current_size"`
+	CachedComplaints int64   `json:"cached_complaints"`
+	MaxCacheSize     int64   `json:"max_cache_size"`
+	MaxSize          int64   `json:"max_size"`          // ✅ ADDED for test compatibility
+	Hits             int64   `json:"hits"`
+	Misses           int64   `json:"misses"`
+	Evictions        int64   `json:"evictions"`
+	CurrentSize      int64   `json:"current_size"`
 	HitRate          float64 `json:"hit_rate_percent"`
 }
 
@@ -348,10 +349,186 @@ func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Reposito
 	return NewFileRepository(cfg.Storage.BaseDir, tracer)
 }
 
-// NewCachedRepository creates a cached repository (alias for compatibility)
+// SimpleCachedRepository provides basic caching functionality
+type SimpleCachedRepository struct {
+	base        Repository
+	cache       map[domain.ComplaintID]*domain.Complaint
+	maxSize     int
+	stats        CacheStats
+	mu          sync.RWMutex
+}
+
+// NewSimpleCachedRepository creates a simple cached repository wrapper
+func NewSimpleCachedRepository(base Repository, maxSize int) Repository {
+	return &SimpleCachedRepository{
+		base:    base,
+		cache:   make(map[domain.ComplaintID]*domain.Complaint),
+		maxSize: maxSize,
+		stats: CacheStats{
+			MaxSize: int64(maxSize),
+		},
+	}
+}
+
+// Save implements Repository interface
+func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	// Save to base repository
+	if err := r.base.Save(ctx, complaint); err != nil {
+		return err
+	}
+	
+	// Add to cache
+	r.cache[complaint.ID] = complaint
+	r.updateCacheSize()
+	return nil
+}
+
+// FindByID implements Repository interface
+func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+	r.mu.RLock()
+	
+	// Check cache first
+	if cached, found := r.cache[id]; found {
+		r.mu.RUnlock()
+		r.mu.Lock()
+		r.stats.Hits++
+		r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
+		r.mu.Unlock()
+		return cached, nil
+	}
+	
+	r.mu.RUnlock()
+	
+	// Get from base repository
+	complaint, err := r.base.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Add to cache
+	r.mu.Lock()
+	r.cache[id] = complaint
+	r.stats.Misses++
+	r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
+	r.updateCacheSize()
+	r.mu.Unlock()
+	
+	return complaint, nil
+}
+
+// GetCacheStats implements Repository interface
+func (r *SimpleCachedRepository) GetCacheStats() CacheStats {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	return r.stats
+}
+
+// updateCacheSize updates current cache size and eviction logic
+func (r *SimpleCachedRepository) updateCacheSize() {
+	currentSize := int64(len(r.cache))
+	r.stats.CurrentSize = currentSize
+	r.stats.CachedComplaints = currentSize
+	
+	// Simple eviction: if over max size, remove oldest (first) items
+	for currentSize > int64(r.maxSize) {
+		var oldestID domain.ComplaintID
+		for id := range r.cache {
+			oldestID = id
+			break
+		}
+		delete(r.cache, oldestID)
+		r.stats.Evictions++
+		currentSize = int64(len(r.cache))
+	}
+	
+	r.stats.CurrentSize = currentSize
+	r.stats.CachedComplaints = currentSize
+}
+
+// Delegate other methods to base repository
+func (r *SimpleCachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+	return r.base.FindAll(ctx, limit, offset)
+}
+
+func (r *SimpleCachedRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+	return r.base.Search(ctx, query, limit)
+}
+
+func (r *SimpleCachedRepository) FindByProject(ctx context.Context, projectID string, limit int) ([]*domain.Complaint, error) {
+	return r.base.FindByProject(ctx, projectID, limit)
+}
+
+func (r *SimpleCachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+	return r.base.FindUnresolved(ctx, limit)
+}
+
+// Add missing methods from Repository interface
+func (r *SimpleCachedRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+	return r.base.FindBySeverity(ctx, severity, limit)
+}
+
+func (r *SimpleCachedRepository) FindBySession(ctx context.Context, sessionID string, limit int) ([]*domain.Complaint, error) {
+	return r.base.FindBySession(ctx, sessionID, limit)
+}
+
+func (r *SimpleCachedRepository) FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error) {
+	return r.base.FindByAgent(ctx, agentID, limit)
+}
+
+func (r *SimpleCachedRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	// Delete from base repository
+	if err := r.base.Delete(ctx, id); err != nil {
+		return err
+	}
+	
+	// Remove from cache
+	delete(r.cache, id)
+	r.updateCacheSize()
+	return nil
+}
+
+func (r *SimpleCachedRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	// Update base repository
+	if err := r.base.Update(ctx, complaint); err != nil {
+		return err
+	}
+	
+	// Update cache
+	if _, exists := r.cache[complaint.ID]; exists {
+		r.cache[complaint.ID] = complaint
+	}
+	return nil
+}
+
+func (r *SimpleCachedRepository) WarmCache(ctx context.Context) error {
+	return r.base.WarmCache(ctx)
+}
+
+func (r *SimpleCachedRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	return r.base.GetFilePath(ctx, id)
+}
+
+func (r *SimpleCachedRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
+	return r.base.GetDocsPath(ctx, id)
+}
+
+// NewCachedRepository creates a cached repository with minimal cache implementation
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
-	// For now, return FileRepository (cache not implemented yet)
-	return NewFileRepository(baseDir, tracer)
+	// Create file repository as base
+	baseRepo := NewFileRepository(baseDir, tracer)
+	
+	// Wrap with simple cache layer
+	return NewSimpleCachedRepository(baseRepo, 1000)
 }
 
 // readFile reads data from a file
