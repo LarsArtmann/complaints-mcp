@@ -300,9 +300,8 @@ func (r *CachedRepository) Update(ctx context.Context, complaint *domain.Complai
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
-	// Update resolution fields (ResolvedAt is single source of truth)
-	existing.ResolvedAt = complaint.ResolvedAt
-	existing.ResolvedBy = complaint.ResolvedBy
+	// Update resolution field (single Resolution value object - no split brain!)
+	existing.Resolution = complaint.Resolution
 
 	// Save updated complaint (updates existing file and LRU cache)
 	return r.Save(ctx, existing)
@@ -329,9 +328,8 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 	existing.MissingInfo = complaint.MissingInfo
 	existing.ConfusedBy = complaint.ConfusedBy
 	existing.FutureWishes = complaint.FutureWishes
-	// Update resolution fields (ResolvedAt is single source of truth)
-	existing.ResolvedAt = complaint.ResolvedAt
-	existing.ResolvedBy = complaint.ResolvedBy
+	// Update resolution field (single Resolution value object - no split brain!)
+	existing.Resolution = complaint.Resolution
 
 	// Save updated complaint (updates existing file in-place)
 	return r.Save(ctx, existing)

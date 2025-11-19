@@ -129,11 +129,22 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 
 	// Check if already resolved (for idempotency)
 	if complaint.IsResolved() {
-		logger.Info("Complaint already resolved, returning success for idempotency", "resolved_by", complaint.ResolvedBy, "resolved_at", complaint.ResolvedAt)
+		resolution := complaint.GetResolution()
+		logger.Info("Complaint already resolved, returning success for idempotency",
+			"resolved_by", resolution.ResolvedBy().String(),
+			"resolved_at", resolution.Timestamp())
 		return nil
 	}
 
-	if err := complaint.Resolve(resolvedBy); err != nil {
+	// Create AgentName value object from string (enforces validation)
+	resolvedByAgent, err := domain.NewAgentName(resolvedBy)
+	if err != nil {
+		logger.Error("Invalid resolver name", "error", err, "resolved_by", resolvedBy)
+		return fmt.Errorf("invalid resolver name: %w", err)
+	}
+
+	// Resolve with strong-typed AgentName (no split-brain possible!)
+	if err := complaint.Resolve(resolvedByAgent); err != nil {
 		logger.Error("failed to resolve complaint", "error", err, "complaint_id", id.String())
 		return fmt.Errorf("failed to resolve complaint: %w", err)
 	}

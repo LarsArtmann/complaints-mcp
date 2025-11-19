@@ -90,14 +90,11 @@ type Complaint struct {
 	Timestamp       time.Time   `json:"timestamp"`
 	ProjectName     ProjectName `json:"project_name"` // Value object: optional, max 100 chars
 
-	// Resolution tracking (single source of truth)
-	// ResolvedAt is nil when not resolved, non-nil when resolved
-	// This eliminates split-brain state - use IsResolved() to check status
-	ResolvedAt *time.Time `json:"resolved_at,omitempty"` // nil = not resolved, non-nil = resolved
-	ResolvedBy string     `json:"resolved_by,omitempty"` // Who resolved it (empty when not resolved)
-
-	// Thread safety for concurrent resolution attempts
-	mu sync.RWMutex `json:"-"` // Don't serialize mutex
+	// Resolution tracking (SINGLE VALUE OBJECT - NO SPLIT BRAIN!)
+	// nil = not resolved, non-nil = resolved with timestamp + who
+	// This eliminates split-brain: impossible to have timestamp without resolver or vice versa
+	// TODO: Make private when we refactor to immutable Complaint (HIGH-3)
+	Resolution *Resolution `json:"resolution,omitempty"` // nil = not resolved, non-nil = resolved
 }
 
 // NewComplaint creates a new complaint with the given parameters
@@ -155,37 +152,38 @@ func NewComplaint(ctx context.Context, agentName, sessionName, taskDescription, 
 	return complaint, nil
 }
 
-// Resolve marks a complaint as resolved - thread-safe with proper error handling
-func (c *Complaint) Resolve(resolvedBy string) error {
-	// Use write lock to ensure thread-safe resolution
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Check if already resolved (fixes issue #37)
-	if c.ResolvedAt != nil {
-		return fmt.Errorf("complaint already resolved by %s at %s", c.ResolvedBy, c.ResolvedAt.Format(time.RFC3339))
+// Resolve marks a complaint as resolved
+// Thread safety is handled at the service/repository layer, not in domain entity
+func (c *Complaint) Resolve(resolvedBy AgentName) error {
+	// Check if already resolved
+	if c.Resolution != nil {
+		return fmt.Errorf("complaint already resolved by %s at %s",
+			c.Resolution.ResolvedBy().String(),
+			c.Resolution.Timestamp().Format(time.RFC3339))
 	}
 
-	// Validate resolver name
-	if resolvedBy == "" {
-		return fmt.Errorf("resolver name cannot be empty")
+	// Create Resolution value object (automatically uses current time)
+	resolution, err := NewResolution(resolvedBy)
+	if err != nil {
+		return fmt.Errorf("failed to create resolution: %w", err)
 	}
 
-	// Set resolution with timestamp (single source of truth)
-	now := time.Now()
-	c.ResolvedAt = &now       // Set resolution timestamp
-	c.ResolvedBy = resolvedBy // Set who resolved it
+	// Set the resolution (single value object - no split brain!)
+	c.Resolution = &resolution
 
 	return nil
 }
 
-// IsResolved checks if the complaint is resolved - thread-safe
-// Returns true if ResolvedAt is non-nil (single source of truth)
+// IsResolved checks if the complaint is resolved
+// Returns true if Resolution is non-nil (single source of truth - no split brain!)
 func (c *Complaint) IsResolved() bool {
-	// Use read lock for thread-safe resolution status check
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.ResolvedAt != nil
+	return c.Resolution != nil
+}
+
+// GetResolution returns the resolution if resolved, nil otherwise
+// Provides safe access to resolution details
+func (c *Complaint) GetResolution() *Resolution {
+	return c.Resolution
 }
 
 // Validate checks if the complaint data is valid using validator

@@ -26,7 +26,7 @@ type ComplaintDTO struct {
 
 // ToDTO converts a domain Complaint to a type-safe DTO (standalone function)
 func ToDTO(c *domain.Complaint) ComplaintDTO {
-	return ComplaintDTO{
+	dto := ComplaintDTO{
 		ID:              c.ID.String(),
 		AgentName:       c.AgentName.String(),
 		SessionName:     c.SessionName.String(),
@@ -39,7 +39,14 @@ func ToDTO(c *domain.Complaint) ComplaintDTO {
 		Timestamp:       c.Timestamp,
 		ProjectName:     c.ProjectName.String(),
 		Resolved:        c.IsResolved(),
-		ResolvedAt:      c.ResolvedAt,
-		ResolvedBy:      c.ResolvedBy,
 	}
+
+	// Extract resolution details from Resolution value object (no split-brain!)
+	if resolution := c.GetResolution(); resolution != nil {
+		timestamp := resolution.Timestamp()
+		dto.ResolvedAt = &timestamp
+		dto.ResolvedBy = resolution.ResolvedBy().String()
+	}
+
+	return dto
 }
