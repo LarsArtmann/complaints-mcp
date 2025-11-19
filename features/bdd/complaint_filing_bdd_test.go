@@ -30,7 +30,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 		// Initialize repository and service
 		repository = repo.NewFileRepository(tempDir, tracer)
-		complaintService = service.NewComplaintService(repository, tracer, logger)
+		complaintService = service.NewComplaintService(repository, tracer)
 	})
 
 	AfterEach(func() {
@@ -53,9 +53,9 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.ID.Value).NotTo(BeEmpty())
-			Expect(complaint.AgentName.String()).To(Equal("AI Assistant"))
-			Expect(complaint.SessionName.String()).To(Equal("test-session"))
+			Expect(complaint.ID.String()).NotTo(BeEmpty())
+			Expect(complaint.AgentID.String()).To(Equal("AI Assistant"))
+			Expect(complaint.SessionID.String()).To(Equal("test-session"))
 			Expect(complaint.TaskDescription).To(Equal("Implement authentication system"))
 			Expect(complaint.ContextInfo).To(Equal("Need to add JWT authentication to API endpoints"))
 			Expect(complaint.MissingInfo).To(Equal("Unclear error handling patterns"))
@@ -81,7 +81,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.AgentName.String()).To(Equal("A"))
+			Expect(complaint.AgentID.String()).To(Equal("A"))
 			Expect(complaint.TaskDescription).To(Equal("T"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityLow))
 			Expect(complaint.ProjectName.String()).To(Equal("test"))
@@ -123,7 +123,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Or(
 				ContainSubstring("agent name is required"),
-				ContainSubstring("AgentName"),
+				ContainSubstring("AgentID"),
 				ContainSubstring("agent name cannot be empty"),
 			))
 		})
@@ -222,7 +222,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
-			Expect(complaint.AgentName.String()).To(Equal("AI Assistant 🤖"))
+			Expect(complaint.AgentID.String()).To(Equal("AI Assistant 🤖"))
 			Expect(complaint.TaskDescription).To(Equal("Test with special chars: quotes, newlines, tabs"))
 			Expect(complaint.ContextInfo).To(Equal("Content with \"quotes\" and \t\t tabs\nnewlines"))
 		})
@@ -248,8 +248,8 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			retrieved, err := complaintService.GetComplaint(ctx, complaint.ID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(retrieved).NotTo(BeNil())
-			Expect(retrieved.ID.Value).To(Equal(complaint.ID.Value))
-			Expect(retrieved.AgentName).To(Equal(complaint.AgentName))
+			Expect(retrieved.ID.String()).To(Equal(complaint.ID.String()))
+			Expect(retrieved.AgentID).To(Equal(complaint.AgentID))
 			Expect(retrieved.TaskDescription).To(Equal(complaint.TaskDescription))
 		})
 
@@ -280,16 +280,16 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// Both should have different IDs
-			Expect(complaint1.ID.Value).NotTo(Equal(complaint2.ID.Value))
+			Expect(complaint1.ID.String()).NotTo(Equal(complaint2.ID.String()))
 
 			// Both should be retrievable
 			retrieved1, err := complaintService.GetComplaint(ctx, complaint1.ID)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(retrieved1.ID.Value).To(Equal(complaint1.ID.Value))
+			Expect(retrieved1.ID.String()).To(Equal(complaint1.ID.String()))
 
 			retrieved2, err := complaintService.GetComplaint(ctx, complaint2.ID)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(retrieved2.ID.Value).To(Equal(complaint2.ID.Value))
+			Expect(retrieved2.ID.String()).To(Equal(complaint2.ID.String()))
 		})
 	})
 })

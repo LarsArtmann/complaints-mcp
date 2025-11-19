@@ -33,7 +33,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		// Initialize repository and service
 		repository = repo.NewFileRepository(tempDir, tracer)
-		complaintService = service.NewComplaintService(repository, tracer, logger)
+		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Create test complaints
 		testComplaints = []*domain.Complaint{}
@@ -112,10 +112,10 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			// Verify no overlap
 			ids1 := map[string]bool{}
 			for _, c := range complaints {
-				ids1[c.ID.Value] = true
+				ids1[c.ID.String()] = true
 			}
 			for _, c := range complaints2 {
-				Expect(ids1[c.ID.Value]).To(BeFalse())
+				Expect(ids1[c.ID.String()]).To(BeFalse())
 			}
 		})
 
@@ -274,7 +274,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 			// Verify resolved complaint is not in list
 			for _, complaint := range unresolvedComplaints {
-				Expect(complaint.ID.Value).NotTo(Equal(testComplaints[0].ID.Value))
+				Expect(complaint.ID.String()).NotTo(Equal(testComplaints[0].ID.String()))
 				Expect(complaint.IsResolved()).To(BeFalse())
 			}
 		})

@@ -37,7 +37,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 
 		// Initialize repository and service
 		repository = repo.NewFileRepository(tempDir, tracer)
-		complaintService = service.NewComplaintService(repository, tracer, logger)
+		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Initialize MCP server
 		mcpServer = mcpdelivery.NewServer("test-server", "1.0.0", complaintService, logger, tracer)
@@ -115,7 +115,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			retrieved, err := complaintService.GetComplaint(ctx, complaint.ID)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(retrieved).NotTo(BeNil())
-			Expect(retrieved.ID.Value).To(Equal(complaint.ID.Value))
+			Expect(retrieved.ID.String()).To(Equal(complaint.ID.String()))
 
 			// Step 3: List complaints
 			complaints, err := complaintService.ListComplaints(ctx, 10, 0)
@@ -141,7 +141,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			found := false
 			for _, c := range unresolved {
-				if c.ID.Value == complaint.ID.Value {
+				if c.ID.String() == complaint.ID.String() {
 					found = true
 					break
 				}

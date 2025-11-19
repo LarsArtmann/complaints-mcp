@@ -39,8 +39,8 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 		Context("when using CachedRepository", func() {
 			BeforeEach(func() {
 				// Initialize cached repository and service
-				repository = repo.NewCachedRepository(tempDir, 1000, tracer)
-				complaintService = service.NewComplaintService(repository, tracer, logger)
+				repository = repo.NewCachedRepository(tempDir, tracer)
+				complaintService = service.NewComplaintService(repository, tracer)
 			})
 
 			It("should return cache performance statistics", func(ctx SpecContext) {
@@ -102,7 +102,7 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 			BeforeEach(func() {
 				// Create file repository directly (no cache)
 				repository = repo.NewFileRepository(tempDir, tracer)
-				complaintService = service.NewComplaintService(repository, tracer, logger)
+				complaintService = service.NewComplaintService(repository, tracer)
 			})
 
 			It("should return cache disabled statistics", func() {
@@ -122,8 +122,8 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 		Context("cache performance characteristics", func() {
 			BeforeEach(func() {
 				// Use cached repository for performance tests
-				repository = repo.NewCachedRepository(tempDir, 1000, tracer)
-				complaintService = service.NewComplaintService(repository, tracer, logger)
+				repository = repo.NewCachedRepository(tempDir, tracer)
+				complaintService = service.NewComplaintService(repository, tracer)
 			})
 
 			It("should track statistics accurately", func(ctx SpecContext) {
@@ -156,8 +156,8 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 	Describe("Cache statistics JSON serialization", func() {
 		Context("when stats are returned", func() {
 			BeforeEach(func() {
-				repository = repo.NewCachedRepository(tempDir, 1000, tracer)
-				complaintService = service.NewComplaintService(repository, tracer, logger)
+				repository = repo.NewCachedRepository(tempDir, tracer)
+				complaintService = service.NewComplaintService(repository, tracer)
 			})
 
 			It("should serialize correctly to JSON", func() {

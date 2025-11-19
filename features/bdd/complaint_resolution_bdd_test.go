@@ -34,7 +34,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 		// Initialize repository and service
 		repository = repo.NewFileRepository(tempDir, tracer)
-		complaintService = service.NewComplaintService(repository, tracer, logger)
+		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Create a test complaint for resolution testing
 		var err error
@@ -83,9 +83,9 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			resolvedComplaint, err := complaintService.GetComplaint(ctx, testComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(resolvedComplaint.ID.Value).To(Equal(testComplaint.ID.Value))
-			Expect(resolvedComplaint.AgentName).To(Equal(testComplaint.AgentName))
-			Expect(resolvedComplaint.SessionName).To(Equal(testComplaint.SessionName))
+			Expect(resolvedComplaint.ID.String()).To(Equal(testComplaint.ID.String()))
+			Expect(resolvedComplaint.AgentID).To(Equal(testComplaint.AgentID))
+			Expect(resolvedComplaint.SessionID).To(Equal(testComplaint.SessionID))
 			Expect(resolvedComplaint.TaskDescription).To(Equal(testComplaint.TaskDescription))
 			Expect(resolvedComplaint.ContextInfo).To(Equal(testComplaint.ContextInfo))
 			Expect(resolvedComplaint.MissingInfo).To(Equal(testComplaint.MissingInfo))
@@ -219,7 +219,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			Expect(resolvedComplaint.IsResolved()).To(BeTrue())
 
 			// Simulate service restart by creating new service instance with same repository
-			newService := service.NewComplaintService(repository, tracer, logger)
+			newService := service.NewComplaintService(repository, tracer)
 
 			// Verify complaint is still resolved after "restart"
 			restartedComplaint, err := newService.GetComplaint(ctx, testComplaint.ID)
@@ -234,7 +234,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 			// Verify resolution is persisted by creating new repository instance
 			newRepository := repo.NewFileRepository(tempDir, tracer)
-			newService := service.NewComplaintService(newRepository, tracer, logger)
+			newService := service.NewComplaintService(newRepository, tracer)
 
 			// Load complaint through new service instance
 			persistedComplaint, err := newService.GetComplaint(ctx, testComplaint.ID)
