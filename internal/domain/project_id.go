@@ -24,10 +24,15 @@ func NewProjectID(name string) (ProjectID, error) {
 
 // ParseProjectID validates and creates a ProjectID from string
 func ParseProjectID(s string) (ProjectID, error) {
-	if err := validateProjectID(s); err != nil {
+	// Allow empty strings for optional project tracking
+	trimmed := strings.TrimSpace(s)
+	if trimmed == "" {
+		return ProjectID(""), nil // Empty is valid for optional project
+	}
+	if err := validateProjectID(trimmed); err != nil {
 		return ProjectID(""), fmt.Errorf("invalid ProjectID: %w", err)
 	}
-	return ProjectID(s), nil
+	return ProjectID(trimmed), nil
 }
 
 // MustParseProjectID creates a ProjectID from string, panics on invalid input
@@ -41,7 +46,18 @@ func MustParseProjectID(s string) ProjectID {
 
 // Validate checks if ProjectID is valid
 func (id ProjectID) Validate() error {
-	return validateProjectID(string(id))
+	// Allow empty strings for optional project tracking
+	trimmed := strings.TrimSpace(string(id))
+	if trimmed == "" {
+		return nil // Empty is valid for optional project
+	}
+	if len(trimmed) > 100 {
+		return fmt.Errorf("cannot exceed 100 characters")
+	}
+	if !projectIDPattern.MatchString(trimmed) {
+		return fmt.Errorf("contains invalid characters")
+	}
+	return nil
 }
 
 // IsValid returns true if ProjectID is valid

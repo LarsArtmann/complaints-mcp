@@ -24,10 +24,15 @@ func NewSessionID(name string) (SessionID, error) {
 
 // ParseSessionID validates and creates a SessionID from string
 func ParseSessionID(s string) (SessionID, error) {
-	if err := validateSessionID(s); err != nil {
+	// Allow empty strings for optional session tracking
+	trimmed := strings.TrimSpace(s)
+	if trimmed == "" {
+		return SessionID(""), nil // Empty is valid for optional session
+	}
+	if err := validateSessionID(trimmed); err != nil {
 		return SessionID(""), fmt.Errorf("invalid SessionID: %w", err)
 	}
-	return SessionID(s), nil
+	return SessionID(trimmed), nil
 }
 
 // MustParseSessionID creates a SessionID from string, panics on invalid input
@@ -41,7 +46,18 @@ func MustParseSessionID(s string) SessionID {
 
 // Validate checks if SessionID is valid
 func (id SessionID) Validate() error {
-	return validateSessionID(string(id))
+	// Allow empty strings for optional session tracking
+	trimmed := strings.TrimSpace(string(id))
+	if trimmed == "" {
+		return nil // Empty is valid for optional session
+	}
+	if len(trimmed) > 100 {
+		return fmt.Errorf("cannot exceed 100 characters")
+	}
+	if !sessionIDPattern.MatchString(trimmed) {
+		return fmt.Errorf("contains invalid characters")
+	}
+	return nil
 }
 
 // IsValid returns true if SessionID is valid

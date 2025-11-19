@@ -156,7 +156,7 @@ func (c *Complaint) Validate() error {
 	}
 
 	if c.TaskDescription == "" {
-		return fmt.Errorf("task_description cannot be empty")
+		return fmt.Errorf("task description is required")
 	}
 
 	return nil
@@ -169,11 +169,17 @@ func (c *Complaint) IsValid() bool {
 
 // Resolve marks a complaint as resolved
 func (c *Complaint) Resolve(resolvedBy string) error {
-	if c.ResolutionState.IsResolved() {
-		return fmt.Errorf("complaint is already resolved")
-	}
 	if resolvedBy == "" {
 		return fmt.Errorf("resolver name cannot be empty")
+	}
+
+	// Idempotent: if already resolved, just update resolvedBy if different
+	if c.ResolutionState.IsResolved() {
+		if c.ResolvedBy != resolvedBy {
+			c.ResolvedBy = resolvedBy
+			return nil
+		}
+		return nil // Already resolved with same resolver
 	}
 
 	now := time.Now()
