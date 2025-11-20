@@ -307,7 +307,7 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 type CacheStats struct {
 	CachedComplaints int64   `json:"cached_complaints"`
 	MaxCacheSize     int64   `json:"max_cache_size"`
-	MaxSize          int64   `json:"max_size"`          // ✅ ADDED for test compatibility
+	MaxSize          int64   `json:"max_size"` // ✅ ADDED for test compatibility
 	Hits             int64   `json:"hits"`
 	Misses           int64   `json:"misses"`
 	Evictions        int64   `json:"evictions"`
@@ -351,11 +351,11 @@ func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Reposito
 
 // SimpleCachedRepository provides basic caching functionality
 type SimpleCachedRepository struct {
-	base        Repository
-	cache       map[domain.ComplaintID]*domain.Complaint
-	maxSize     int
-	stats        CacheStats
-	mu          sync.RWMutex
+	base    Repository
+	cache   map[domain.ComplaintID]*domain.Complaint
+	maxSize int
+	stats   CacheStats
+	mu      sync.RWMutex
 }
 
 // NewSimpleCachedRepository creates a simple cached repository wrapper
@@ -374,12 +374,12 @@ func NewSimpleCachedRepository(base Repository, maxSize int) Repository {
 func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	// Save to base repository
 	if err := r.base.Save(ctx, complaint); err != nil {
 		return err
 	}
-	
+
 	// Add to cache
 	r.cache[complaint.ID] = complaint
 	r.updateCacheSize()
@@ -389,7 +389,7 @@ func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Com
 // FindByID implements Repository interface
 func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
 	r.mu.RLock()
-	
+
 	// Check cache first
 	if cached, found := r.cache[id]; found {
 		r.mu.RUnlock()
@@ -399,15 +399,15 @@ func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.Complai
 		r.mu.Unlock()
 		return cached, nil
 	}
-	
+
 	r.mu.RUnlock()
-	
+
 	// Get from base repository
 	complaint, err := r.base.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Add to cache
 	r.mu.Lock()
 	r.cache[id] = complaint
@@ -415,7 +415,7 @@ func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.Complai
 	r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
 	r.updateCacheSize()
 	r.mu.Unlock()
-	
+
 	return complaint, nil
 }
 
@@ -423,7 +423,7 @@ func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.Complai
 func (r *SimpleCachedRepository) GetCacheStats() CacheStats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	return r.stats
 }
 
@@ -432,7 +432,7 @@ func (r *SimpleCachedRepository) updateCacheSize() {
 	currentSize := int64(len(r.cache))
 	r.stats.CurrentSize = currentSize
 	r.stats.CachedComplaints = currentSize
-	
+
 	// Simple eviction: if over max size, remove oldest (first) items
 	for currentSize > int64(r.maxSize) {
 		var oldestID domain.ComplaintID
@@ -444,7 +444,7 @@ func (r *SimpleCachedRepository) updateCacheSize() {
 		r.stats.Evictions++
 		currentSize = int64(len(r.cache))
 	}
-	
+
 	r.stats.CurrentSize = currentSize
 	r.stats.CachedComplaints = currentSize
 }
@@ -482,12 +482,12 @@ func (r *SimpleCachedRepository) FindByAgent(ctx context.Context, agentID string
 func (r *SimpleCachedRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	// Delete from base repository
 	if err := r.base.Delete(ctx, id); err != nil {
 		return err
 	}
-	
+
 	// Remove from cache
 	delete(r.cache, id)
 	r.updateCacheSize()
@@ -497,12 +497,12 @@ func (r *SimpleCachedRepository) Delete(ctx context.Context, id domain.Complaint
 func (r *SimpleCachedRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	// Update base repository
 	if err := r.base.Update(ctx, complaint); err != nil {
 		return err
 	}
-	
+
 	// Update cache
 	if _, exists := r.cache[complaint.ID]; exists {
 		r.cache[complaint.ID] = complaint
@@ -526,7 +526,7 @@ func (r *SimpleCachedRepository) GetDocsPath(ctx context.Context, id domain.Comp
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 	// Create file repository as base
 	baseRepo := NewFileRepository(baseDir, tracer)
-	
+
 	// Wrap with simple cache layer
 	return NewSimpleCachedRepository(baseRepo, 1000)
 }

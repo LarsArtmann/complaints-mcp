@@ -113,10 +113,10 @@ const (
 
 // Complaint represents a structured complaint with phantom type ID
 type Complaint struct {
-	ID              ComplaintID     `json:"id"`           // ✅ Phantom type - flat JSON
-	AgentID         AgentID         `json:"agent_id"`     // ✅ Phantom type for consistency  
-	SessionID       SessionID       `json:"session_id"`   // ✅ Phantom type for consistency
-	ProjectName     ProjectID       `json:"project_id"`   // ✅ Phantom type for consistency
+	ID              ComplaintID     `json:"id"`         // ✅ Phantom type - flat JSON
+	AgentID         AgentID         `json:"agent_id"`   // ✅ Phantom type for consistency
+	SessionID       SessionID       `json:"session_id"` // ✅ Phantom type for consistency
+	ProjectName     ProjectID       `json:"project_id"` // ✅ Phantom type for consistency
 	TaskDescription string          `json:"task_description"`
 	ContextInfo     string          `json:"context_info"`
 	MissingInfo     string          `json:"missing_info"`

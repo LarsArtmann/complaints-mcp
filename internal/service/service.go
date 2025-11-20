@@ -37,12 +37,12 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 	if err != nil {
 		return nil, fmt.Errorf("invalid agent name: %w", err)
 	}
-	
+
 	sessionID, err := domain.ParseSessionID(sessionName)
 	if err != nil {
 		return nil, fmt.Errorf("invalid session name: %w", err)
 	}
-	
+
 	projectID, err := domain.ParseProjectID(projectName)
 	if err != nil {
 		return nil, fmt.Errorf("invalid project name: %w", err)
@@ -109,12 +109,12 @@ func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.Complaint
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get file path: %w", err)
 	}
-	
+
 	docsPath, err = s.repo.GetDocsPath(ctx, id)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get docs path: %w", err)
 	}
-	
+
 	return filePath, docsPath, nil
 }
 

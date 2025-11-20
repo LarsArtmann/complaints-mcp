@@ -24,7 +24,7 @@ func NewAgentID(name string) (AgentID, error) {
 
 // ParseAgentID validates and creates an AgentID from string
 func ParseAgentID(s string) (AgentID, error) {
-	// Allow empty strings for optional agent tracking  
+	// Allow empty strings for optional agent tracking
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" {
 		return AgentID(""), nil // Empty is valid for optional agent
