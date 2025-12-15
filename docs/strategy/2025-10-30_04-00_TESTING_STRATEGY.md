@@ -10,7 +10,7 @@ This document outlines the comprehensive BDD testing strategy for the complaints
 complaints-mcp/
 ├── internal/
 │   ├── bdd_steps.go           # Basic BDD step definitions
-│   ├── llm_enhanced_steps.go  # LLM-enhanced step definitions  
+│   ├── llm_enhanced_steps.go  # LLM-enhanced step definitions
 │   └── bdd_test.go            # Test suite initialization
 ├── features/
 │   ├── complaint_filing.feature  # Core complaint functionality
@@ -24,6 +24,7 @@ complaints-mcp/
 ### 1. Feature Coverage
 
 **Core Features:**
+
 - Complaint filing with all required and optional fields
 - File saving to local and global storage locations
 - Content validation and formatting checks
@@ -31,6 +32,7 @@ complaints-mcp/
 - Project name detection from git remote or fallback
 
 **Advanced Features:**
+
 - AI-assisted complaint filing with structured analysis
 - Progress tracking for complex operations
 - Resource-based complaint access via MCP URIs
@@ -42,6 +44,7 @@ complaints-mcp/
 ### 2. Test Organization
 
 **Test Context Management:**
+
 - Proper context isolation between scenarios
 - Comprehensive cleanup functions for resource management
 - Before/After hooks for setup/teardown
@@ -50,12 +53,14 @@ complaints-mcp/
 ### 3. Implementation Patterns
 
 **Step Definitions:**
+
 - Given/When/Then pattern with proper Gherkin syntax
 - Table argument parsing for data-driven tests
 - Context-based state management
 - Error-first testing approach
 
 **Test Structure:**
+
 - Separate files for basic and advanced scenarios
 - Modular step definition organization
 - Comprehensive validation and assertion logic
@@ -64,16 +69,19 @@ complaints-mcp/
 ## Running Tests
 
 ### Basic Tests
+
 ```bash
 go test ./internal -v -run TestBDD
 ```
 
 ### Advanced Tests
+
 ```bash
 go test ./internal -v -run TestBDDAdvanced
 ```
 
 ### All Tests
+
 ```bash
 go test ./internal -v
 ```

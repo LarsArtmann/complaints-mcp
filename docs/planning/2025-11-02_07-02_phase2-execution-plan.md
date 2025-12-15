@@ -23,7 +23,9 @@ This plan applies the Pareto Principle (80/20 rule) recursively to identify the 
 ## 🎯 THE PARETO BREAKDOWN
 
 ### Context: Phase 1 Achievements
+
 In Phase 1, we:
+
 - ✅ Eliminated 11% dead code (508 lines)
 - ✅ Fixed split-brain state (added ResolvedAt)
 - ✅ Fixed validator anti-pattern (singleton)
@@ -32,9 +34,11 @@ In Phase 1, we:
 - ✅ BDD tests: 85% passing (40/47)
 
 ### Remaining Work Analysis
+
 After Phase 1, we identified 25 remaining tasks totaling ~83 hours of work.
 
 Using Pareto analysis:
+
 - Top 2 tasks (1% effort) → 51% value
 - Top 6 tasks (4% effort) → 64% value
 - Top 14 tasks (20% effort) → 80% value
@@ -44,11 +48,14 @@ Using Pareto analysis:
 ## 🔥 THE 1% - BLOCKING CRITICAL PATH (2.5 hours)
 
 ### Why This Is 51% of Value
+
 These tasks are **BLOCKING** - nothing else can ship until they're done:
+
 1. **Fix Tests** (2h) - Can't deploy with failing tests
 2. **Add ResolvedBy** (30min) - Audit requirement, tiny effort, huge value
 
 ### Impact
+
 - ✅ Enables deployment to production
 - ✅ Unblocks all other development
 - ✅ Completes audit trail (who + when)
@@ -57,11 +64,13 @@ These tasks are **BLOCKING** - nothing else can ship until they're done:
 ### Tasks
 
 #### Task 1: Fix All Test Failures (2 hours)
+
 **Files**: `internal/service/*_test.go`, `internal/repo/*_test.go`
 
 **Problem**: Tests failing due to Phase 1 signature changes
 
 **Sub-tasks**:
+
 1. Domain tests (15min) - Already passing ✅
 2. Service tests (45min) - Add context params, fix mocks
 3. Repo tests (45min) - Add tracer param, fix assertions
@@ -70,9 +79,11 @@ These tasks are **BLOCKING** - nothing else can ship until they're done:
 **Acceptance**: `go test ./... -v` → 100% pass
 
 #### Task 2: Add ResolvedBy Field (30 min)
+
 **Files**: `internal/domain/complaint.go`, `internal/service/*.go`
 
 **Changes**:
+
 ```go
 // Add to Complaint struct
 ResolvedBy string `json:"resolved_by,omitempty"`
@@ -87,6 +98,7 @@ func (c *Complaint) Resolve(ctx context.Context, resolvedBy string) {
 ```
 
 **Acceptance**:
+
 - Field exists and is set on resolution
 - Tests verify ResolvedBy is populated
 - API documentation updated
@@ -96,7 +108,9 @@ func (c *Complaint) Resolve(ctx context.Context, resolvedBy string) {
 ## ⚡ THE 4% - PRODUCTION READY (5 more hours, 7.5h cumulative)
 
 ### Why This Adds 13% More Value (64% cumulative)
+
 These tasks make the system **production-ready** with good performance:
+
 - Type safety in API layer
 - 10-100x query performance improvement
 - Data integrity fixes
@@ -104,6 +118,7 @@ These tasks make the system **production-ready** with good performance:
 ### Tasks
 
 #### Task 3: Create ComplaintService Interface (45min)
+
 **File**: `internal/service/interface.go` (new)
 
 **Why**: Enables proper dependency injection, mocking, testing
@@ -122,12 +137,14 @@ type Service interface {
 **Acceptance**: Interface defined, implementation verified
 
 #### Task 4: Fix Repository Update() Bug (1 hour)
+
 **File**: `internal/repo/file_repository.go`
 
 **Problem**: Update() creates new file instead of updating existing
 **Impact**: Data duplication, storage waste, confusion
 
 **Current Bug**:
+
 ```go
 func (r *FileRepository) Update(ctx, complaint) error {
     existing, _ := r.FindByID(ctx, complaint.ID)
@@ -137,6 +154,7 @@ func (r *FileRepository) Update(ctx, complaint) error {
 ```
 
 **Solutions** (choose one):
+
 1. **Option A**: Delete old file before Save
 2. **Option B**: Track original filename in memory
 3. **Option C**: Save to same UUID-based filename (ignore timestamp)
@@ -144,11 +162,13 @@ func (r *FileRepository) Update(ctx, complaint) error {
 **Recommended**: Option C - simplest and most reliable
 
 **Acceptance**:
+
 - Update modifies existing file
 - No duplicate files created
 - Test verifies behavior
 
 #### Task 5: Create Typed DTO Structs (90min)
+
 **File**: `internal/delivery/mcp/dto.go` (new)
 
 **Why**: Replace `map[string]interface{}` with strong types
@@ -181,9 +201,11 @@ func (c *Complaint) ToDTO() ComplaintDTO {
 **Acceptance**: All DTOs defined, documented, tested
 
 #### Task 6: Replace map[string]interface{} (30min)
+
 **File**: `internal/delivery/mcp/mcp_server.go`
 
 **Changes**:
+
 ```go
 // Before
 type ListComplaintsOutput struct {
@@ -199,9 +221,11 @@ type ListComplaintsOutput struct {
 **Acceptance**: No untyped maps in API responses
 
 #### Task 7: Design Repository Cache (30min)
+
 **File**: `internal/repo/cache.go` (new)
 
 **Design**:
+
 ```go
 type CachedRepository struct {
     underlying Repository
@@ -231,9 +255,11 @@ func (r *CachedRepository) FindByID(ctx, id) (*domain.Complaint, error) {
 **Acceptance**: Design documented, reviewed
 
 #### Task 8: Implement In-Memory Cache (1 hour)
+
 **File**: `internal/repo/cached_repository.go` (new)
 
 **Implementation**:
+
 - Wrap existing FileRepository
 - Cache FindByID results
 - Invalidate on Save/Update/Delete
@@ -243,6 +269,7 @@ func (r *CachedRepository) FindByID(ctx, id) (*domain.Complaint, error) {
 **Performance Target**: 10-100x improvement for repeated queries
 
 **Acceptance**:
+
 - Benchmarks show improvement
 - Concurrent access works correctly
 - Cache invalidation works
@@ -252,7 +279,9 @@ func (r *CachedRepository) FindByID(ctx, id) (*domain.Complaint, error) {
 ## 🏗️ THE 20% - ARCHITECTURE POLISH (14.5 more hours, 22h cumulative)
 
 ### Why This Adds 16% More Value (80% cumulative)
+
 These tasks improve long-term maintainability and code quality:
+
 - Strong type system
 - Clean architecture
 - Comprehensive testing
@@ -260,14 +289,17 @@ These tasks improve long-term maintainability and code quality:
 ### Tasks
 
 #### Task 9-11: Create Value Objects (3.5 hours)
+
 **Files**: `internal/domain/value/*.go` (new package)
 
 Create value objects for:
+
 - AgentName (1h)
 - ProjectName (45min)
 - SessionName (45min)
 
 Each with:
+
 - Constructor with validation
 - String() method
 - JSON marshaling
@@ -276,6 +308,7 @@ Each with:
 **Why**: Prevents invalid data from entering system
 
 #### Task 12: Update Domain to Use Value Objects (1 hour)
+
 **File**: `internal/domain/complaint.go`
 
 Replace primitive strings with value objects
@@ -283,14 +316,17 @@ Replace primitive strings with value objects
 **Acceptance**: Compile-time type safety
 
 #### Task 13: Create DTO Package (45min)
+
 **File**: `internal/delivery/dto/` (new package)
 
 Extract DTOs to separate package
 
 #### Task 14: Move DTOs (45min)
+
 Refactor to use new package structure
 
 #### Task 15: Strengthen Severity Enum (1 hour)
+
 **File**: `internal/domain/severity.go` (new)
 
 ```go
@@ -308,16 +344,19 @@ const (
 **Why**: Zero value cannot be accidentally used
 
 #### Task 16: Use Custom Error Types (1.5 hours)
+
 Replace `fmt.Errorf` with `errors.New*` throughout
 
 **Why**: Type-safe error handling
 
 #### Task 17: Add Service Layer Tests (1.5 hours)
+
 **File**: `internal/service/complaint_service_test.go`
 
 Comprehensive test coverage for all service methods
 
 #### Task 18: Fix 7 BDD Test Failures (1.5 hours)
+
 **Files**: `features/bdd/*.go`
 
 Fix remaining test failures from Phase 1 changes
@@ -378,6 +417,7 @@ graph TB
 ## 📅 EXECUTION TIMELINE
 
 ### Week 1: THE 1% + THE 4%
+
 ```
 Monday (2.5h):
   ├─ 09:00-11:00: Task 1 - Fix all tests
@@ -400,6 +440,7 @@ Thursday (1h):
 ```
 
 ### Week 2-3: THE 20%
+
 ```
 Week 2 (12h):
   ├─ Tasks 9-11: Value objects (3.5h)
@@ -419,9 +460,11 @@ Week 3 (3h):
 ## 🎯 MILESTONES & SUCCESS CRITERIA
 
 ### Milestone 1: Production Ready (After THE 1%)
+
 **When**: End of Day 1 (2.5h)
 
 **Criteria**:
+
 - [ ] All tests passing (100%)
 - [ ] ResolvedBy field implemented
 - [ ] Complete audit trail (who + when)
@@ -430,9 +473,11 @@ Week 3 (3h):
 **Value Delivered**: 51%
 
 ### Milestone 2: High Performance (After THE 4%)
+
 **When**: End of Week 1 (7.5h cumulative)
 
 **Criteria**:
+
 - [ ] Service interface defined
 - [ ] Update() bug fixed
 - [ ] Type-safe DTOs (no maps)
@@ -442,9 +487,11 @@ Week 3 (3h):
 **Value Delivered**: 64% cumulative
 
 ### Milestone 3: Architecture Complete (After THE 20%)
+
 **When**: End of Week 3 (22h cumulative)
 
 **Criteria**:
+
 - [ ] Value objects implemented
 - [ ] Clean package structure
 - [ ] Strong Severity enum
@@ -460,7 +507,9 @@ Week 3 (3h):
 ## 🚦 QUALITY GATES
 
 ### Gate 1: After THE 1%
+
 **Question**: Can we deploy to production?
+
 - ✅ All tests pass
 - ✅ Audit trail complete
 - ✅ No known bugs
@@ -468,7 +517,9 @@ Week 3 (3h):
 **Action**: Deploy or proceed to THE 4%
 
 ### Gate 2: After THE 4%
+
 **Question**: Is performance acceptable?
+
 - ✅ Queries 10x+ faster
 - ✅ No data corruption
 - ✅ Type-safe APIs
@@ -476,7 +527,9 @@ Week 3 (3h):
 **Action**: Monitor production or proceed to THE 20%
 
 ### Gate 3: After THE 20%
+
 **Question**: Is architecture maintainable?
+
 - ✅ Strong types throughout
 - ✅ Clean boundaries
 - ✅ Comprehensive tests
@@ -487,36 +540,41 @@ Week 3 (3h):
 
 ## 📊 METRICS TRACKING
 
-| Metric | Phase 1 | After 1% | After 4% | After 20% |
-|--------|---------|----------|----------|-----------|
-| **Tests Passing** | 85% | 100% ✅ | 100% ✅ | 100% ✅ |
-| **Type Safety** | 6/10 | 6/10 | 7/10 ✅ | 9/10 ✅ |
-| **Query Performance** | O(n) | O(n) | O(1) ✅ | O(1) ✅ |
-| **Tech Debt** | Medium | Low ✅ | Low ✅ | Very Low ✅ |
-| **Audit Trail** | Partial | Complete ✅ | Complete ✅ | Complete ✅ |
-| **Deployable** | No | Yes ✅ | Yes ✅ | Yes ✅ |
-| **Lines of Code** | 4,144 | 4,150 | 4,300 | 4,500 |
-| **Test Coverage** | ~70% | ~75% | ~75% | ~85% |
+| Metric                | Phase 1 | After 1%    | After 4%    | After 20%   |
+| --------------------- | ------- | ----------- | ----------- | ----------- |
+| **Tests Passing**     | 85%     | 100% ✅     | 100% ✅     | 100% ✅     |
+| **Type Safety**       | 6/10    | 6/10        | 7/10 ✅     | 9/10 ✅     |
+| **Query Performance** | O(n)    | O(n)        | O(1) ✅     | O(1) ✅     |
+| **Tech Debt**         | Medium  | Low ✅      | Low ✅      | Very Low ✅ |
+| **Audit Trail**       | Partial | Complete ✅ | Complete ✅ | Complete ✅ |
+| **Deployable**        | No      | Yes ✅      | Yes ✅      | Yes ✅      |
+| **Lines of Code**     | 4,144   | 4,150       | 4,300       | 4,500       |
+| **Test Coverage**     | ~70%    | ~75%        | ~75%        | ~85%        |
 
 ---
 
 ## 🎓 KEY PRINCIPLES
 
 ### 1. Pareto Principle Applied Recursively
+
 - Find the 20% that delivers 80%
 - Then find the 20% of THAT (4% → 64%)
 - Then find the 20% of THAT (1% → 51%)
 
 ### 2. Value-First Ordering
+
 Every task ordered by: `(customer_value * impact) / effort`
 
 ### 3. Unblock Dependencies
+
 THE 1% unblocks everything else (deployment)
 
 ### 4. Diminishing Returns
+
 After 22h, only 20% more value available in 61h more work
 
 ### 5. Ship Early, Ship Often
+
 - Ship after 1% (51% value)
 - Ship after 4% (64% value)
 - Ship after 20% (80% value)
@@ -526,15 +584,19 @@ After 22h, only 20% more value available in 61h more work
 ## 🔄 RISK MITIGATION
 
 ### Risk: Tests Still Fail After Task 1
+
 **Mitigation**: Allocate extra buffer time, pair program
 
 ### Risk: Update() Fix More Complex Than Expected
+
 **Mitigation**: Option C (UUID naming) is simplest fallback
 
 ### Risk: Cache Implementation Has Concurrency Bugs
+
 **Mitigation**: Comprehensive tests, use battle-tested sync.RWMutex
 
 ### Risk: Value Objects Break Existing Code
+
 **Mitigation**: Phase gradually, keep old constructors temporarily
 
 ---
@@ -542,10 +604,12 @@ After 22h, only 20% more value available in 61h more work
 ## 📚 DEPENDENCIES
 
 ### External
+
 - Go 1.25+
 - All existing dependencies (no new ones in THE 1% or 4%)
 
 ### Internal
+
 ```
 Task 2 depends on: Task 1 (tests must pass)
 Task 5 depends on: Task 3 (interface defined)
@@ -560,16 +624,19 @@ Task 14 depends on: Task 13 (package created)
 ## 🎯 NEXT ACTIONS
 
 ### Immediate (Right Now)
+
 1. ✅ Review this plan
 2. ✅ Confirm approach
 3. 🚀 Start Task 1.1: Verify domain tests
 
 ### This Week
+
 1. Complete THE 1% (Day 1)
 2. Complete THE 4% (Days 2-4)
 3. Deploy to production
 
 ### This Month
+
 1. Complete THE 20% (Weeks 2-3)
 2. Achieve 80% of total value
 3. Plan Phase 3 (advanced features)

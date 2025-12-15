@@ -1,11 +1,13 @@
 # Step 6: Implement Phantom Types for All ID Fields
 
 ## 🎯 Objective
+
 Implement comprehensive phantom type system for type safety and flat JSON structure.
 
 ## 🏗️ Implementation Tasks
 
 ### A. Create Phantom Type Framework
+
 ```go
 // internal/domain/types.go
 package domain
@@ -58,6 +60,7 @@ func validateName(s string) error {
 ```
 
 ### B. ComplaintID Implementation
+
 ```go
 // internal/domain/complaint_id.go
 type ComplaintID string
@@ -125,6 +128,7 @@ func (id *ComplaintID) UnmarshalJSON(data []byte) error {
 ```
 
 ### C. AgentID Implementation
+
 ```go
 // internal/domain/agent_id.go
 type AgentID string
@@ -180,6 +184,7 @@ func (id *AgentID) UnmarshalJSON(data []byte) error {
 ```
 
 ### D. SessionID Implementation
+
 ```go
 // internal/domain/session_id.go
 type SessionID string
@@ -235,6 +240,7 @@ func (id *SessionID) UnmarshalJSON(data []byte) error {
 ```
 
 ### E. ProjectID Implementation
+
 ```go
 // internal/domain/project_id.go
 type ProjectID string
@@ -290,6 +296,7 @@ func (id *ProjectID) UnmarshalJSON(data []byte) error {
 ```
 
 ### F. Update Domain Entities
+
 ```go
 // internal/domain/complaint.go (updated)
 type Complaint struct {
@@ -323,7 +330,7 @@ func (c *Complaint) Validate() error {
     if err := c.ProjectID.Validate(); err != nil {
         return fmt.Errorf("invalid ProjectID: %w", err)
     }
-    
+
     // Validate other fields...
     return nil
 }
@@ -334,6 +341,7 @@ func (c *Complaint) IsValid() bool {
 ```
 
 ### G. Update Repository Layer
+
 ```go
 // internal/repo/repository.go (updated)
 type Repository interface {
@@ -360,13 +368,13 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
     if err := complaint.Validate(); err != nil {
         return fmt.Errorf("invalid complaint: %w", err)
     }
-    
+
     // Serialize with flat JSON structure
     data, err := json.Marshal(complaint)
     if err != nil {
         return fmt.Errorf("failed to marshal complaint: %w", err)
     }
-    
+
     // Use phantom type for file naming
     fileName := fmt.Sprintf("%s.json", complaint.ID.String())
     return r.writeFile(ctx, fileName, data)
@@ -376,23 +384,24 @@ func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
     if err := id.Validate(); err != nil {
         return nil, fmt.Errorf("invalid ComplaintID: %w", err)
     }
-    
+
     fileName := fmt.Sprintf("%s.json", id.String())
     data, err := r.readFile(ctx, fileName)
     if err != nil {
         return nil, err
     }
-    
+
     var complaint domain.Complaint
     if err := json.Unmarshal(data, &complaint); err != nil {
         return nil, fmt.Errorf("failed to unmarshal complaint: %w", err)
     }
-    
+
     return &complaint, nil
 }
 ```
 
 ### H. Update Service Layer
+
 ```go
 // internal/service/complaint_service.go (updated)
 func (s *ComplaintService) CreateComplaint(
@@ -408,22 +417,22 @@ func (s *ComplaintService) CreateComplaint(
     if err != nil {
         return nil, fmt.Errorf("invalid agent name: %w", err)
     }
-    
+
     sessionID, err := domain.NewSessionID(sessionName)
     if err != nil {
         return nil, fmt.Errorf("invalid session name: %w", err)
     }
-    
+
     projectID, err := domain.NewProjectID(projectName)
     if err != nil {
         return nil, fmt.Errorf("invalid project name: %w", err)
     }
-    
+
     complaintID, err := domain.NewComplaintID()
     if err != nil {
         return nil, fmt.Errorf("failed to generate ComplaintID: %w", err)
     }
-    
+
     // Create complaint with phantom types
     complaint := &domain.Complaint{
         ID:              complaintID,
@@ -439,17 +448,18 @@ func (s *ComplaintService) CreateComplaint(
         Timestamp:       time.Now(),
         ResolutionState: domain.ResolutionStateOpen,
     }
-    
+
     // Validate complete complaint
     if err := complaint.Validate(); err != nil {
         return nil, fmt.Errorf("invalid complaint: %w", err)
     }
-    
+
     return s.repo.Save(ctx, complaint)
 }
 ```
 
 ### I. Update MCP Handlers
+
 ```go
 // internal/delivery/mcp/mcp_server.go (updated)
 func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
@@ -458,17 +468,17 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid agent name: %w", err)
     }
-    
+
     sessionID, err := domain.NewSessionID(input.SessionName)
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid session name: %w", err)
     }
-    
+
     projectID, err := domain.NewProjectID(input.ProjectName)
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid project name: %w", err)
     }
-    
+
     // Create complaint with phantom types
     complaint, err := m.service.CreateComplaint(
         ctx,
@@ -485,30 +495,31 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("failed to create complaint: %w", err)
     }
-    
+
     // Get file paths using phantom type ID
     filePath, docsPath, err := m.service.GetFilePaths(ctx, complaint.ID)
     if err != nil {
         m.logger.Warn("Failed to get file paths", "error", err, "complaint_id", complaint.ID.String())
     }
-    
+
     output := FileComplaintOutput{
         Success:   true,
         Message:   "Complaint filed successfully",
         Complaint: delivery.ToDTOWithPaths(complaint, filePath, docsPath),
     }
-    
+
     result := &mcp.CallToolResult{
         Content: []mcp.Content{
             {Type: "text", Text: output.Message},
         },
     }
-    
+
     return result, output, nil
 }
 ```
 
 ### J. Update DTOs for API Compatibility
+
 ```go
 // internal/delivery/mcp/dto.go (updated)
 type ComplaintDTO struct {
@@ -560,6 +571,7 @@ func ToDTOWithPaths(complaint *domain.Complaint, filePath, docsPath string) Comp
 ## 📝 Implementation Details
 
 ### Type Safety Benefits
+
 ```go
 // Compile-time type safety - prevents ID mixing
 func ProcessComplaint(id domain.ComplaintID, agentID domain.AgentID) error { ... }
@@ -572,6 +584,7 @@ ProcessComplaint(agentID, sessionID)    // ✅ Type-safe!
 ```
 
 ### Flat JSON Output
+
 ```go
 // Before (nested)
 {
@@ -587,6 +600,7 @@ ProcessComplaint(agentID, sessionID)    // ✅ Type-safe!
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 ```go
 // Test phantom type creation and validation
 func TestComplaintID_New(t *testing.T) {
@@ -607,7 +621,7 @@ func TestAgentID_Validation(t *testing.T) {
         {"invalid chars", "AI@Assistant", true},
         {"too long", strings.Repeat("a", 101), true},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             id, err := domain.NewAgentID(tt.input)
@@ -623,17 +637,18 @@ func TestAgentID_Validation(t *testing.T) {
 ```
 
 ### JSON Serialization Tests
+
 ```go
 func TestPhantomType_JSONSerialization(t *testing.T) {
     id := domain.MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000")
-    
+
     data, err := json.Marshal(id)
     require.NoError(t, err)
-    
+
     var result map[string]any
     err = json.Unmarshal(data, &result)
     require.NoError(t, err)
-    
+
     // Verify flat structure
     idValue := result["id"]
     idStr, isString := idValue.(string)
@@ -644,10 +659,11 @@ func TestPhantomType_JSONSerialization(t *testing.T) {
 ```
 
 ### Integration Tests
+
 ```go
 func TestComplaintService_WithPhantomTypes(t *testing.T) {
     service := setupService()
-    
+
     complaint, err := service.CreateComplaint(
         context.Background(),
         "AI-Assistant",    // Valid agent name
@@ -656,10 +672,10 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         "low",
         "my-project",     // Valid project name
     )
-    
+
     assert.NoError(t, err)
     assert.NotNil(t, complaint)
-    
+
     // Verify phantom types are valid
     assert.True(t, complaint.ID.IsValid())
     assert.True(t, complaint.AgentID.IsValid())
@@ -669,5 +685,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
 ```
 
 ## ⏱️ Time Estimate: 8-10 hours
+
 ## 🎯 Impact: HIGH (complete type safety + JSON fix)
+
 ## 💪 Work Required: HIGH (comprehensive refactoring)

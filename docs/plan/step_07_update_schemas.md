@@ -1,10 +1,13 @@
 # Step 7: Update MCP Tool Schemas for Flat ID Structure
 
 ## 🎯 Objective
+
 Update all MCP tool schemas to expect flat ID strings instead of nested objects.
 
 ## 🚨 Critical Issue
+
 Current schemas expect nested structure:
+
 ```json
 {
   "complaint_id": {
@@ -14,6 +17,7 @@ Current schemas expect nested structure:
 ```
 
 But phantom types produce flat structure:
+
 ```json
 {
   "complaint_id": "550e8400-e29b-41d4-a716-446655440000"
@@ -25,6 +29,7 @@ But phantom types produce flat structure:
 ### A. Update Tool Input Schemas
 
 #### resolve_complaint Tool
+
 ```go
 // internal/delivery/mcp/mcp_server.go (updated)
 
@@ -61,6 +66,7 @@ resolveComplaintTool := &mcp.Tool{
 ```
 
 #### file_complaint Tool
+
 ```go
 fileComplaintTool := &mcp.Tool{
     Name: "file_complaint",
@@ -170,6 +176,7 @@ fileComplaintTool := &mcp.Tool{
 ```
 
 #### list_complaints Tool
+
 ```go
 listComplaintsTool := &mcp.Tool{
     Name: "list_complaints",
@@ -233,6 +240,7 @@ listComplaintsTool := &mcp.Tool{
 ### B. Update Tool Output Examples
 
 #### Expected Output Examples
+
 ```go
 // file_complaint output example
 {
@@ -260,6 +268,7 @@ listComplaintsTool := &mcp.Tool{
 ```
 
 ### C. Update Input Validation Functions
+
 ```go
 // internal/delivery/mcp/input_validation.go (updated)
 
@@ -269,47 +278,47 @@ func validateResolveComplaintInput(input map[string]any) (string, string, error)
     if !exists {
         return "", "", fmt.Errorf("complaint_id is required")
     }
-    
+
     complaintIDStr, isString := complaintIDInterface.(string)
     if !isString {
         return "", "", fmt.Errorf("complaint_id must be string, got %T", complaintIDInterface)
     }
-    
+
     // Validate UUID format (flat string)
     if !isValidUUID(complaintIDStr) {
         return "", "", fmt.Errorf("complaint_id must be valid UUID v4 format, got: %s", complaintIDStr)
     }
-    
+
     // Validate resolved_by
     resolvedByInterface, exists := input["resolved_by"]
     if !exists {
         return "", "", fmt.Errorf("resolved_by is required")
     }
-    
+
     resolvedByStr, isString := resolvedByInterface.(string)
     if !isString {
         return "", "", fmt.Errorf("resolved_by must be string, got %T", resolvedByInterface)
     }
-    
+
     if strings.TrimSpace(resolvedByStr) == "" {
         return "", "", fmt.Errorf("resolved_by cannot be empty")
     }
-    
+
     if len(resolvedByStr) > 100 {
         return "", "", fmt.Errorf("resolved_by cannot exceed 100 characters")
     }
-    
+
     return complaintIDStr, resolvedByStr, nil
 }
 
 func validateFileComplaintInput(input map[string]any) (FileComplaintInput, error) {
     var result FileComplaintInput
-    
+
     // Validate agent_name
     if err := validateRequiredString(input, "agent_name", &result.AgentName, 1, 100, agentNamePattern); err != nil {
         return result, err
     }
-    
+
     // Validate project_name (optional)
     if projectInterface, exists := input["project_name"]; exists && projectInterface != nil {
         if projectStr, isString := projectInterface.(string); isString && projectStr != "" {
@@ -319,7 +328,7 @@ func validateFileComplaintInput(input map[string]any) (FileComplaintInput, error
             result.ProjectName = projectStr
         }
     }
-    
+
     // Validate session_name (optional)
     if sessionInterface, exists := input["session_name"]; exists && sessionInterface != nil {
         if sessionStr, isString := sessionInterface.(string); isString {
@@ -329,23 +338,23 @@ func validateFileComplaintInput(input map[string]any) (FileComplaintInput, error
             result.SessionName = sessionStr
         }
     }
-    
+
     // Validate task_description (required)
     if err := validateRequiredString(input, "task_description", &result.TaskDescription, 1, 1000, nil); err != nil {
         return result, err
     }
-    
+
     // Validate optional fields with length limits
     validateOptionalString(input, "context_info", &result.ContextInfo, 500)
     validateOptionalString(input, "missing_info", &result.MissingInfo, 500)
     validateOptionalString(input, "confused_by", &result.ConfusedBy, 500)
     validateOptionalString(input, "future_wishes", &result.FutureWishes, 500)
-    
+
     // Validate severity (required)
     if err := validateSeverity(input); err != nil {
         return result, err
     }
-    
+
     return result, nil
 }
 
@@ -355,25 +364,25 @@ func validateRequiredString(input map[string]any, field string, result *string, 
     if !exists {
         return fmt.Errorf("%s is required", field)
     }
-    
+
     valueStr, isString := valueInterface.(string)
     if !isString {
         return fmt.Errorf("%s must be string, got %T", field, valueInterface)
     }
-    
+
     trimmed := strings.TrimSpace(valueStr)
     if len(trimmed) < minLen {
         return fmt.Errorf("%s cannot be empty", field)
     }
-    
+
     if len(trimmed) > maxLen {
         return fmt.Errorf("%s cannot exceed %d characters", field, maxLen)
     }
-    
+
     if pattern != nil && !pattern.MatchString(trimmed) {
         return fmt.Errorf("%s contains invalid characters", field)
     }
-    
+
     *result = trimmed
     return nil
 }
@@ -398,6 +407,7 @@ func validatePattern(value, field string, pattern *regexp.Regexp) error {
 ```
 
 ### D. Update BDD Tests
+
 ```gherkin
 # features/bdd/schema_validation_bdd.feature
 Feature: MCP Tool Schema Validation
@@ -433,7 +443,8 @@ Feature: MCP Tool Schema Validation
 ### E. Update Documentation
 
 #### README.md Schema Examples
-```markdown
+
+````markdown
 ## MCP Tool Interface
 
 ### file_complaint
@@ -461,11 +472,12 @@ Feature: MCP Tool Schema Validation
     "required": ["agent_name", "task_description", "severity"]
   }
 }
-```
+````
 
 ## 🧪 Verification Steps
 
 ### 1. Schema Validation Tests
+
 ```go
 func TestSchemaValidation_FlatIDFormat(t *testing.T) {
     tests := []struct {
@@ -503,7 +515,7 @@ func TestSchemaValidation_FlatIDFormat(t *testing.T) {
             errorMsg: "must be valid UUID v4 format",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             _, err := validateResolveComplaintInput(tt.input)
@@ -519,10 +531,11 @@ func TestSchemaValidation_FlatIDFormat(t *testing.T) {
 ```
 
 ### 2. Integration Tests
+
 ```go
 func TestMCPServer_FlatIDIntegration(t *testing.T) {
     server := setupTestServer()
-    
+
     t.Run("File complaint with flat IDs", func(t *testing.T) {
         input := map[string]any{
             "agent_name": "AI-Assistant",
@@ -530,20 +543,20 @@ func TestMCPServer_FlatIDIntegration(t *testing.T) {
             "severity": "low",
             "project_name": "", // Auto-detect
         }
-        
+
         // Call file_complaint tool
         result, output, err := server.handleFileComplaint(context.Background(), &mcp.CallToolRequest{
             Arguments: mcp.ToolArguments(input),
         })
-        
+
         require.NoError(t, err)
         assert.NotNil(t, result)
         assert.True(t, output.Success)
-        
+
         // Verify flat ID in output
         assert.Contains(t, output.Complaint.ID, "-")  // UUID format
     })
-    
+
     t.Run("Resolve complaint with flat ID", func(t *testing.T) {
         // First create a complaint
         input := map[string]any{
@@ -551,22 +564,22 @@ func TestMCPServer_FlatIDIntegration(t *testing.T) {
             "task_description": "Test task",
             "severity": "low",
         }
-        
+
         _, createOutput, err := server.handleFileComplaint(context.Background(), &mcp.CallToolRequest{
             Arguments: mcp.ToolArguments(input),
         })
         require.NoError(t, err)
-        
+
         // Then resolve with flat ID
         resolveInput := map[string]any{
             "complaint_id": createOutput.Complaint.ID,  // Flat string
             "resolved_by": "Test-Resolver",
         }
-        
+
         result, output, err := server.handleResolveComplaint(context.Background(), &mcp.CallToolRequest{
             Arguments: mcp.ToolArguments(resolveInput),
         })
-        
+
         require.NoError(t, err)
         assert.NotNil(t, result)
         assert.True(t, output.Success)
@@ -575,6 +588,7 @@ func TestMCPServer_FlatIDIntegration(t *testing.T) {
 ```
 
 ### 3. End-to-End Tests
+
 ```bash
 # Test flat ID format with real MCP server
 echo '{"tool":"file_complaint","arguments":{"agent_name":"Test-Agent","task_description":"Test task","severity":"low"}}' | ./complaints-mcp
@@ -587,6 +601,9 @@ echo '{"tool":"resolve_complaint","arguments":{"complaint_id":"550e8400-e29b-41d
 ```
 
 ## ⏱️ Time Estimate: 4-6 hours
+
 ## 🎯 Impact: HIGH (fixes API contract alignment)
+
 ## 💪 Work Required: MEDIUM (schema updates + validation)
+
 ## 🚨 Prerequisite: Step 6 (phantom types implementation)

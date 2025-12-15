@@ -1,11 +1,13 @@
 # Step 5: Implement Project Detection Service
 
 ## 🎯 Objective
+
 Create a working project detection service based on research findings.
 
 ## 🏗️ Implementation Tasks
 
 ### A. Create Detector Interface
+
 ```go
 // internal/detection/project_detector.go
 package detection
@@ -19,6 +21,7 @@ type ProjectDetector interface {
 ```
 
 ### B. System Git Implementation (Primary)
+
 ```go
 // internal/detection/system_git_detector.go
 type systemGitDetector struct {
@@ -35,19 +38,19 @@ func (d *systemGitDetector) DetectProjectNameWithWorkspace(ctx context.Context, 
     if cached, exists := d.cache[workspace]; exists {
         return cached, nil
     }
-    
+
     // Try git remote detection
     if name, err := d.detectFromGitRemote(ctx, workspace); err == nil {
         d.cache[workspace] = name
         return name, nil
     }
-    
+
     // Fallback to directory name
     if name, err := d.detectFromDirectoryName(workspace); err == nil {
         d.cache[workspace] = name
         return name, nil
     }
-    
+
     // Default fallback
     name := "unknown-project"
     d.cache[workspace] = name
@@ -57,18 +60,19 @@ func (d *systemGitDetector) DetectProjectNameWithWorkspace(ctx context.Context, 
 func (d *systemGitDetector) detectFromGitRemote(ctx context.Context, workspace string) (string, error) {
     cmd := exec.CommandContext(ctx, "git", "config", "--get", "remote.origin.url")
     cmd.Dir = workspace
-    
+
     output, err := cmd.Output()
     if err != nil {
         return "", fmt.Errorf("not in git repository: %w", err)
     }
-    
+
     gitRemote := strings.TrimSpace(string(output))
     return d.extractProjectNameFromRemote(gitRemote)
 }
 ```
 
 ### C. Go-Git Implementation (Alternative)
+
 ```go
 // internal/detection/go_git_detector.go
 import "github.com/go-git/go-git/v5"
@@ -84,24 +88,25 @@ func (d *goGitDetector) DetectProjectNameWithWorkspace(ctx context.Context, work
     if err != nil {
         return "", fmt.Errorf("not a git repository: %w", err)
     }
-    
+
     remoteConfig, err := repo.Config()
     if err != nil {
         return "", fmt.Errorf("failed to get git config: %w", err)
     }
-    
+
     if remote, ok := remoteConfig.Remotes["origin"]; ok {
         if len(remote.URLs) > 0 {
             gitRemote := remote.URLs[0]
             return d.extractProjectNameFromRemote(gitRemote), nil
         }
     }
-    
+
     return "", fmt.Errorf("no origin remote found")
 }
 ```
 
 ### D. Factory and Configuration
+
 ```go
 // internal/detection/factory.go
 type DetectorType string
@@ -148,6 +153,7 @@ func gitCommandExists() bool {
 ```
 
 ### E. Comprehensive Tests
+
 ```go
 // internal/detection/project_detector_test.go
 func TestProjectDetector_SystemGit(t *testing.T) {
@@ -164,10 +170,10 @@ func TestProjectDetector_SystemGit(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "https://github.com/user/my-project.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -182,7 +188,7 @@ func TestProjectDetector_SystemGit(t *testing.T) {
                 subdir := filepath.Join(dir, "awesome-app")
                 err := os.Mkdir(subdir, 0755)
                 require.NoError(t, err)
-                
+
                 return subdir, nil
             },
             cleanupFunc: func() error {
@@ -191,17 +197,17 @@ func TestProjectDetector_SystemGit(t *testing.T) {
             expected: "awesome-app",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             workspace, err := tt.setupFunc()
             require.NoError(t, err)
             defer tt.cleanupFunc()
-            
+
             detector := NewSystemGitDetector(workspace, make(map[string]string))
-            
+
             result, err := detector.DetectProjectName(context.Background())
-            
+
             if tt.expectError {
                 assert.Error(t, err)
             } else {
@@ -214,6 +220,7 @@ func TestProjectDetector_SystemGit(t *testing.T) {
 ```
 
 ### F. Integration with Service Layer
+
 ```go
 // internal/service/complaint_service.go (updated)
 type ComplaintService struct {
@@ -251,7 +258,7 @@ func (s *ComplaintService) CreateComplaint(
             s.logger.Info("Auto-detected project name", "project", finalProjectName)
         }
     }
-    
+
     // Rest of existing complaint creation logic...
 }
 ```
@@ -259,6 +266,7 @@ func (s *ComplaintService) CreateComplaint(
 ## 📝 Implementation Details
 
 ### A. Error Handling Strategy
+
 ```go
 type DetectionError struct {
     Type    string
@@ -283,6 +291,7 @@ const (
 ```
 
 ### B. Caching Strategy
+
 ```go
 type CacheEntry struct {
     ProjectName string
@@ -298,25 +307,25 @@ type MemoryCache struct {
 func (c *MemoryCache) Get(workspace string) (string, bool) {
     c.mutex.RLock()
     defer c.mutex.RUnlock()
-    
+
     entry, exists := c.entries[workspace]
     if !exists {
         return "", false
     }
-    
+
     // Check TTL
     if time.Since(entry.Timestamp) > c.ttl {
         delete(c.entries, workspace)
         return "", false
     }
-    
+
     return entry.ProjectName, true
 }
 
 func (c *MemoryCache) Set(workspace, projectName string) {
     c.mutex.Lock()
     defer c.mutex.Unlock()
-    
+
     c.entries[workspace] = &CacheEntry{
         ProjectName: projectName,
         Timestamp:  time.Now(),
@@ -325,6 +334,7 @@ func (c *MemoryCache) Set(workspace, projectName string) {
 ```
 
 ### C. Configuration Integration
+
 ```go
 // internal/config/config.go (updated)
 type ProjectDetectionConfig struct {
@@ -346,35 +356,38 @@ type Config struct {
 ## 🧪 Verification Steps
 
 ### 1. Unit Tests
+
 ```bash
 go test ./internal/detection -v
 ```
 
 ### 2. Integration Tests
+
 ```go
 func TestProjectDetector_Integration(t *testing.T) {
     // Test with real git repository
     dir := t.TempDir()
     err := os.Chdir(dir)
     require.NoError(t, err)
-    
+
     runGitCommand(dir, "init")
     runGitCommand(dir, "remote", "add", "origin", "https://github.com/user/test-project.git")
-    
+
     detector := NewSystemGitDetector(dir, make(map[string]string))
     result, err := detector.DetectProjectName(context.Background())
-    
+
     assert.NoError(t, err)
     assert.Equal(t, "test-project", result)
 }
 ```
 
 ### 3. Service Integration Tests
+
 ```go
 func TestComplaintService_WithProjectDetection(t *testing.T) {
     detector := NewMockProjectDetector("auto-detected-project", nil)
     service := NewComplaintService(repo, tracer, logger, detector)
-    
+
     complaint, err := service.CreateComplaint(
         context.Background(),
         "Test-Agent",
@@ -384,13 +397,14 @@ func TestComplaintService_WithProjectDetection(t *testing.T) {
         "low",
         "", // Empty - should auto-detect
     )
-    
+
     assert.NoError(t, err)
     assert.Contains(t, complaint.ProjectName, "auto-detected-project")
 }
 ```
 
 ### 4. End-to-End Test
+
 ```bash
 # Setup test repository
 mkdir -p /tmp/test-project
@@ -405,7 +419,9 @@ echo '{"tool":"file_complaint","arguments":{"agent_name":"Test-Agent","task_desc
 ```
 
 ## ⏱️ Time Estimate: 6-8 hours
+
 ## 🎯 Impact: High (enables project detection)
+
 ## 💪 Work Required: Medium (service implementation + tests)
 
 ## 🎯 Success Criteria

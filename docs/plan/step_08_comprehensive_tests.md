@@ -1,11 +1,13 @@
 # Step 8: Create Comprehensive Test Suite
 
 ## 🎯 Objective
+
 Ensure complete test coverage for phantom types, project detection, and schema validation.
 
 ## 🧪 Testing Strategy Overview
 
 ### Test Categories
+
 1. **Unit Tests**: Individual component testing
 2. **Integration Tests**: Component interaction testing
 3. **BDD Tests**: User behavior scenario testing
@@ -18,6 +20,7 @@ Ensure complete test coverage for phantom types, project detection, and schema v
 ### A. Phantom Type Unit Tests
 
 #### ComplaintID Tests
+
 ```go
 // internal/domain/complaint_id_test.go
 package domain
@@ -32,33 +35,33 @@ import (
 func TestComplaintID_New(t *testing.T) {
     t.Run("successful generation", func(t *testing.T) {
         id, err := NewComplaintID()
-        
+
         require.NoError(t, err)
         assert.False(t, id.IsEmpty())
         assert.True(t, id.IsValid())
-        
+
         // Verify UUID format
         parsed, err := uuid.Parse(id.String())
         require.NoError(t, err)
         assert.Equal(t, id.String(), parsed.String())
     })
-    
+
     t.Run("generates unique IDs", func(t *testing.T) {
         ids := make(map[ComplaintID]bool)
-        
+
         for i := 0; i < 1000; i++ {
             id, err := NewComplaintID()
             require.NoError(t, err)
-            
+
             assert.False(t, ids[id], "Generated duplicate ID: %s", id.String())
             ids[id] = true
         }
     })
-    
+
     t.Run("generates version 4 UUIDs", func(t *testing.T) {
         id, err := NewComplaintID()
         require.NoError(t, err)
-        
+
         parsed, err := id.UUID()
         require.NoError(t, err)
         assert.Equal(t, uuid.Version(4), parsed.Version())
@@ -114,11 +117,11 @@ func TestComplaintID_Parse(t *testing.T) {
             expectedID: ComplaintID(""),
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := ParseComplaintID(tt.input)
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -138,38 +141,38 @@ func TestComplaintID_Parse(t *testing.T) {
 func TestComplaintID_JSONSerialization(t *testing.T) {
     t.Run("marshal produces flat JSON", func(t *testing.T) {
         id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
-        
+
         data, err := json.Marshal(id)
         require.NoError(t, err)
-        
+
         // Verify flat structure
         var result map[string]any
         err = json.Unmarshal(data, &result)
         require.NoError(t, err)
-        
+
         // Should be flat string, not nested object
         idValue, exists := result["id"]
         require.True(t, exists, "id field should exist")
-        
+
         idStr, isString := idValue.(string)
         assert.True(t, isString, "id should be string, got %T", idValue)
         assert.Equal(t, id.String(), idStr)
     })
-    
+
     t.Run("unmarshal from flat JSON", func(t *testing.T) {
         jsonData := `{"id":"550e8400-e29b-41d4-a716-446655440000"}`
-        
+
         var id ComplaintID
         err := json.Unmarshal([]byte(jsonData), &id)
         require.NoError(t, err)
-        
+
         assert.Equal(t, ComplaintID("550e8400-e29b-41d4-a716-446655440000"), id)
         assert.True(t, id.IsValid())
     })
-    
+
     t.Run("reject nested JSON", func(t *testing.T) {
         jsonData := `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`
-        
+
         var id ComplaintID
         err := json.Unmarshal([]byte(jsonData), &id)
         assert.Error(t, err)
@@ -180,33 +183,33 @@ func TestComplaintID_Methods(t *testing.T) {
     validID := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
     invalidID := ComplaintID("")
     emptyID := ComplaintID("")
-    
+
     t.Run("String method", func(t *testing.T) {
         assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", validID.String())
         assert.Equal(t, "", emptyID.String())
     })
-    
+
     t.Run("IsEmpty method", func(t *testing.T) {
         assert.False(t, validID.IsEmpty())
         assert.True(t, emptyID.IsEmpty())
     })
-    
+
     t.Run("IsValid method", func(t *testing.T) {
         assert.True(t, validID.IsValid())
         assert.False(t, invalidID.IsValid())
         assert.False(t, emptyID.IsValid())
     })
-    
+
     t.Run("Validate method", func(t *testing.T) {
         assert.NoError(t, validID.Validate())
         assert.Error(t, invalidID.Validate())
     })
-    
+
     t.Run("UUID method", func(t *testing.T) {
         parsed, err := validID.UUID()
         assert.NoError(t, err)
         assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", parsed.String())
-        
+
         _, err = emptyID.UUID()
         assert.Error(t, err)
     })
@@ -214,6 +217,7 @@ func TestComplaintID_Methods(t *testing.T) {
 ```
 
 #### AgentID, SessionID, ProjectID Tests
+
 ```go
 // Similar comprehensive test files for each phantom type
 // internal/domain/agent_id_test.go
@@ -268,11 +272,11 @@ func TestAgentID_New(t *testing.T) {
             expectedID: AgentID(""),
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := NewAgentID(tt.input)
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -293,6 +297,7 @@ func TestAgentID_New(t *testing.T) {
 ### B. Project Detection Tests
 
 #### SystemGitDetector Tests
+
 ```go
 // internal/detection/system_git_detector_test.go
 package detection
@@ -321,10 +326,10 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "https://github.com/user/my-project.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -339,10 +344,10 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "git@github.com:user/awesome-app.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -358,7 +363,7 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
                 subdir := filepath.Join(dir, "my-cool-project")
                 err := os.Mkdir(subdir, 0755)
                 require.NoError(t, err)
-                
+
                 return subdir, nil
             },
             cleanupFunc: func() error {
@@ -374,7 +379,7 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
                 subdir := filepath.Join(dir, "invalid@name")
                 err := os.Mkdir(subdir, 0755)
                 require.NoError(t, err)
-                
+
                 return subdir, nil
             },
             cleanupFunc: func() error {
@@ -389,10 +394,10 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "git://github.com/user/git-protocol-project.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -402,25 +407,25 @@ func TestSystemGitDetector_DetectProjectName(t *testing.T) {
             expectError: false,
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             // Setup
             originalDir, _ := os.Getwd()
             defer os.Chdir(originalDir) // Ensure we return to original
-            
+
             workspace, err := tt.setupFunc()
             require.NoError(t, err)
-            
+
             // Cleanup
             if tt.cleanupFunc != nil {
                 defer tt.cleanupFunc()
             }
-            
+
             // Test detection
             detector := NewSystemGitDetector(workspace, make(map[string]string))
             result, err := detector.DetectProjectName(context.Background())
-            
+
             if tt.expectError {
                 assert.Error(t, err)
             } else {
@@ -435,23 +440,23 @@ func TestSystemGitDetector_Caching(t *testing.T) {
     dir := t.TempDir()
     err := os.Chdir(dir)
     require.NoError(t, err)
-    
+
     runGitCommand(dir, "init")
     runGitCommand(dir, "remote", "add", "origin", "https://github.com/user/cache-test.git")
-    
+
     detector := NewSystemGitDetector(dir, make(map[string]string))
-    
+
     // First call should detect
     result1, err1 := detector.DetectProjectName(context.Background())
     require.NoError(t, err1)
     assert.Equal(t, "cache-test", result1)
-    
+
     // Second call should use cache (even if we modify git repo)
     runGitCommand(dir, "remote", "set-url", "origin", "https://github.com/user/different-project.git")
     result2, err2 := detector.DetectProjectName(context.Background())
     require.NoError(t, err2)
     assert.Equal(t, "cache-test", result2) // Should return cached value
-    
+
     // Test cache invalidation (if implemented)
     // This depends on whether you implement cache TTL or manual invalidation
 }
@@ -466,6 +471,7 @@ func runGitCommand(dir, name string, args ...string) {
 ### C. Integration Tests
 
 #### Service Layer Tests
+
 ```go
 // internal/service/complaint_service_integration_test.go
 package service
@@ -474,10 +480,10 @@ import (
     "context"
     "testing"
     "time"
-    
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
-    
+
     "github.com/larsartmann/complaints-mcp/internal/domain"
     "github.com/larsartmann/complaints-mcp/internal/detection"
     "github.com/larsartmann/complaints-mcp/internal/repo"
@@ -492,7 +498,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
     repository := repo.NewFileRepository(tempDir, tracer)
     mockDetector := &mockProjectDetector{detectResult: "test-project"}
     service := NewComplaintService(repository, tracer, logger, mockDetector)
-    
+
     t.Run("create complaint with typed IDs", func(t *testing.T) {
         complaint, err := service.CreateComplaint(
             context.Background(),
@@ -506,22 +512,22 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "medium",
             "test-project",
         )
-        
+
         require.NoError(t, err)
         require.NotNil(t, complaint)
-        
+
         // Verify phantom types are properly set
         assert.True(t, complaint.ID.IsValid())
         assert.True(t, complaint.AgentID.IsValid())
         assert.True(t, complaint.SessionID.IsValid())
         assert.True(t, complaint.ProjectID.IsValid())
-        
+
         // Verify string conversions work
         assert.Equal(t, "AI-Assistant", complaint.AgentID.String())
         assert.Equal(t, "integration-test", complaint.SessionID.String())
         assert.Equal(t, "test-project", complaint.ProjectID.String())
     })
-    
+
     t.Run("reject invalid typed IDs", func(t *testing.T) {
         _, err := service.CreateComplaint(
             context.Background(),
@@ -532,11 +538,11 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "low",
             "test-project",
         )
-        
+
         assert.Error(t, err)
         assert.Contains(t, err.Error(), "invalid agent name")
     })
-    
+
     t.Run("get complaint returns typed IDs", func(t *testing.T) {
         // Create complaint
         complaint, err := service.CreateComplaint(
@@ -549,23 +555,23 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "test-project",
         )
         require.NoError(t, err)
-        
+
         // Get complaint
         retrieved, err := service.GetComplaint(context.Background(), complaint.ID)
         require.NoError(t, err)
         require.NotNil(t, retrieved)
-        
+
         // Verify phantom types are preserved
         assert.Equal(t, complaint.ID, retrieved.ID)
         assert.Equal(t, complaint.AgentID, retrieved.AgentID)
         assert.Equal(t, complaint.SessionID, retrieved.SessionID)
         assert.Equal(t, complaint.ProjectID, retrieved.ProjectID)
     })
-    
+
     t.Run("list complaints preserves typed IDs", func(t *testing.T) {
         // Create multiple complaints
         agentIDs := []string{"Agent-1", "Agent-2", "Agent-3"}
-        
+
         for _, agentID := range agentIDs {
             _, err := service.CreateComplaint(
                 context.Background(),
@@ -578,12 +584,12 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             )
             require.NoError(t, err)
         }
-        
+
         // List complaints
         complaints, err := service.ListComplaints(context.Background(), 100, 0)
         require.NoError(t, err)
         assert.Len(t, complaints, 3)
-        
+
         // Verify all phantom types are valid
         for _, complaint := range complaints {
             assert.True(t, complaint.ID.IsValid())
@@ -592,7 +598,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             assert.True(t, complaint.ProjectID.IsValid())
         }
     })
-    
+
     t.Run("resolve complaint with typed ID", func(t *testing.T) {
         // Create complaint
         complaint, err := service.CreateComplaint(
@@ -605,23 +611,23 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "test-project",
         )
         require.NoError(t, err)
-        
+
         // Resolve complaint with typed ID
         resolverID, err := domain.NewAgentID("Test-Resolver")
         require.NoError(t, err)
-        
+
         err = service.ResolveComplaint(
             context.Background(),
             complaint.ID,
             resolverID.String(),
         )
-        
+
         require.NoError(t, err)
-        
+
         // Verify resolution
         resolved, err := service.GetComplaint(context.Background(), complaint.ID)
         require.NoError(t, err)
-        
+
         assert.True(t, resolved.ResolutionState.IsResolved())
         assert.Equal(t, "Test-Resolver", resolved.ResolvedBy)
         assert.NotNil(t, resolved.ResolvedAt)
@@ -663,6 +669,7 @@ func (m *mockLogger) Error(msg string, args ...interface{}) {
 ### D. BDD Tests
 
 #### Complete Workflow BDD Tests
+
 ```gherkin
 # features/bdd/phantom_type_workflow_bdd.feature
 Feature: Phantom Type Workflow Integration
@@ -747,6 +754,7 @@ Feature: Phantom Type Workflow Integration
 ### E. Schema Validation Tests
 
 #### MCP Schema Tests
+
 ```go
 // internal/delivery/mcp/schema_validation_test.go
 package mcp
@@ -754,7 +762,7 @@ package mcp
 import (
     "context"
     "testing"
-    
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 )
@@ -842,18 +850,18 @@ func TestSchemaValidation_FlatIDFormat(t *testing.T) {
             errorMsg: "contains invalid characters",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             // Setup test server
             server := setupTestServer()
-            
+
             // Create tool request
             request := &mcp.CallToolRequest{
                 Name: tt.tool,
                 Arguments: mcp.ToolArguments(tt.input),
             }
-            
+
             // Process request based on tool
             var err error
             switch tt.tool {
@@ -864,7 +872,7 @@ func TestSchemaValidation_FlatIDFormat(t *testing.T) {
             case "list_complaints":
                 _, _, err = server.handleListComplaints(context.Background(), request)
             }
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 if tt.errorMsg != "" {
@@ -881,6 +889,7 @@ func TestSchemaValidation_FlatIDFormat(t *testing.T) {
 ### F. Performance Tests
 
 #### Benchmark Tests
+
 ```go
 // internal/benchmarks/phantom_type_benchmark_test.go
 package benchmarks
@@ -900,7 +909,7 @@ func BenchmarkPhantomType_NewComplaintID(b *testing.B) {
 
 func BenchmarkPhantomType_ParseComplaintID(b *testing.B) {
     validUUID := "550e8400-e29b-41d4-a716-446655440000"
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = domain.ParseComplaintID(validUUID)
@@ -909,7 +918,7 @@ func BenchmarkPhantomType_ParseComplaintID(b *testing.B) {
 
 func BenchmarkPhantomType_String(b *testing.B) {
     id, _ := domain.NewComplaintID()
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.String()
@@ -918,7 +927,7 @@ func BenchmarkPhantomType_String(b *testing.B) {
 
 func BenchmarkPhantomType_Validate(b *testing.B) {
     id, _ := domain.NewComplaintID()
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.Validate()
@@ -936,7 +945,7 @@ func BenchmarkPhantomType_JSONMarshal(b *testing.B) {
         Timestamp:      time.Now(),
         ResolutionState: domain.ResolutionStateOpen,
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = json.Marshal(complaint)
@@ -956,7 +965,7 @@ func BenchmarkStructID_String(b *testing.B) {
     id := &OldComplaintID{
         Value: "550e8400-e29b-41d4-a716-446655440000",
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.String()
@@ -973,7 +982,7 @@ func BenchmarkStructID_JSONMarshal(b *testing.B) {
         Severity:        "medium",
         Timestamp:       time.Now(),
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = json.Marshal(complaint)
@@ -1017,6 +1026,7 @@ func mustNewProjectID(name string) domain.ProjectID {
 ## 🧪 Test Coverage Goals
 
 ### Coverage Targets
+
 - **Unit Tests**: 95%+ coverage for phantom type implementations
 - **Integration Tests**: 90%+ coverage for service layer with phantom types
 - **BDD Tests**: Complete workflow coverage with type safety scenarios
@@ -1024,6 +1034,7 @@ func mustNewProjectID(name string) domain.ProjectID {
 - **Schema Tests**: 100% coverage for MCP tool schema validation
 
 ### Success Criteria
+
 - [ ] All phantom types have comprehensive unit tests
 - [ ] JSON serialization produces correct flat structure
 - [ ] Service layer integration tests pass with typed IDs
@@ -1034,5 +1045,7 @@ func mustNewProjectID(name string) domain.ProjectID {
 - [ ] Test coverage meets or exceeds targets
 
 ## ⏱️ Time Estimate: 10-12 hours
+
 ## 🎯 Impact: HIGH (ensures reliability and correctness)
+
 ## 💪 Work Required: HIGH (comprehensive test suite)

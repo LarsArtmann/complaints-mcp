@@ -96,6 +96,7 @@ just --version
 The Makefile remains for backward compatibility but Just is recommended. All Make targets have equivalent Just commands.
 
 ### Running
+
 ```bash
 # Run the MCP server (stdio transport)
 ./complaints-mcp
@@ -114,6 +115,7 @@ The Makefile remains for backward compatibility but Just is recommended. All Mak
 ```
 
 ### Linting
+
 ```bash
 make lint
 ```
@@ -152,7 +154,7 @@ This project follows a clean, layered architecture with clear separation of conc
 6. **internal/config** - Configuration Management
    - Uses Viper for configuration loading (YAML, env vars, CLI flags)
    - XDG Base Directory compliant
-   - Environment variables prefixed with COMPLAINTS_MCP_
+   - Environment variables prefixed with COMPLAINTS*MCP*
 
 7. **internal/tracing** - Observability
    - MockTracer for development (production-ready tracer interface exists)
@@ -178,36 +180,45 @@ This project follows a clean, layered architecture with clear separation of conc
   - complaint_resolution_bdd_test.go
   - cache_stats_bdd_test.go (NEW!)
   - mcp_integration_bdd_test.go
-- **Unit Tests**: Each internal package has corresponding *_test.go files
+- **Unit Tests**: Each internal package has corresponding \*\_test.go files
 - Test files use table-driven tests where appropriate
 
 ## Important Patterns
 
 ### Context Propagation
+
 Context is passed through all layers for cancellation and timeout support. Logger is attached to context using charmbracelet/log.WithContext().
 
 ### Error Handling
+
 Errors are wrapped with context using fmt.Errorf("description: %w", err) to maintain error chains.
 
 ### Logging
+
 Use structured logging with key-value pairs:
+
 ```go
 logger.Info("message", "key", value, "another_key", another_value)
 logger.With("persistent_key", value) // Creates child logger
 ```
 
 ### Dependency Injection
+
 Dependencies are injected through constructors (NewComplaintService, NewServer, etc.). No global state except for the logger default.
 
 ### File Storage Format
+
 Complaints are stored as JSON files with naming pattern:
+
 - `YYYY-MM-DD_HH-MM-SS-<session_name>.json`
 - `YYYY-MM-DD_HH-MM-SS.json` (if no session name)
 
 ### MCP Tool Implementation
+
 Tools are registered with schema definitions and handler functions. Handlers use type-safe input/output structs and return (result, output, error).
 
 #### Available Tools:
+
 1. **file_complaint** - File a new structured complaint
 2. **list_complaints** - List all complaints with pagination
 3. **resolve_complaint** - Mark a complaint as resolved
@@ -215,6 +226,7 @@ Tools are registered with schema definitions and handler functions. Handlers use
 5. **get_cache_stats** - Get cache performance statistics (NEW!)
 
 #### get_cache_stats Tool Details:
+
 - **Purpose**: Monitor LRU cache performance metrics
 - **Input**: No parameters required
 - **Output**: JSON with cache statistics:
@@ -237,8 +249,9 @@ Tools are registered with schema definitions and handler functions. Handlers use
 ## Configuration
 
 Configuration is loaded from (in order of precedence):
+
 1. Command-line flags
-2. Environment variables (COMPLAINTS_MCP_*)
+2. Environment variables (COMPLAINTS*MCP*\*)
 3. Config file (./config.yaml, ~/.complaints-mcp/config.yaml, /etc/complaints-mcp/config.yaml)
 4. XDG config directory ($XDG_CONFIG_HOME/complaints-mcp/config.yaml)
 5. Default values
@@ -255,6 +268,7 @@ storage:
 ```
 
 CLI Flags:
+
 ```bash
 --cache-enabled=true        # Enable/disable cache (default: true)
 --cache-max-size=1000       # Set cache size (default: 1000)
@@ -262,6 +276,7 @@ CLI Flags:
 ```
 
 Environment Variables:
+
 ```bash
 COMPLAINTS_MCP_CACHE_ENABLED=true
 COMPLAINTS_MCP_CACHE_MAX_SIZE=1000
@@ -269,16 +284,19 @@ COMPLAINTS_MCP_CACHE_EVICTION=lru
 ```
 
 **Repository Selection Logic:**
+
 - `cache_enabled=true` → Creates CachedRepository (LRU cache for O(1) lookups)
 - `cache_enabled=false` → Creates FileRepository (no cache, direct file I/O)
 - Explicit `type="file"` always forces FileRepository regardless of cache settings
 
 **Performance Impact:**
+
 - CachedRepository: ~1000x faster for repeated lookups (O(1) vs O(n))
 - FileRepository: Lower memory usage, always reads from disk
 
 ## Internal Package Note
 
 The `internal/` directory contains vendored/customized versions of third-party packages:
+
 - afero, cast, jwalterweatherman, pflag, semver - Customized from spf13 libraries
-These are modified to integrate with the project's logging and configuration systems.
+  These are modified to integrate with the project's logging and configuration systems.

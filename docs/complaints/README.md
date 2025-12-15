@@ -30,6 +30,7 @@ Each complaint markdown file contains:
 Documentation export can be configured via:
 
 ### Configuration File (config.yaml):
+
 ```yaml
 storage:
   docs_enabled: true
@@ -39,6 +40,7 @@ storage:
 ```
 
 ### Command Line Flags:
+
 ```bash
 --storage.docs-enabled=true
 --storage.docs-dir=docs/complaints
@@ -47,6 +49,7 @@ storage:
 ```
 
 ### Environment Variables:
+
 ```bash
 COMPLAINTS_MCP_STORAGE_DOCS_ENABLED=true
 COMPLAINTS_MCP_STORAGE_DOCS_DIR=docs/complaints
@@ -57,16 +60,19 @@ COMPLAINTS_MCP_STORAGE_RETENTION_DAYS=0
 ## 🔄 Export Formats
 
 ### Markdown (Default)
+
 - Human-readable and version control friendly
 - Easy to edit and contribute to
 - Best for documentation and collaboration
 
 ### HTML
+
 - Web-friendly format
 - Rich presentation for browsers
 - Good for internal dashboards
 
 ### Text
+
 - Simple plain text format
 - Maximum compatibility
 - Good for logs and parsing
@@ -97,4 +103,4 @@ This documentation system serves to:
 
 ---
 
-*This directory is automatically generated and maintained by the complaints-mcp system.*
+_This directory is automatically generated and maintained by the complaints-mcp system._

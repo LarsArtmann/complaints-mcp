@@ -3,9 +3,11 @@
 ## 🐛 **Bug Report: JSON Nesting in ID Fields**
 
 ### **Current Problem**
+
 The `ComplaintID` field is causing unwanted JSON nesting in API responses:
 
 **❌ Current Output (Nested):**
+
 ```json
 {
   "id": {
@@ -15,6 +17,7 @@ The `ComplaintID` field is causing unwanted JSON nesting in API responses:
 ```
 
 **✅ Desired Output (Flat):**
+
 ```json
 {
   "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"
@@ -22,6 +25,7 @@ The `ComplaintID` field is causing unwanted JSON nesting in API responses:
 ```
 
 ### **Root Cause Analysis**
+
 ```go
 // Current implementation (causes nesting)
 type ComplaintID struct {
@@ -36,11 +40,12 @@ When serialized, this produces `{ "id": { "Value": "..." } }` instead of `{ "id"
 Implement phantom types (type aliases) for compile-time safety with zero runtime overhead:
 
 ### **Implementation Plan**
+
 ```go
 // Phantom types - compile-time safety, runtime performance
 type (
     ComplaintID string  // Primary complaint identifier
-    SessionID   string  // Session identifier  
+    SessionID   string  // Session identifier
     ProjectID   string  // Project identifier
     AgentID     string  // Agent identifier
 )
@@ -67,6 +72,7 @@ func (id ComplaintID) IsValid() bool {
 ```
 
 ### **Benefits**
+
 - ✅ **Fixes JSON nesting immediately**
 - ✅ **Compile-time type safety** (prevents ID mixing)
 - ✅ **Zero runtime overhead** (type aliases are free)
@@ -75,17 +81,20 @@ func (id ComplaintID) IsValid() bool {
 - ✅ **Improved IDE support**
 
 ### **Migration Strategy**
+
 1. **Backward Compatibility**: Keep existing struct temporarily
 2. **Parallel Implementation**: Add phantom types alongside
 3. **Gradual Migration**: Update layer by layer
 4. **Cleanup**: Remove old struct implementation
 
 ### **Breaking Changes**
+
 - **JSON Output**: Changes from nested to flat structure
 - **API Consumers**: Need to handle flat ID format
 - **Test Updates**: Existing test expectations need updates
 
 ### **Files to Modify**
+
 - `internal/domain/complaint.go` - Replace ComplaintID struct
 - `internal/delivery/mcp/dto.go` - Update DTO conversion
 - `internal/repo/*.go` - Update repository interfaces
@@ -94,6 +103,7 @@ func (id ComplaintID) IsValid() bool {
 - `internal/delivery/mcp/mcp_server.go` - Update tool schemas
 
 ### **Verification Steps**
+
 ```bash
 # Test JSON serialization
 go test ./internal/domain -run TestComplaintID_MarshalJSON -v
@@ -105,11 +115,13 @@ echo '{"tool":"file_complaint","arguments":{...}}' | ./complaints-mcp
 ```
 
 ### **Risk Assessment**
+
 - **Low Risk**: Type-only changes, no logic modifications
 - **High Value**: Fixes immediate API issue + architectural improvement
 - **Easy Rollback**: Can revert struct implementation if needed
 
 ## 🏆 **Success Criteria**
+
 - [ ] ComplaintID serializes to flat JSON string
 - [ ] All existing functionality preserved
 - [ ] Type safety improvements verified
@@ -118,6 +130,7 @@ echo '{"tool":"file_complaint","arguments":{...}}' | ./complaints-mcp
 - [ ] Performance benchmarks show no regression
 
 ## 🏷️ **Labels**
+
 - `bug` - Fixes JSON nesting issue
 - `type-safety` - Improves compile-time safety
 - `architecture` - Core architectural improvement
@@ -125,11 +138,13 @@ echo '{"tool":"file_complaint","arguments":{...}}' | ./complaints-mcp
 - `breaking-change` - Changes API contract
 
 ## 📊 **Priority**: Critical
+
 - **User Impact**: High - API responses broken
 - **Complexity**: Medium - Type refactoring
 - **Risk**: Low - Type-only changes
 
 ## 🤝 **Dependencies**
+
 - None (standalone type improvement)
 - Enables future ID field improvements
 

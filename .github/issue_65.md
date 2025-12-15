@@ -3,9 +3,11 @@
 ## 🎯 **Enhancement: Intelligent Project Name Detection for Better Complaint Context**
 
 ### **Current State Analysis**
+
 The complaints system currently requires manual project name input, but this creates several problems:
 
 **❌ Current Issues:**
+
 - **Manual Input Required**: Users must explicitly provide project name
 - **Inconsistent Names**: AI may provide varying project name formats
 - **Missing Context**: Project context lost when not provided
@@ -13,9 +15,11 @@ The complaints system currently requires manual project name input, but this cre
 - **Data Quality**: Inconsistent or incorrect project names
 
 ### **Target State**
+
 Implement automatic project name detection with intelligent fallback hierarchy:
 
 **✅ Desired Behavior:**
+
 ```go
 // Automatic detection priority:
 1. Git remote repository name (highest priority)
@@ -33,6 +37,7 @@ fallback: → project: "unknown-project"
 ### **Phase 1: Project Name Detection Service**
 
 #### **Git Repository Detection**
+
 ```go
 // internal/detection/project_detector.go
 package detection
@@ -64,19 +69,19 @@ func (pd *ProjectDetector) DetectProjectName() (string, error) {
     if cached, exists := pd.cache[pd.workspace]; exists {
         return cached, nil
     }
-    
+
     // Try git remote detection first
     if projectName, err := pd.detectFromGitRemote(); err == nil {
         pd.cache[pd.workspace] = projectName
         return projectName, nil
     }
-    
+
     // Fallback to directory name
     if projectName, err := pd.detectFromDirectoryName(); err == nil {
         pd.cache[pd.workspace] = projectName
         return projectName, nil
     }
-    
+
     // Last resort fallback
     projectName := "unknown-project"
     pd.cache[pd.workspace] = projectName
@@ -87,12 +92,12 @@ func (pd *ProjectDetector) DetectProjectName() (string, error) {
 func (pd *ProjectDetector) detectFromGitRemote() (string, error) {
     cmd := exec.Command("git", "config", "--get", "remote.origin.url")
     cmd.Dir = pd.workspace
-    
+
     output, err := cmd.Output()
     if err != nil {
         return "", fmt.Errorf("not in git repository: %w", err)
     }
-    
+
     gitRemote := strings.TrimSpace(string(output))
     return pd.extractProjectNameFromRemote(gitRemote)
 }
@@ -104,42 +109,42 @@ func (pd *ProjectDetector) extractProjectNameFromRemote(remote string) (string, 
     // git@github.com:user/project.git
     // git://github.com/user/project.git
     // /path/to/project.git (local)
-    
+
     // Remove .git suffix
     if strings.HasSuffix(remote, ".git") {
         remote = remote[:len(remote)-4]
     }
-    
+
     // Extract project name from path
     parts := strings.Split(remote, "/")
     if len(parts) < 2 {
         return "", fmt.Errorf("invalid git remote format: %s", remote)
     }
-    
+
     projectName := parts[len(parts)-1]
-    
+
     // Remove potential user@ prefix
     if strings.Contains(parts[0], "@") {
         // Format: user@host:path
         return projectName, nil
     }
-    
+
     // Validate project name
     if !isValidProjectName(projectName) {
         return "", fmt.Errorf("invalid project name: %s", projectName)
     }
-    
+
     return projectName, nil
 }
 
 // detectFromDirectoryName extracts project name from current directory
 func (pd *ProjectDetector) detectFromDirectoryName() (string, error) {
     dirName := filepath.Base(pd.workspace)
-    
+
     if !isValidProjectName(dirName) {
         return "", fmt.Errorf("invalid directory name: %s", dirName)
     }
-    
+
     return dirName, nil
 }
 
@@ -148,14 +153,14 @@ func isValidProjectName(name string) bool {
     if len(name) == 0 || len(name) > 100 {
         return false
     }
-    
+
     // Basic validation - can be enhanced
     for _, char := range name {
         if !isValidProjectChar(char) {
             return false
         }
     }
-    
+
     return true
 }
 
@@ -170,6 +175,7 @@ func isValidProjectChar(char rune) bool {
 ### **Phase 2: Integration with Complaint Service**
 
 #### **Enhanced Complaint Creation**
+
 ```go
 // internal/service/complaint_service.go (enhanced)
 
@@ -193,13 +199,13 @@ func (s *ComplaintService) CreateComplaint(
             s.logger.Info("Auto-detected project name", "project", finalProjectName)
         }
     }
-    
+
     // Validate and create typed project ID
     projectID, err := domain.NewProjectID(finalProjectName)
     if err != nil {
         return nil, fmt.Errorf("invalid project name: %w", err)
     }
-    
+
     // Rest of existing complaint creation logic...
     complaint := &domain.Complaint{
         ID:             complaintID,
@@ -209,7 +215,7 @@ func (s *ComplaintService) CreateComplaint(
         TaskDescription: taskDescription,
         // ... other fields
     }
-    
+
     return s.repo.Save(ctx, complaint)
 }
 ```
@@ -217,6 +223,7 @@ func (s *ComplaintService) CreateComplaint(
 ### **Phase 3: MCP Handler Enhancement**
 
 #### **Tool Input Schema Update**
+
 ```go
 // internal/delivery/mcp/mcp_server.go (updated)
 
@@ -290,6 +297,7 @@ fileComplaintTool := &mcp.Tool{
 ```
 
 #### **Handler Implementation**
+
 ```go
 func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
     // Convert string inputs to domain types
@@ -297,12 +305,12 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid agent name: %w", err)
     }
-    
+
     sessionID, err := domain.NewSessionID(input.SessionName)
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid session name: %w", err)
     }
-    
+
     // Create complaint - project name detection handled internally
     complaint, err := m.service.CreateComplaint(
         ctx,
@@ -319,25 +327,25 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("failed to create complaint: %w", err)
     }
-    
+
     // Get file paths with enhanced context
     filePath, docsPath, err := m.service.GetFilePaths(ctx, complaint.ID)
     if err != nil {
         m.logger.Warn("Failed to get file paths", "error", err, "complaint_id", complaint.ID.String())
     }
-    
+
     output := FileComplaintOutput{
         Success:   true,
         Message:   "Complaint filed successfully",
         Complaint: delivery.ToDTOWithPaths(complaint, filePath, docsPath),
     }
-    
+
     result := &mcp.CallToolResult{
         Content: []mcp.Content{
             {Type: "text", Text: output.Message},
         },
     }
-    
+
     return result, output, nil
 }
 ```
@@ -345,12 +353,13 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 ### **Phase 4: Configuration and Customization**
 
 #### **Configuration Options**
+
 ```go
 // internal/config/config.go (enhanced)
 
 type Config struct {
     // ... existing fields ...
-    
+
     ProjectDetection ProjectDetectionConfig `toml:"project_detection"`
 }
 
@@ -365,6 +374,7 @@ type ProjectDetectionConfig struct {
 ```
 
 #### **Environment Variables**
+
 ```bash
 # Project detection configuration
 export COMPLAINTS_MCP_PROJECT_DETECTION_ENABLED=true
@@ -377,6 +387,7 @@ export COMPLAINTS_MCP_PROJECT_DETECTION_DEFAULT_NAME="unknown-project"
 ### **Phase 5: Testing Implementation**
 
 #### **Unit Tests**
+
 ```go
 // internal/detection/project_detector_test.go
 package detection
@@ -402,11 +413,11 @@ func TestProjectDetector_DetectProjectName(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 // Initialize git repo with remote
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "https://github.com/user/my-project.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -421,10 +432,10 @@ func TestProjectDetector_DetectProjectName(t *testing.T) {
                 dir := t.TempDir()
                 err := os.Chdir(dir)
                 require.NoError(t, err)
-                
+
                 runGitCommand(dir, "init")
                 runGitCommand(dir, "remote", "add", "origin", "git@github.com:user/awesome-app.git")
-                
+
                 return dir, nil
             },
             cleanupFunc: func() error {
@@ -440,7 +451,7 @@ func TestProjectDetector_DetectProjectName(t *testing.T) {
                 subdir := filepath.Join(dir, "my-cool-project")
                 err := os.Mkdir(subdir, 0755)
                 require.NoError(t, err)
-                
+
                 return subdir, nil
             },
             cleanupFunc: func() error {
@@ -456,7 +467,7 @@ func TestProjectDetector_DetectProjectName(t *testing.T) {
                 subdir := filepath.Join(dir, "invalid@name")
                 err := os.Mkdir(subdir, 0755)
                 require.NoError(t, err)
-                
+
                 return subdir, nil
             },
             cleanupFunc: func() error {
@@ -466,25 +477,25 @@ func TestProjectDetector_DetectProjectName(t *testing.T) {
             expectError: false, // Should fall back gracefully
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             // Setup
             originalDir, _ := os.Getwd()
             defer os.Chdir(originalDir) // Ensure we return to original
-            
+
             workspace, err := tt.setupFunc()
             require.NoError(t, err)
-            
+
             // Cleanup
             if tt.cleanupFunc != nil {
                 defer tt.cleanupFunc()
             }
-            
+
             // Test detection
             detector := NewProjectDetector()
             result, err := detector.DetectProjectName()
-            
+
             if tt.expectError {
                 assert.Error(t, err)
             } else {
@@ -503,6 +514,7 @@ func runGitCommand(dir, name string, args ...string) {
 ```
 
 #### **Integration Tests**
+
 ```go
 // internal/service/complaint_service_test.go (enhanced)
 
@@ -512,9 +524,9 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
         detectResult: "my-test-project",
         detectError:   nil,
     }
-    
+
     service := NewComplaintService(repo, tracer, logger, mockDetector)
-    
+
     // Test complaint creation without project name
     complaint, err := service.CreateComplaint(
         context.Background(),
@@ -525,13 +537,13 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
         "medium",
         "", // Empty project name - should auto-detect
     )
-    
+
     require.NoError(t, err)
     require.NotNil(t, complaint)
-    
+
     // Verify project was auto-detected
     assert.Equal(t, "my-test-project", complaint.ProjectID.String())
-    
+
     // Verify detector was called
     assert.True(t, mockDetector.DetectCalled)
 }
@@ -540,24 +552,28 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 ## 🎯 **Benefits of This Enhancement**
 
 ### **1. Improved User Experience**
+
 - **Automatic Detection**: No manual project name entry needed
 - **Intelligent Fallbacks**: Multiple detection strategies
 - **Consistent Names**: Standardized project naming
 - **Error Reduction**: Less manual entry errors
 
 ### **2. Better Data Quality**
+
 - **Accurate Context**: Project names from actual git repos
 - **Standardized Format**: Consistent naming conventions
 - **Rich Metadata**: Enhanced search and filtering
 - **Reduced Duplication**: Automatic detection prevents variations
 
 ### **3. Enhanced AI Context**
+
 - **Project Awareness**: AI knows current project context
 - **Better Suggestions**: Context-aware recommendations
 - **Smarter Organization**: Automatic project categorization
 - **Improved Debugging**: Clear project association
 
 ### **4. Configuration Flexibility**
+
 - **Customizable Detection**: Enable/disable detection methods
 - **Fallback Options**: Custom project name sources
 - **Performance Tuning**: Cache TTL and optimization
@@ -566,11 +582,13 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 ## 📋 **Files to Create/Modify**
 
 ### **New Files**
+
 - `internal/detection/project_detector.go` - Project name detection service
 - `internal/detection/project_detector_test.go` - Detection service tests
 - `internal/detection/mock_project_detector.go` - Test double for detection
 
 ### **Modified Files**
+
 - `internal/service/complaint_service.go` - Integration with detection
 - `internal/service/complaint_service_test.go` - Enhanced tests
 - `internal/config/config.go` - Configuration options
@@ -578,24 +596,28 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 - `features/bdd/project_detection_bdd_test.go` - BDD scenarios
 
 ### **Configuration Files**
+
 - `examples/project-detection-config.toml` - Example configuration
 - `examples/.env.project-detection` - Environment variables example
 
 ## 🔄 **Migration Strategy**
 
 ### **Phase 1: Backward Compatibility**
+
 - **Optional Field**: Project name remains optional in tool input
 - **Graceful Fallback**: Use existing logic if detection fails
 - **Manual Override**: Users can still specify project name manually
 - **Feature Flag**: Enable/disable detection via configuration
 
 ### **Phase 2: Gradual Rollout**
+
 - **Default Enable**: Detection enabled by default for new installations
 - **User Control**: Configuration option to disable if problematic
 - **Monitoring**: Log detection success/failure rates
 - **Feedback**: Collect user experience data
 
 ### **Phase 3: Enhanced Features**
+
 - **Advanced Detection**: Support for additional VCS (Mercurial, SVN)
 - **Project Mapping**: Custom project name mapping rules
 - **Workspace Detection**: Multi-project workspace support
@@ -604,6 +626,7 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 ## 🧪 **Testing Strategy**
 
 ### **Detection Scenarios**
+
 - **Git Repositories**: HTTPS, SSH, Git protocols
 - **Directory Names**: Valid, invalid, edge cases
 - **Non-Git Projects**: Fallback to directory name
@@ -611,6 +634,7 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 - **Workspace Projects**: Multi-project scenarios
 
 ### **Edge Cases**
+
 - **No Git Repository**: Directory name fallback
 - **Invalid Directory Name**: Default project name
 - **Permission Errors**: Graceful handling
@@ -618,6 +642,7 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 - **Multiple Remotes**: Intelligent selection
 
 ### **Performance Tests**
+
 - **Detection Speed**: Fast project name resolution
 - **Cache Performance**: Caching effectiveness measurement
 - **Memory Usage**: Low memory footprint
@@ -636,6 +661,7 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 - [ ] Documentation updated with new features
 
 ## 🏷️ **Labels**
+
 - `enhancement` - New feature addition
 - `automation` - Automatic detection capabilities
 - `git-integration` - Git repository integration
@@ -644,12 +670,14 @@ func TestComplaintService_CreateComplaintWithAutoProjectDetection(t *testing.T) 
 - `medium-priority` - Important UX improvement
 
 ## 📊 **Priority**: Medium
+
 - **Complexity**: Medium (git integration + fallback logic)
 - **Value**: High (significant UX improvement + data quality)
 - **Risk**: Low (graceful fallbacks ensure reliability)
 - **Dependencies**: None (standalone enhancement)
 
 ## 🤝 **Dependencies**
+
 - **Git Binary**: Requires git command availability
 - **File System**: Read access to current directory
 - **Configuration**: Optional configuration system

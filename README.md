@@ -15,8 +15,9 @@
 ## ✨ Key Features
 
 ### 🏗️ **Core Functionality**
+
 - **📝 Structured Complaint Filing**: Standardized complaint reports with rich metadata
-- **💾 Dual Storage System**: Local project storage + global user-wide tracking  
+- **💾 Dual Storage System**: Local project storage + global user-wide tracking
 - **📅 Intelligent Organization**: Timestamp-based filenames with session context
 - **🔄 Resolution Tracking**: Complete complaint lifecycle management
 - **📄 Documentation Export**: Multi-format export (Markdown, HTML, Text)
@@ -24,6 +25,7 @@
 - **📊 Performance Analytics**: Real-time cache statistics and metrics
 
 ### 🛡️ **Enterprise-Grade Architecture**
+
 - **🏛️ Clean Architecture**: Layered design with clear separation of concerns
 - **🔒 Type Safety**: Strongly-typed domain models with validation
 - **🧵 Thread Safety**: Concurrent-safe operations with proper synchronization
@@ -32,6 +34,7 @@
 - **⚡ High Performance**: LRU caching with O(1) lookups
 
 ### 🆕 **Latest Enhancement (v2.0)**
+
 - **📁 File Path Transparency**: Complete visibility into data storage locations
 - **🛠️ Enhanced MCP Integration**: File paths included in tool responses
 - **🔧 Improved Error Handling**: Graceful degradation with detailed logging
@@ -86,6 +89,7 @@
 ## 📊 Data Model
 
 ### **Complaint Structure**
+
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -108,12 +112,14 @@
 ```
 
 ### **Severity Levels**
+
 - `low` - Minor inconveniences, workarounds available
-- `medium` - Significant productivity impact, unclear alternatives  
+- `medium` - Significant productivity impact, unclear alternatives
 - `high` - Blockers, no clear path forward
 - `critical` - System failure, complete project stall
 
 ### **Resolution States**
+
 - `open` - Complaint filed, awaiting resolution
 - `resolved` - Issue addressed, timestamp recorded
 - `rejected` - Complaint reviewed, deemed invalid
@@ -124,6 +130,7 @@
 ## 🗂️ File Organization & Storage
 
 ### **Primary Storage (JSON)**
+
 ```
 {storage_base_dir}/{complaint_id}.json
 
@@ -133,6 +140,7 @@ Examples:
 ```
 
 ### **Documentation Export (Markdown/HTML/Text)**
+
 ```
 {docs_dir}/{YYYY-MM-DD_HH-MM-SESSION_NAME}.{format}
 
@@ -143,8 +151,9 @@ docs/complaints/2024-11-09_16-45-bug-fix-session.txt
 ```
 
 ### **Project Name Detection**
+
 1. **Git Remote Repository Name** - Primary source
-2. **Current Directory Name** - Fallback option  
+2. **Current Directory Name** - Fallback option
 3. **"unknown-project"** - Last resort default
 
 ---
@@ -152,11 +161,13 @@ docs/complaints/2024-11-09_16-45-bug-fix-session.txt
 ## 🛠️ Installation & Setup
 
 ### **Prerequisites**
+
 - Go 1.21+ with modules
 - Git (for project name detection)
 - 10MB available disk space
 
 ### **Build from Source**
+
 ```bash
 # Clone repository
 git clone https://github.com/LarsArtmann/complaints-mcp.git
@@ -172,9 +183,10 @@ go build -o complaints-mcp ./cmd/server
 ### **Configuration**
 
 #### **Environment Variables**
+
 ```bash
 export COMPLAINTS_MCP_SERVER_NAME="complaints-mcp"
-export COMPLAINTS_MCP_SERVER_HOST="localhost" 
+export COMPLAINTS_MCP_SERVER_HOST="localhost"
 export COMPLAINTS_MCP_SERVER_PORT=8080
 export COMPLAINTS_MCP_STORAGE_BASE_DIR="$HOME/.local/share/complaints"
 export COMPLAINTS_MCP_STORAGE_DOCS_DIR="docs/complaints"
@@ -184,6 +196,7 @@ export COMPLAINTS_MCP_LOG_LEVEL="info"
 ```
 
 #### **Configuration File (YAML)**
+
 ```yaml
 server:
   name: "complaints-mcp"
@@ -192,7 +205,7 @@ server:
 
 storage:
   base_dir: "$HOME/.local/share/complaints"
-  docs_dir: "docs/complaints"  
+  docs_dir: "docs/complaints"
   docs_enabled: true
   docs_format: "markdown"
   max_size: 10485760  # 10MB
@@ -213,6 +226,7 @@ log:
 ## 🚀 Usage & Integration
 
 ### **Running the Server**
+
 ```bash
 # Standard execution
 ./complaints-mcp
@@ -229,6 +243,7 @@ COMPLAINTS_MCP_SERVER_PORT=9090 ./complaints-mcp
 The server exposes the following MCP tools:
 
 #### **file_complaint**
+
 ```json
 {
   "name": "file_complaint",
@@ -252,9 +267,10 @@ The server exposes the following MCP tools:
 ```
 
 #### **list_complaints**
+
 ```json
 {
-  "name": "list_complaints", 
+  "name": "list_complaints",
   "description": "Retrieve paginated list of complaints",
   "inputSchema": {
     "type": "object",
@@ -268,12 +284,13 @@ The server exposes the following MCP tools:
 ```
 
 #### **resolve_complaint**
+
 ```json
 {
   "name": "resolve_complaint",
   "description": "Mark a complaint as resolved",
   "inputSchema": {
-    "type": "object", 
+    "type": "object",
     "properties": {
       "complaint_id": {"type": "string", "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"},
       "resolved_by": {"type": "string", "minLength": 1, "maxLength": 100}
@@ -284,6 +301,7 @@ The server exposes the following MCP tools:
 ```
 
 #### **search_complaints**
+
 ```json
 {
   "name": "search_complaints",
@@ -300,6 +318,7 @@ The server exposes the following MCP tools:
 ```
 
 #### **get_cache_stats**
+
 ```json
 {
   "name": "get_cache_stats",
@@ -314,6 +333,7 @@ The server exposes the following MCP tools:
 ### **AI Assistant Integration**
 
 #### **Crush Integration**
+
 Add to your Crush configuration (`.crush.json`):
 
 ```json
@@ -332,6 +352,7 @@ Add to your Crush configuration (`.crush.json`):
 ```
 
 #### **Claude Integration**
+
 Add to your Claude desktop configuration:
 
 ```json
@@ -350,6 +371,7 @@ Add to your Claude desktop configuration:
 ## 📋 Example Usage Scenarios
 
 ### **Scenario 1: Missing API Documentation**
+
 ```json
 {
   "agent_name": "AI-Coding-Assistant",
@@ -365,9 +387,10 @@ Add to your Claude desktop configuration:
 ```
 
 ### **Scenario 2: Confusing Error Messages**
+
 ```json
 {
-  "agent_name": "Bug-Fix-Assistant", 
+  "agent_name": "Bug-Fix-Assistant",
   "session_name": "memory-leak-debugging",
   "task_description": "Fix memory leak in data processing pipeline",
   "context_info": "Analyzing heap dumps, processing large datasets",
@@ -380,6 +403,7 @@ Add to your Claude desktop configuration:
 ```
 
 ### **Enhanced Response with File Paths (v2.0+)**
+
 ```json
 {
   "success": true,
@@ -402,6 +426,7 @@ Add to your Claude desktop configuration:
 ## 🔧 Development & Testing
 
 ### **Project Structure**
+
 ```
 complaints-mcp/
 ├── cmd/server/                 # Application entry point
@@ -419,6 +444,7 @@ complaints-mcp/
 ```
 
 ### **Running Tests**
+
 ```bash
 # Run all tests
 just test
@@ -435,6 +461,7 @@ go tool cover -html=coverage.out
 ```
 
 ### **Building for Development**
+
 ```bash
 # Build with race detection
 go build -race -o complaints-mcp ./cmd/server
@@ -452,6 +479,7 @@ go build -gcflags="all=-N -l" -o complaints-mcp-debug ./cmd/server
 ## 📊 Performance & Monitoring
 
 ### **Cache Performance**
+
 ```json
 {
   "cache_enabled": true,
@@ -467,6 +495,7 @@ go build -gcflags="all=-N -l" -o complaints-mcp-debug ./cmd/server
 ```
 
 ### **Monitoring Metrics**
+
 - **Request Rate**: Average complaints per minute/hour/day
 - **Resolution Time**: Time from filing to resolution
 - **Storage Usage**: Disk space consumption by complaint data
@@ -474,8 +503,9 @@ go build -gcflags="all=-N -l" -o complaints-mcp-debug ./cmd/server
 - **Error Rate**: Failed operations per time period
 
 ### **Log Levels**
+
 - `trace` - Detailed execution tracing
-- `debug` - Development debugging information  
+- `debug` - Development debugging information
 - `info` - General operational information
 - `warn` - Non-critical issues and deprecations
 - `error` - Failed operations requiring attention
@@ -485,18 +515,21 @@ go build -gcflags="all=-N -l" -o complaints-mcp-debug ./cmd/server
 ## 🔐 Security Considerations
 
 ### **Data Privacy**
+
 - Complaints stored locally with user-controlled locations
 - No external data transmission or cloud storage
 - File permissions respect system umask settings
 - Sensitive information logged at appropriate levels
 
 ### **Access Control**
+
 - File system access respects user permissions
 - No authentication required for local usage
 - Network access disabled by default (stdio transport)
 - Configuration file access controlled by user permissions
 
 ### **Input Validation**
+
 - Strict input validation with length limits
 - Sanitization of file paths to prevent directory traversal
 - SQL injection prevention (not applicable to JSON storage)
@@ -507,12 +540,14 @@ go build -gcflags="all=-N -l" -o complaints-mcp-debug ./cmd/server
 ## 🔄 Migration & Upgrades
 
 ### **Version Compatibility**
+
 - **Backward Compatible**: All existing JSON files supported
 - **Configuration Migration**: Automatic detection of old config formats
 - **API Stability**: MCP tool contracts maintained across versions
 - **Data Migration**: Built-in conversion utilities for legacy formats
 
 ### **Upgrade Process**
+
 ```bash
 # Backup existing data
 cp -r ~/.local/share/complaints ~/.local/share/complaints.backup
@@ -534,6 +569,7 @@ go build -o complaints-mcp ./cmd/server
 ### **Common Issues**
 
 #### **Server Won't Start**
+
 ```bash
 # Check configuration
 ./complaints-mcp --validate-config
@@ -546,6 +582,7 @@ lsof -i :8080
 ```
 
 #### **Complaints Not Saving**
+
 ```bash
 # Check disk space
 df -h ~/.local/share/
@@ -558,6 +595,7 @@ touch ~/.local/share/complaints/test.json
 ```
 
 #### **Performance Issues**
+
 ```bash
 # Check cache statistics
 echo '{"tool": "get_cache_stats"}' | ./complaints-mcp
@@ -570,6 +608,7 @@ go test -bench=. ./internal/repo/
 ```
 
 ### **Debug Mode**
+
 ```bash
 # Enable comprehensive debugging
 COMPLAINTS_MCP_LOG_LEVEL=debug ./complaints-mcp --trace
@@ -577,7 +616,7 @@ COMPLAINTS_MCP_LOG_LEVEL=debug ./complaints-mcp --trace
 # Generate bug report
 ./complaints-mcp --bug-report > bug-report.txt
 
-# Validate data integrity  
+# Validate data integrity
 ./complaints-mcp --validate-data
 ```
 
@@ -586,18 +625,21 @@ COMPLAINTS_MCP_LOG_LEVEL=debug ./complaints-mcp --trace
 ## 📚 Documentation & Resources
 
 ### **Project Documentation**
+
 - [**Architecture Guide**](docs/architecture/) - Complete architectural overview
 - [**Implementation Strategy**](docs/strategy/) - Development approach and decisions
 - [**Status Reports**](docs/status/) - Progress tracking and milestones
 - [**Issue Resolution**](docs/ISSUES_45_46_RESOLUTION.md) - Problem-solving documentation
 
 ### **External References**
+
 - [**MCP Specification**](https://modelcontextprotocol.io/) - Protocol documentation
 - [**Clean Architecture**](https://blog.cleancoder.com/uncle-bob-2017-architecture-01-part01/) - Architectural patterns
 - [**Domain-Driven Design**](https://dddcommunity.org/) - Design principles
 - [**Behavior-Driven Development**](https://cucumber.io/docs/bdd/) - Testing methodology
 
 ### **Community & Support**
+
 - **GitHub Issues**: [Report bugs and feature requests](https://github.com/LarsArtmann/complaints-mcp/issues)
 - **Discussions**: [Community support and Q&A](https://github.com/LarsArtmann/complaints-mcp/discussions)
 - **Contributing**: [Development guidelines](CONTRIBUTING.md)
@@ -610,6 +652,7 @@ COMPLAINTS_MCP_LOG_LEVEL=debug ./complaints-mcp --trace
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### **Development Workflow**
+
 1. Fork repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
@@ -617,6 +660,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed gu
 5. Open Pull Request
 
 ### **Code Standards**
+
 - Follow Go conventions and `gofmt` formatting
 - Maintain test coverage above 80%
 - Add comprehensive BDD tests for new features
@@ -634,6 +678,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🎯 Roadmap & Future Development
 
 ### **Upcoming Features (v2.1)**
+
 - [ ] **Plugin Architecture** - Extensible tool system
 - [ ] **Advanced Search** - Filtering, sorting, faceted search
 - [ ] **Analytics Dashboard** - Web-based monitoring interface
@@ -641,6 +686,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] **API Server** - RESTful HTTP interface option
 
 ### **Long-term Vision (v3.0)**
+
 - [ ] **Multi-tenant Support** - Organization-level isolation
 - [ ] **Event Sourcing** - Complete audit trail and replay
 - [ ] **Machine Learning** - Automatic categorization and prioritization

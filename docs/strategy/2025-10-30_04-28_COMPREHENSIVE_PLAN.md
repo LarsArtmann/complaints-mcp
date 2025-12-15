@@ -9,11 +9,13 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 ## 📊 **CURRENT STATE ANALYSIS**
 
 ### ✅ **STRENGTHS TO LEVERAGE**
+
 - **MCP SDK Integration**: Already working with Model Context Protocol
 - **Complaint Domain Logic**: Core business logic well-defined
 - **File Storage**: Basic persistence layer exists
 
 ### 🚨 **CRITICAL ARCHITECTURAL ISSUES**
+
 - **No Domain Separation**: Business logic mixed with infrastructure
 - **Hardcoded Configuration**: No configuration management
 - **Zero Testing**: No unit tests, no BDD implementation
@@ -68,83 +70,89 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 ## 🚀 **EXECUTION ROADMAP**
 
 ### **PHASE 1: FOUNDATION (Week 1-2)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Setup proper Go modules | 🔥 CRITICAL | 2h | None | ✅ |
-| Add DI container setup | 🔥 CRITICAL | 1h | ✅ | ✅ |
-| Implement domain entities | 🔥 CRITICAL | 3h | ✅ | ✅ |
-| Add repository interfaces | 🔥 CRITICAL | 2h | ✅ | ✅ |
-| Create base application structure | 🔥 CRITICAL | 2h | ✅ | ✅ |
-| Add configuration management | 🔥 CRITICAL | 2h | ✅ | ✅ |
+
+| **Task**                          | **Priority** | **Time** | **Dependencies** |
+| --------------------------------- | ------------ | -------- | ---------------- | --- |
+| Setup proper Go modules           | 🔥 CRITICAL  | 2h       | None             | ✅  |
+| Add DI container setup            | 🔥 CRITICAL  | 1h       | ✅               | ✅  |
+| Implement domain entities         | 🔥 CRITICAL  | 3h       | ✅               | ✅  |
+| Add repository interfaces         | 🔥 CRITICAL  | 2h       | ✅               | ✅  |
+| Create base application structure | 🔥 CRITICAL  | 2h       | ✅               | ✅  |
+| Add configuration management      | 🔥 CRITICAL  | 2h       | ✅               | ✅  |
 
 ### **PHASE 2: CORE SERVICES (Week 2-3)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Implement repository pattern | 🔥 HIGH | 4h | Phase 1 | ✅ |
-| Add database abstraction | 🔥 HIGH | 6h | ✅ | ✅ |
-| Add logging infrastructure | 🔥 HIGH | 3h | ✅ | ✅ |
-| Add validation layer | 🔥 HIGH | 2h | ✅ | ✅ |
-| Implement MCP server refactoring | 🔥 HIGH | 4h | Phase 1 | ✅ |
-| Add service layer | 🔥 HIGH | 3h | Phase 1 | ✅ |
-| Add use cases layer | 🔥 HIGH | 3h | ✅ | ✅ |
+
+| **Task**                         | **Priority** | **Time** | **Dependencies** |
+| -------------------------------- | ------------ | -------- | ---------------- | --- |
+| Implement repository pattern     | 🔥 HIGH      | 4h       | Phase 1          | ✅  |
+| Add database abstraction         | 🔥 HIGH      | 6h       | ✅               | ✅  |
+| Add logging infrastructure       | 🔥 HIGH      | 3h       | ✅               | ✅  |
+| Add validation layer             | 🔥 HIGH      | 2h       | ✅               | ✅  |
+| Implement MCP server refactoring | 🔥 HIGH      | 4h       | Phase 1          | ✅  |
+| Add service layer                | 🔥 HIGH      | 3h       | Phase 1          | ✅  |
+| Add use cases layer              | 🔥 HIGH      | 3h       | ✅               | ✅  |
 
 ### **PHASE 3: WEB INTERFACE (Week 3-4)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Add HTTP server with gin | 🟡 MEDIUM | 2h | Phase 2 | ✅ |
-| Add REST API endpoints | 🟡 MEDIUM | 4h | Phase 2 | ✅ |
-| Add middleware system | 🟡 MEDIUM | 2h | Phase 2 | ✅ |
-| Add authentication/authorization | 🟡 MEDIUM | 6h | ✅ | ✅ |
-| Add request/response DTOs | 🟡 MEDIUM | 2h | Phase 2 | ✅ |
-| Add API documentation | 🟡 MEDIUM | 3h | Phase 2 | ✅ |
+
+| **Task**                         | **Priority** | **Time** | **Dependencies** |
+| -------------------------------- | ------------ | -------- | ---------------- | --- |
+| Add HTTP server with gin         | 🟡 MEDIUM    | 2h       | Phase 2          | ✅  |
+| Add REST API endpoints           | 🟡 MEDIUM    | 4h       | Phase 2          | ✅  |
+| Add middleware system            | 🟡 MEDIUM    | 2h       | Phase 2          | ✅  |
+| Add authentication/authorization | 🟡 MEDIUM    | 6h       | ✅               | ✅  |
+| Add request/response DTOs        | 🟡 MEDIUM    | 2h       | Phase 2          | ✅  |
+| Add API documentation            | 🟡 MEDIUM    | 3h       | Phase 2          | ✅  |
 
 ### **PHASE 4: OBSERVABILITY (Week 4-5)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Add structured logging with zap | 🟡 MEDIUM | 2h | Phase 3 | ✅ |
-| Add OpenTelemetry tracing | 🟡 MEDIUM | 4h | ✅ | ✅ |
-| Add metrics collection | 🟡 MEDIUM | 3h | Phase 3 | ✅ |
-| Add health checks | 🟡 MEDIUM | 2h | Phase 3 | ✅ |
-| Add monitoring dashboard | 🟡 MEDIUM | 4h | Phase 3 | ✅ |
+
+| **Task**                        | **Priority** | **Time** | **Dependencies** |
+| ------------------------------- | ------------ | -------- | ---------------- | --- |
+| Add structured logging with zap | 🟡 MEDIUM    | 2h       | Phase 3          | ✅  |
+| Add OpenTelemetry tracing       | 🟡 MEDIUM    | 4h       | ✅               | ✅  |
+| Add metrics collection          | 🟡 MEDIUM    | 3h       | Phase 3          | ✅  |
+| Add health checks               | 🟡 MEDIUM    | 2h       | Phase 3          | ✅  |
+| Add monitoring dashboard        | 🟡 MEDIUM    | 4h       | Phase 3          | ✅  |
 
 ### **PHASE 5: TESTING (Week 5-6)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Add unit tests with ginkgo | 🔥 HIGH | 6h | Phase 1 | ✅ |
-| Add integration tests | 🔥 HIGH | 4h | Phases 1-4 | ✅ |
-| Add BDD tests with godog | 🔥 HIGH | 3h | Phases 1-4 | ✅ |
-| Add test fixtures | 🟡 MEDIUM | 2h | Phase 1 | ✅ |
-| Add performance tests | 🟡 MEDIUM | 3h | Phases 1-4 | ✅ |
-| Add CI/CD pipeline | 🟡 MEDIUM | 3h | All phases | ✅ |
+
+| **Task**                   | **Priority** | **Time** | **Dependencies** |
+| -------------------------- | ------------ | -------- | ---------------- | --- |
+| Add unit tests with ginkgo | 🔥 HIGH      | 6h       | Phase 1          | ✅  |
+| Add integration tests      | 🔥 HIGH      | 4h       | Phases 1-4       | ✅  |
+| Add BDD tests with godog   | 🔥 HIGH      | 3h       | Phases 1-4       | ✅  |
+| Add test fixtures          | 🟡 MEDIUM    | 2h       | Phase 1          | ✅  |
+| Add performance tests      | 🟡 MEDIUM    | 3h       | Phases 1-4       | ✅  |
+| Add CI/CD pipeline         | 🟡 MEDIUM    | 3h       | All phases       | ✅  |
 
 ### **PHASE 6: PRODUCTION (Week 6-8)**
-| **Task** | **Priority** | **Time** | **Dependencies** |
-|---------|------------|----------|--------------|--------------|
-| Add Docker deployment | 🔥 HIGH | 3h | Phase 3 | ✅ |
-| Add Kubernetes manifests | 🟡 MEDIUM | 4h | All phases | ✅ |
-| Add environment-specific configs | 🟡 MEDIUM | 2h | Phase 1 | ✅ |
-| Add security hardening | 🔥 HIGH | 4h | All phases | ✅ |
-| Add performance optimization | 🟡 MEDIUM | 3h | All phases | ✅ |
-| Add scaling support | 🟡 MEDIUM | 5h | All phases | ✅ |
-| Production monitoring | 🔥 HIGH | 2h | Phases 3-4 | ✅ |
+
+| **Task**                         | **Priority** | **Time** | **Dependencies** |
+| -------------------------------- | ------------ | -------- | ---------------- | --- |
+| Add Docker deployment            | 🔥 HIGH      | 3h       | Phase 3          | ✅  |
+| Add Kubernetes manifests         | 🟡 MEDIUM    | 4h       | All phases       | ✅  |
+| Add environment-specific configs | 🟡 MEDIUM    | 2h       | Phase 1          | ✅  |
+| Add security hardening           | 🔥 HIGH      | 4h       | All phases       | ✅  |
+| Add performance optimization     | 🟡 MEDIUM    | 3h       | All phases       | ✅  |
+| Add scaling support              | 🟡 MEDIUM    | 5h       | All phases       | ✅  |
+| Production monitoring            | 🔥 HIGH      | 2h       | Phases 3-4       | ✅  |
 
 ---
 
 ## 🔧 **TECHNOLOGY STACK DECISIONS**
 
-| **Layer** | **Technology** | **Rationale** |
-|------------|------------|-------------|
-| **Configuration** | spf13/viper | Industry standard, battle-tested, YAML/JSON support |
-| **Dependency Injection** | samber/do | Modern runtime DI, excellent performance |
-| **Logging** | uber.org/zap | Structured logging, high performance |
-| **Validation** | go-playground/validator | Field validation, comprehensive |
-| **HTTP Framework** | gin-gonic/gin | Performance, ecosystem, middleware |
-| **Database** | sqlc-dev/sqlc | Type-safe SQL, compile-time checks |
-| **Testing** | onsi/ginkgo | BDD support, expressive specs |
-| **Observability** | open-telemetry/opentelemetry | CNCF standard, cloud-native |
-| **Error Handling** | pkg/errors | Type-safe error domain |
-| **Functional** | samber/mo | Monads, functional patterns |
-| **Utilities** | samber/lo | Lodash-style helpers |
+| **Layer**                | **Technology**               | **Rationale**                                       |
+| ------------------------ | ---------------------------- | --------------------------------------------------- |
+| **Configuration**        | spf13/viper                  | Industry standard, battle-tested, YAML/JSON support |
+| **Dependency Injection** | samber/do                    | Modern runtime DI, excellent performance            |
+| **Logging**              | uber.org/zap                 | Structured logging, high performance                |
+| **Validation**           | go-playground/validator      | Field validation, comprehensive                     |
+| **HTTP Framework**       | gin-gonic/gin                | Performance, ecosystem, middleware                  |
+| **Database**             | sqlc-dev/sqlc                | Type-safe SQL, compile-time checks                  |
+| **Testing**              | onsi/ginkgo                  | BDD support, expressive specs                       |
+| **Observability**        | open-telemetry/opentelemetry | CNCF standard, cloud-native                         |
+| **Error Handling**       | pkg/errors                   | Type-safe error domain                              |
+| **Functional**           | samber/mo                    | Monads, functional patterns                         |
+| **Utilities**            | samber/lo                    | Lodash-style helpers                                |
 
 ---
 
@@ -153,8 +161,9 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 ### **FOUNDATION (95 tasks - 12min each)**
 
 #### **Go Modules & Dependencies (5 tasks)**
+
 1. Add viper config dependency
-2. Add samber/do dependency  
+2. Add samber/do dependency
 3. Add go-playground/validator dependency
 4. Add uber.org/zap logging dependency
 5. Add gin-gonic/gin HTTP dependency
@@ -170,6 +179,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 15. Create internal/pkg/errors for domain errors
 
 #### **Configuration Layer Setup (10 tasks)**
+
 16. Create internal/config package structure
 17. Add config.go with validation structs
 18. Implement config loading with viper
@@ -182,6 +192,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 25. Add configuration versioning
 
 #### **Domain Layer Setup (15 tasks)**
+
 26. Create internal/domain package structure
 27. Implement Complaint aggregate root
 28. Add ComplaintID value object
@@ -199,6 +210,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 40. Add anti-corruption rules in domain
 
 #### **Infrastructure Layer Setup (20 tasks)**
+
 41. Create internal/infra package structure
 42. Add repository pattern interfaces
 43. Implement in-memory repository for testing
@@ -221,6 +233,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 60. Add monitoring instrumentation
 
 #### **Application Layer Setup (10 tasks)**
+
 61. Create internal/app package structure
 62. Add application service interfaces
 63. Add use case layer
@@ -233,6 +246,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 70. Add application events handling
 
 #### **Testing Layer Setup (15 tasks)**
+
 71. Create test package structure
 72. Add unit test setup with ginkgo
 73. Add test utilities and fixtures
@@ -250,6 +264,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 85. Add test reporting and coverage
 
 #### **HTTP & API Layer Setup (10 tasks)**
+
 86. Create internal/delivery/http package structure
 87. Add gin router setup with middleware
 88. Add HTTP handler patterns
@@ -266,6 +281,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 ## 🎯 **SUCCESS METRICS**
 
 ### **Technical Excellence**
+
 - ✅ Domain-Driven Design with proper boundaries
 - ✅ Clean Architecture with dependency injection
 - ✅ Production-ready observability (logging, tracing, metrics)
@@ -276,6 +292,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 - ✅ Cloud-native deployment with Docker/K8s
 
 ### **Business Value**
+
 - 🎯 **AI Developer Productivity**: 10x improvement in development experience
 - 🎯 **Quality Assurance**: Comprehensive validation and error handling
 - 🎯 **Operational Excellence**: Real-time monitoring and alerting
@@ -283,6 +300,7 @@ Transform complaints-mcp from a basic prototype into a **production-ready, enter
 - 🎯 **Maintainability**: Clean, documented, testable code
 
 ### **Development Experience**
+
 - 🚀 **Hot Reload**: Configuration changes without restart
 - 🚀 **Debug Mode**: Comprehensive debugging support
 - 🚀 **Auto-completion**: CLI help and suggestions
@@ -309,18 +327,19 @@ This refactoring will transform complaints-mcp into a **world-class Go applicati
 
 ## 🔥 **RISKS & MITIGATIONS**
 
-| **Risk** | **Mitigation** |
-|------------|--------------|
-| **Scope Creep** | Strict phase gates, regular reviews |
-| **Technical Debt** | Automated refactoring, code quality tools |
-| **Complexity** | Modular design, clear interfaces |
-| **Performance** | Benchmarking, optimization cycles |
-| **Integration** | Comprehensive testing, staging environment |
-| **Security** | Security reviews, dependency scanning |
+| **Risk**           | **Mitigation**                             |
+| ------------------ | ------------------------------------------ |
+| **Scope Creep**    | Strict phase gates, regular reviews        |
+| **Technical Debt** | Automated refactoring, code quality tools  |
+| **Complexity**     | Modular design, clear interfaces           |
+| **Performance**    | Benchmarking, optimization cycles          |
+| **Integration**    | Comprehensive testing, staging environment |
+| **Security**       | Security reviews, dependency scanning      |
 
 ## 🚀 **TARGET OUTCOME**
 
 Transform from basic prototype to **enterprise-grade MCP server** that can:
+
 - Handle 10,000+ concurrent requests
 - Store and process millions of complaints
 - Provide real-time analytics and insights
@@ -329,4 +348,4 @@ Transform from basic prototype to **enterprise-grade MCP server** that can:
 
 ---
 
-*This comprehensive plan establishes complaints-mcp as a reference implementation for Go-based microservices, demonstrating modern software engineering practices and delivering exceptional business value.*
+_This comprehensive plan establishes complaints-mcp as a reference implementation for Go-based microservices, demonstrating modern software engineering practices and delivering exceptional business value._

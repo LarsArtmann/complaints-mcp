@@ -3,9 +3,11 @@
 ## 🎯 **Enhancement: API Schema Updates for Phantom Type Integration**
 
 ### **Current State Analysis**
+
 The JSON schemas in MCP tool handlers still expect nested ID structures, but phantom types produce flat structures:
 
 **❌ Current Schema Expectation (Nested):**
+
 ```json
 {
   "complaint_id": {
@@ -15,6 +17,7 @@ The JSON schemas in MCP tool handlers still expect nested ID structures, but pha
 ```
 
 **✅ New Phantom Type Output (Flat):**
+
 ```json
 {
   "complaint_id": "550e8400-e29b-41d4-a716-446655440000"
@@ -22,7 +25,9 @@ The JSON schemas in MCP tool handlers still expect nested ID structures, but pha
 ```
 
 ### **Problem Identified**
+
 This schema mismatch will cause:
+
 - **Tool Input Validation Failures**: MCP clients sending flat strings rejected
 - **API Documentation Confusion**: Docs show wrong structure
 - **Integration Issues**: External tools broken
@@ -33,6 +38,7 @@ This schema mismatch will cause:
 ### **Phase 1: MCP Tool Schema Updates**
 
 #### **resolve_complaint Tool Schema**
+
 ```go
 // ❌ Current (nested)
 resolveComplaintTool := &mcp.Tool{
@@ -92,6 +98,7 @@ resolveComplaintTool := &mcp.Tool{
 ```
 
 #### **file_complaint Tool Schema (Updated for typed IDs)**
+
 ```go
 // ✅ Updated (flat with typed ID examples)
 fileComplaintTool := &mcp.Tool{
@@ -203,6 +210,7 @@ fileComplaintTool := &mcp.Tool{
 ```
 
 #### **list_complaints Tool Schema**
+
 ```go
 // ✅ Updated (flat with improved filtering)
 listComplaintsTool := &mcp.Tool{
@@ -265,6 +273,7 @@ listComplaintsTool := &mcp.Tool{
 ```
 
 #### **search_complaints Tool Schema**
+
 ```go
 // ✅ Updated (enhanced with search options)
 searchComplaintsTool := &mcp.Tool{
@@ -314,6 +323,7 @@ searchComplaintsTool := &mcp.Tool{
 ```
 
 #### **get_cache_stats Tool Schema (Enhanced)**
+
 ```go
 // ✅ Updated (enhanced with detailed stats)
 getCacheStatsTool := &mcp.Tool{
@@ -339,6 +349,7 @@ getCacheStatsTool := &mcp.Tool{
 ### **Phase 2: Output Schema Documentation**
 
 #### **Expected Tool Responses (Updated)**
+
 ```json
 // file_complaint response
 {
@@ -433,7 +444,8 @@ getCacheStatsTool := &mcp.Tool{
 ### **Phase 3: Documentation Updates**
 
 #### **README.md Schema Examples**
-```markdown
+
+````markdown
 ## MCP Tool Interface
 
 ### file_complaint
@@ -461,10 +473,11 @@ getCacheStatsTool := &mcp.Tool{
     "required": ["agent_name", "task_description", "severity"]
   }
 }
-```
+````
 
 #### **API Migration Guide**
-```markdown
+
+````markdown
 ## API Migration Guide: v1.0 → v2.0
 
 ### ID Field Structure Changes
@@ -476,9 +489,10 @@ getCacheStatsTool := &mcp.Tool{
     "Value": "550e8400-e29b-41d4-a716-446655440000"
   }
 }
-```
+````
 
 #### After (Flat)
+
 ```json
 {
   "complaint_id": "550e8400-e29b-41d4-a716-446655440000"
@@ -496,6 +510,7 @@ getCacheStatsTool := &mcp.Tool{
 ### Example Migration
 
 #### Tool Call Update
+
 ```json
 // ❌ Before (nested)
 {
@@ -510,7 +525,7 @@ getCacheStatsTool := &mcp.Tool{
 
 // ✅ After (flat)
 {
-  "tool": "resolve_complaint", 
+  "tool": "resolve_complaint",
   "arguments": {
     "complaint_id": "550e8400-e29b-41d4-a716-446655440000",
     "resolved_by": "AI-Assistant"
@@ -519,6 +534,7 @@ getCacheStatsTool := &mcp.Tool{
 ```
 
 #### Validation Update
+
 ```json
 // ❌ Before (nested validation)
 {
@@ -539,7 +555,8 @@ getCacheStatsTool := &mcp.Tool{
   }
 }
 ```
-```
+
+````
 
 ### **Phase 4: Test Schema Updates**
 
@@ -567,9 +584,10 @@ Feature: MCP Tool Schema Validation
     When I call any tool with nested ID structure
     Then the tool should reject the nested format
     And should return appropriate validation error
-```
+````
 
 #### **Unit Test Updates**
+
 ```go
 func TestToolSchema_FlatIDValidation(t *testing.T) {
     tests := []struct {
@@ -607,7 +625,7 @@ func TestToolSchema_FlatIDValidation(t *testing.T) {
             errorMsg: "complaint_id must match UUID v4 pattern",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             _, err := validateResolveComplaintInput(tt.input)
@@ -625,6 +643,7 @@ func TestToolSchema_FlatIDValidation(t *testing.T) {
 ## 🎯 **Benefits of Schema Updates**
 
 ### **1. Consistency with Phantom Types**
+
 ```go
 // ✅ Aligned: Schema matches actual output
 type ComplaintDTO struct {
@@ -641,6 +660,7 @@ type ComplaintDTO struct {
 ```
 
 ### **2. Better Developer Experience**
+
 ```json
 {
   "complaint_id": {
@@ -653,12 +673,14 @@ type ComplaintDTO struct {
 ```
 
 ### **3. Improved Validation**
+
 - **Pattern Matching**: Direct string validation
 - **Clear Examples**: Real-world format examples
 - **Better Error Messages**: Specific validation failures
 - **Type Safety**: Schema enforces correct types
 
 ### **4. Enhanced Documentation**
+
 - **Migration Guide**: Clear upgrade path
 - **Examples**: Before/after comparisons
 - **Validation Rules**: Detailed pattern explanations
@@ -667,16 +689,19 @@ type ComplaintDTO struct {
 ## 📋 **Files to Modify**
 
 ### **Core Schema Files**
+
 - `internal/delivery/mcp/mcp_server.go` - Update all tool schemas
 - `internal/delivery/mcp/dto.go` - Verify DTO structure alignment
 - `internal/delivery/mcp/input_validation.go` - Update validation logic
 
 ### **Test Files**
+
 - `features/bdd/mcp_integration_bdd_test.go` - Update BDD scenarios
 - `internal/delivery/mcp/mcp_server_test.go` - Update schema tests
 - `features/bdd/schema_validation_bdd_test.go` - Add new schema tests
 
 ### **Documentation Files**
+
 - `README.md` - Update tool interface documentation
 - `docs/API_SCHEMA.md` - Create comprehensive schema reference
 - `docs/MIGRATION_GUIDE.md` - Create v1→v2 migration guide
@@ -685,21 +710,25 @@ type ComplaintDTO struct {
 ## 🔄 **Migration Strategy**
 
 ### **Phase 1: Schema Updates**
+
 - Update all tool schemas to flat ID format
 - Add comprehensive examples and patterns
 - Ensure validation logic matches schema
 
 ### **Phase 2: Documentation Updates**
+
 - Update README.md with new schema examples
 - Create migration guide for existing users
 - Add API schema reference documentation
 
 ### **Phase 3: Test Updates**
+
 - Update BDD tests for flat ID format
 - Add schema validation tests
 - Update integration test expectations
 
 ### **Phase 4: Validation**
+
 - Test all tool schemas with flat ID inputs
 - Verify error messages are clear and helpful
 - Ensure backward compatibility guidelines are followed
@@ -707,11 +736,12 @@ type ComplaintDTO struct {
 ## 🧪 **Testing Strategy**
 
 ### **Schema Validation Tests**
+
 ```go
 func TestToolSchema_FlatIDSupport(t *testing.T) {
     // Test that all tool schemas accept flat ID format
     tools := []Tool{fileComplaintTool, resolveComplaintTool, listComplaintsTool}
-    
+
     for _, tool := range tools {
         t.Run(tool.Name, func(t *testing.T) {
             // Test flat ID inputs
@@ -720,7 +750,7 @@ func TestToolSchema_FlatIDSupport(t *testing.T) {
                 err := validateToolInput(tool, input)
                 assert.NoError(t, err, "Tool %s should accept flat ID input: %+v", tool.Name, input)
             }
-            
+
             // Test nested ID inputs (should fail)
             nestedInputs := generateNestedIDInputs(tool.Name)
             for _, input := range nestedInputs {
@@ -733,21 +763,22 @@ func TestToolSchema_FlatIDSupport(t *testing.T) {
 ```
 
 ### **Integration Tests**
+
 ```go
 func TestMCPServer_FlatIDIntegration(t *testing.T) {
     server := setupTestServer()
-    
+
     // Test complete workflow with flat IDs
     t.Run("Complete Workflow", func(t *testing.T) {
         // 1. File complaint with flat agent ID
         complaintID := fileComplaintWithFlatID(server)
-        
+
         // 2. Resolve complaint with flat complaint ID
         resolveComplaintWithFlatID(server, complaintID)
-        
+
         // 3. List complaints with flat filter
         listComplaintsWithFlatIDs(server)
-        
+
         // 4. Search complaints with flat query
         searchComplaintsWithFlatQuery(server)
     })
@@ -755,6 +786,7 @@ func TestMCPServer_FlatIDIntegration(t *testing.T) {
 ```
 
 ### **BDD Tests**
+
 ```gherkin
 Feature: Flat ID Schema Support
   As an AI assistant
@@ -787,18 +819,21 @@ Feature: Flat ID Schema Support
 ## ⚠️ **Breaking Changes**
 
 ### **API Contract Changes**
+
 - **Input Format**: IDs change from nested objects to flat strings
 - **Validation Rules**: Direct string validation instead of object validation
 - **Error Messages**: Updated to reflect flat ID format expectations
 - **Examples**: All documentation examples updated to flat format
 
 ### **Migration Impact**
+
 - **Tool Calls**: All clients need to use flat ID format
 - **Integration Points**: External tools must update ID handling
 - **Test Suites**: Existing tests need schema updates
 - **Documentation**: All API docs need format updates
 
 ### **Mitigation Strategy**
+
 - **Migration Guide**: Step-by-step upgrade instructions
 - **Backward Compatibility Window**: Support both formats during transition
 - **Clear Error Messages**: Helpful validation errors for format issues
@@ -817,6 +852,7 @@ Feature: Flat ID Schema Support
 - [ ] Performance impact is minimal
 
 ## 🏷️ **Labels**
+
 - `documentation` - API documentation updates
 - `breaking-change` - Changes API contract
 - `api` - MCP tool interface updates
@@ -825,12 +861,14 @@ Feature: Flat ID Schema Support
 - `validation` - Schema validation improvements
 
 ## 📊 **Priority**: High
+
 - **Complexity**: Medium (schema updates + documentation)
 - **Value**: High (enables phantom type integration)
 - **Risk**: Medium (breaking changes require migration)
 - **Dependencies**: Issue #48 (phantom types), Issue #49 (ID field conversion)
 
 ## 🤝 **Dependencies**
+
 - **Issue #48**: Must have phantom types implemented first
 - **Issue #49**: Should have ID fields converted to phantom types
 - **Issue #50**: Need validation constructors for schema examples

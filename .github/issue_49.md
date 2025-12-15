@@ -3,13 +3,14 @@
 ## 🎯 **Enhancement: Comprehensive Type Safety Improvements**
 
 ### **Current State Analysis**
+
 The codebase currently uses string types for many identifier fields, creating potential for type confusion:
 
 ```go
 // Current implementation (type confusion possible)
 type Complaint struct {
     ID          string        // Generic string
-    AgentName    string        // Generic string  
+    AgentName    string        // Generic string
     SessionName  string        // Generic string
     ProjectName  string        // Generic string
 }
@@ -21,6 +22,7 @@ func Process(agentName, sessionName string) error {
 ```
 
 ### **Target State**
+
 Replace string-typed identifiers with strongly-typed phantom types:
 
 ```go
@@ -28,7 +30,7 @@ Replace string-typed identifiers with strongly-typed phantom types:
 type Complaint struct {
     ID          ComplaintID   // Compile-time safe
     AgentID     AgentID       // Compile-time safe
-    SessionID   SessionID     // Compile-time safe  
+    SessionID   SessionID     // Compile-time safe
     ProjectID   ProjectID     // Compile-time safe
 }
 
@@ -41,6 +43,7 @@ func Process(agentID AgentID, sessionID SessionID) error {
 ## 🛠️ **Implementation Plan**
 
 ### **Phase 1: Phantom Type Definitions**
+
 ```go
 // Phantom types with compile-time safety
 type (
@@ -60,7 +63,7 @@ func NewAgentID(name string) (AgentID, error) {
 
 func NewSessionID(name string) (SessionID, error) {
     if !isValidSessionName(name) {
-        return SessionID(""), fmt.Errorf("invalid session name")  
+        return SessionID(""), fmt.Errorf("invalid session name")
     }
     return SessionID(name), nil
 }
@@ -87,6 +90,7 @@ func (id ProjectID) IsEmpty() bool    { return string(id) == "" }
 ```
 
 ### **Phase 2: Domain Entity Updates**
+
 ```go
 // Updated Complaint struct
 type Complaint struct {
@@ -108,6 +112,7 @@ type Complaint struct {
 ```
 
 ### **Phase 3: Repository Interface Updates**
+
 ```go
 // Updated repository interface
 type Repository interface {
@@ -130,6 +135,7 @@ type Repository interface {
 ```
 
 ### **Phase 4: Service Method Updates**
+
 ```go
 // Updated service methods
 func (s *ComplaintService) CreateComplaint(
@@ -155,6 +161,7 @@ func (s *ComplaintService) GetComplaintsByProject(
 ```
 
 ### **Phase 5: MCP Handler Updates**
+
 ```go
 // Updated handler signatures
 func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
@@ -163,17 +170,17 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid agent name: %w", err)
     }
-    
+
     sessionID, err := domain.NewSessionID(input.SessionName)
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid session name: %w", err)
     }
-    
+
     projectID, err := domain.NewProjectID(input.ProjectName)
     if err != nil {
         return nil, FileComplaintOutput{}, fmt.Errorf("invalid project name: %w", err)
     }
-    
+
     // Call service with typed IDs
     complaint, err := m.service.CreateComplaint(
         ctx, agentID, sessionID, input.TaskDescription,
@@ -185,6 +192,7 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 ```
 
 ### **Phase 6: DTO Updates**
+
 ```go
 // Updated DTO structure
 type ComplaintDTO struct {
@@ -230,6 +238,7 @@ func ToDTO(complaint *domain.Complaint) ComplaintDTO {
 ## 🎯 **Benefits of This Change**
 
 ### **1. Compile-Time Type Safety**
+
 ```go
 // ❌ Before: Possible to mix IDs
 func Process(agentName, sessionName string) error {
@@ -243,18 +252,21 @@ func Process(agentID AgentID, sessionID SessionID) error {
 ```
 
 ### **2. Better IDE Support**
+
 - **Smart Completion**: Only appropriate IDs suggested
 - **Refactoring**: Rename IDs safely across codebase
 - **Navigation**: Jump to ID definition easily
 - **Type Hints**: Clear what each ID represents
 
 ### **3. Reduced Bugs**
+
 - **Prevents ID Mixups**: Type system catches mistakes
 - **Clearer Intent**: Code communicates ID purpose
 - **Validation**: IDs can include validation logic
 - **Self-Documenting**: Type names describe content
 
 ### **4. Future Extensibility**
+
 - **Type-Specific Methods**: Add behavior per ID type
 - **Validation**: Centralized validation per ID type
 - **Serialization**: Custom JSON handling per ID type
@@ -263,42 +275,50 @@ func Process(agentID AgentID, sessionID SessionID) error {
 ## 📋 **Files to Modify**
 
 ### **Domain Layer**
+
 - `internal/domain/complaint.go` - Update struct and methods
 - `internal/domain/agent_name.go` - Convert to AgentID
-- `internal/domain/session_name.go` - Convert to SessionID  
+- `internal/domain/session_name.go` - Convert to SessionID
 - `internal/domain/project_name.go` - Convert to ProjectID
 
 ### **Repository Layer**
+
 - `internal/repo/repository.go` - Update interface
 - `internal/repo/file_repository.go` - Update implementations
 - `internal/repo/cached_repository.go` - Update implementations
 
 ### **Service Layer**
+
 - `internal/service/complaint_service.go` - Update method signatures
 - `internal/service/complaint_service_test.go` - Update tests
 
 ### **Delivery Layer**
+
 - `internal/delivery/mcp/mcp_server.go` - Update handlers
 - `internal/delivery/mcp/dto.go` - Update DTOs and conversions
 
 ### **Test Layer**
+
 - `features/bdd/*.go` - Update BDD tests
 - `internal/domain/*_test.go` - Update unit tests
 
 ## 🔄 **Migration Strategy**
 
 ### **Step 1: Backward Compatibility**
+
 - Keep existing string fields temporarily
 - Add new typed ID fields alongside
 - Implement both string and ID methods
 
 ### **Step 2: Gradual Migration**
+
 - Update domain entities first
 - Move to repository layer
 - Update service methods
 - Modify delivery handlers
 
 ### **Step 3: Cleanup**
+
 - Remove old string fields
 - Update all method signatures
 - Clean up test fixtures
@@ -307,6 +327,7 @@ func Process(agentID AgentID, sessionID SessionID) error {
 ## 🧪 **Testing Strategy**
 
 ### **Unit Tests**
+
 ```go
 func TestAgentID_New(t *testing.T) {
     tests := []struct {
@@ -318,7 +339,7 @@ func TestAgentID_New(t *testing.T) {
         {"invalid empty", "", true},
         {"invalid too long", strings.Repeat("a", 101), true},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := NewAgentID(tt.input)
@@ -335,12 +356,13 @@ func TestAgentID_New(t *testing.T) {
 ```
 
 ### **Integration Tests**
+
 ```go
 func TestComplaint_WithTypeSafeIDs(t *testing.T) {
     agentID, _ := NewAgentID("Test-Agent")
     sessionID, _ := NewSessionID("test-session")
     projectID, _ := NewProjectID("test-project")
-    
+
     complaint := &Complaint{
         ID:        mustNewComplaintID(),
         AgentID:   agentID,
@@ -348,7 +370,7 @@ func TestComplaint_WithTypeSafeIDs(t *testing.T) {
         ProjectID: projectID,
         // ... other fields
     }
-    
+
     // Test that type system works correctly
     assert.Equal(t, "Test-Agent", complaint.AgentID.String())
     assert.Equal(t, "test-session", complaint.SessionID.String())
@@ -357,6 +379,7 @@ func TestComplaint_WithTypeSafeIDs(t *testing.T) {
 ```
 
 ### **BDD Tests**
+
 ```gherkin
 Feature: Type-Safe Complaint Management
   As an AI assistant
@@ -373,16 +396,19 @@ Feature: Type-Safe Complaint Management
 ## ⚠️ **Breaking Changes**
 
 ### **API Changes**
+
 - **Method Signatures**: Service methods now accept typed IDs
 - **Constructor Arguments**: Complaint creation requires typed IDs
 - **Test Updates**: Existing tests need type conversions
 
 ### **Migration Impact**
+
 - **External Consumers**: Need to handle typed ID conversion
 - **Configuration**: May need ID parsing changes
 - **Integration Points**: All ID boundaries affected
 
 ### **Mitigation Strategy**
+
 - **Backward Compatibility**: Provide string conversion methods
 - **Gradual Migration**: Support both types during transition
 - **Clear Documentation**: Migration guide for consumers
@@ -399,6 +425,7 @@ Feature: Type-Safe Complaint Management
 - [ ] Migration guide provided
 
 ## 🏷️ **Labels**
+
 - `refactoring` - Large-scale code restructuring
 - `type-safety` - Compile-time type safety improvements
 - `architecture` - Core architectural enhancement
@@ -406,12 +433,14 @@ Feature: Type-Safe Complaint Management
 - `breaking-change` - Changes API contract
 
 ## 📊 **Priority**: High
+
 - **Complexity**: High (affects entire codebase)
 - **Value**: High (long-term maintainability)
 - **Risk**: Medium (requires careful migration)
 - **Dependencies**: Issue #48 (phantom type foundation)
 
 ## 🤝 **Dependencies**
+
 - **Issue #48**: Must implement base phantom types first
 - **Issue #50**: Validation constructors needed
 - **Issue #51**: Schema updates for flat structure

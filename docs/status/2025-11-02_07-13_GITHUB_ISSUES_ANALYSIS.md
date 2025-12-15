@@ -3,6 +3,7 @@
 ## 📊 CURRENT STATE
 
 ### Existing Issues (5 total)
+
 1. **#1** - Add comprehensive unit tests for File Repository (OPEN)
 2. **#2** - Implement proper logging infrastructure (OPEN)
 3. **#3** - Add integration tests for complete workflow (OPEN)
@@ -10,6 +11,7 @@
 5. **#5** - Implement graceful shutdown and health checks (OPEN)
 
 ### Existing Milestones
+
 **NONE** - Need to create
 
 ---
@@ -17,9 +19,11 @@
 ## ✅ COMPLETED WORK (Phase 1)
 
 ### Issue #2: Logging Infrastructure - **COMPLETED** ✅
+
 **Status**: Can be closed
 
 **What Was Done**:
+
 - ✅ Replaced zerolog with charmbracelet/log (as requested in comment)
 - ✅ Implemented structured logging throughout
 - ✅ Added configurable log levels via CLI flags
@@ -27,6 +31,7 @@
 - ✅ Request/response logging in service layer
 
 **Evidence**:
+
 - File: `cmd/server/main.go` - Log setup with charmbracelet/log
 - File: `internal/service/complaint_service.go` - Structured logging
 - File: `internal/repo/file_repository.go` - Repository logging
@@ -37,9 +42,11 @@
 ---
 
 ### Issue #5: Graceful Shutdown - **COMPLETED** ✅
+
 **Status**: Can be closed
 
 **What Was Done**:
+
 - ✅ Implemented graceful shutdown on SIGINT/SIGTERM
 - ✅ Signal handling in `cmd/server/main.go`
 - ✅ 30-second shutdown timeout
@@ -47,6 +54,7 @@
 - ✅ Logging during shutdown process
 
 **Evidence**:
+
 ```go
 // cmd/server/main.go:101-134
 sigChan := make(chan os.Signal, 1)
@@ -79,14 +87,17 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ---
 
 ### Issue #1: Repository Tests - **PARTIALLY COMPLETED** ⚠️
+
 **Status**: Keep open, update progress
 
 **What Was Done**:
+
 - ✅ Fixed existing tests to pass
 - ✅ Updated test signatures for new parameters
 - ✅ Tests now use context and tracer
 
 **What Remains**:
+
 - ⚠️ Need more comprehensive error scenario tests
 - ⚠️ Need concurrent operation tests
 - ⚠️ Need 90%+ coverage (currently ~70%)
@@ -97,14 +108,17 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ---
 
 ### Issue #3: Integration Tests - **PARTIALLY COMPLETED** ⚠️
+
 **Status**: Keep open, update progress
 
 **What Was Done**:
+
 - ✅ BDD tests exist using Ginkgo/Gomega
 - ✅ 85% passing (40/47 tests)
 - ✅ End-to-end workflow tests present
 
 **What Remains**:
+
 - ⚠️ Fix 7 failing BDD tests
 - ⚠️ Need more error propagation tests
 - ⚠️ Need concurrent operation tests
@@ -114,13 +128,16 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ---
 
 ### Issue #4: API Documentation - **NOT STARTED** ❌
+
 **Status**: Keep open
 
 **What Was Done**:
+
 - ✅ CLAUDE.md created (internal docs)
 - ✅ ARCHITECTURAL_REVIEW.md (technical docs)
 
 **What Remains**:
+
 - ❌ MCP tool documentation
 - ❌ Quick start guide
 - ❌ API examples
@@ -132,6 +149,7 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ## 🆕 NEW ISSUES NEEDED (Phase 2 Work)
 
 ### From THE 1% (51% value)
+
 1. **Fix All Test Failures** (P0 - CRITICAL)
    - Service tests
    - Config tests
@@ -143,6 +161,7 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
    - Estimated: 30min
 
 ### From THE 4% (64% cumulative value)
+
 3. **Create ComplaintService Interface** (P1 - HIGH)
    - Enable DI and mocking
    - Estimated: 45min
@@ -160,6 +179,7 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
    - Estimated: 2h
 
 ### From THE 20% (80% cumulative value)
+
 7. **Create Value Objects** (P2 - MEDIUM)
    - AgentName, ProjectName, SessionName
    - Estimated: 3.5h
@@ -177,8 +197,10 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ## 🎯 PROPOSED MILESTONE STRUCTURE
 
 ### v0.1.0 - Production Ready (THE 1%)
+
 **Target**: Deploy to production
 **Issues**: 6-8 issues
+
 1. ✅ #2 - Logging (CLOSE)
 2. ✅ #5 - Graceful shutdown (CLOSE)
 3. 🆕 Fix all test failures
@@ -187,13 +209,16 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 6. 🆕 Critical bug fixes
 
 **Exit Criteria**:
+
 - 100% tests passing
 - Complete audit trail
 - Can deploy to production
 
 ### v0.2.0 - High Performance (THE 4%)
+
 **Target**: Production-ready with performance
 **Issues**: 8-10 issues
+
 1. 🆕 Service interface
 2. 🆕 Fix Update() bug
 3. 🆕 Type-safe DTOs
@@ -202,13 +227,16 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 6. 🆕 Performance benchmarks
 
 **Exit Criteria**:
+
 - Type-safe APIs
 - 10-100x query performance
 - Comprehensive docs
 
 ### v0.3.0 - Architecture Polish (THE 20%)
+
 **Target**: Long-term maintainable
 **Issues**: 8-10 issues
+
 1. 🆕 Value objects
 2. 🆕 Severity enum
 3. 🆕 Custom error types
@@ -218,6 +246,7 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 7. 🆕 Clean architecture
 
 **Exit Criteria**:
+
 - Type safety 9/10
 - All tests passing (47/47)
 - Clean package structure
@@ -227,6 +256,7 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ## 📋 ACTION PLAN
 
 ### Step 1: Update Existing Issues
+
 - [ ] #2 - Close with completion comment
 - [ ] #5 - Close with completion comment
 - [ ] #1 - Add progress comment
@@ -234,26 +264,31 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 - [ ] #4 - Keep open, assign to v0.2.0
 
 ### Step 2: Create Milestones
+
 - [ ] Create v0.1.0 milestone
 - [ ] Create v0.2.0 milestone
 - [ ] Create v0.3.0 milestone
 
 ### Step 3: Create New Issues (THE 1%)
+
 - [ ] Fix all test failures
 - [ ] Add ResolvedBy field
 
 ### Step 4: Create New Issues (THE 4%)
+
 - [ ] Service interface
 - [ ] Fix Update() bug
 - [ ] Type-safe DTOs
 - [ ] Repository cache
 
 ### Step 5: Create New Issues (THE 20%)
+
 - [ ] Value objects
 - [ ] Type system improvements
 - [ ] Complete test coverage
 
 ### Step 6: Assign to Milestones
+
 - [ ] Assign all issues to appropriate milestones
 - [ ] Ensure 6-12 issues per milestone
 
@@ -262,20 +297,27 @@ if err := mcpServer.Shutdown(shutdownCtx); err != nil {
 ## 🎓 RATIONALE
 
 ### Why Close #2 and #5?
+
 Both are **100% complete** with evidence in codebase:
+
 - Logging: charmbracelet/log fully integrated
 - Shutdown: Graceful shutdown implemented with timeout
 
 ### Why Keep #1 and #3 Open?
+
 Both are **partially complete** but need more work:
+
 - #1: Basic tests pass, need comprehensive coverage
 - #3: BDD tests exist but 7 failures remain
 
 ### Why Keep #4 Open?
+
 **Not started yet**, but important for v0.2.0
 
 ### Why Create New Issues?
+
 Phase 2 plan has **20 distinct tasks** that aren't represented in GitHub
+
 - Critical for tracking
 - Important for team visibility
 - Needed for milestone planning
@@ -285,16 +327,19 @@ Phase 2 plan has **20 distinct tasks** that aren't represented in GitHub
 ## 📊 SUMMARY
 
 **Existing Issues**:
+
 - 2 can be closed (✅ Done)
 - 2 need updates (⚠️ In Progress)
 - 1 not started (📋 Backlog)
 
 **New Issues Needed**: 12-15
+
 - 2 for THE 1% (P0)
 - 4 for THE 4% (P1)
 - 6-9 for THE 20% (P2)
 
 **Milestones Needed**: 3
+
 - v0.1.0 (6-8 issues)
 - v0.2.0 (8-10 issues)
 - v0.3.0 (8-10 issues)

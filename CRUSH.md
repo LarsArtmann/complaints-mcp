@@ -72,6 +72,7 @@ Complaints are stored in two locations:
 2. **Global**: `~/.complaints-mcp/<PROJECT_NAME>/<YYYY-MM-DD_HH_MM-SESSION_NAME>.md`
 
 The project name is detected from:
+
 1. Git remote repository name
 2. Folder name (fallback)
 3. "unknown-project" (ultimate fallback)
@@ -86,6 +87,7 @@ The project name is detected from:
 ## Troubleshooting
 
 ### Server Not Starting
+
 ```bash
 # Check if binary exists and is executable
 ls -la /path/to/complaints-mcp
@@ -95,12 +97,14 @@ ls -la /path/to/complaints-mcp
 ```
 
 ### Tool Not Available in Crush
+
 - Check Crush configuration syntax
 - Verify binary path is correct
 - Restart Crush after configuration changes
 - Check Crush logs for MCP connection errors
 
 ### Permissions Issues
+
 ```bash
 # Make binary executable
 chmod +x /path/to/complaints-mcp
@@ -112,6 +116,7 @@ ls -la ~/.complaints-mcp/
 ## Development Commands
 
 ### Using Just (Recommended)
+
 ```bash
 # Build the server
 just build
@@ -153,6 +158,7 @@ just help
 ```
 
 ### Using Go directly
+
 ```bash
 # Run tests (if any)
 go test ./...

@@ -3,6 +3,7 @@
 ## 🎯 **Enhancement: Centralized Validation with Type Safety**
 
 ### **Current State Analysis**
+
 While implementing phantom types fixes JSON nesting, we need robust validation to ensure data integrity:
 
 ```go
@@ -19,6 +20,7 @@ func ParseComplaintID(s string) ComplaintID {
 ```
 
 ### **Target State**
+
 Implement comprehensive validation with proper error handling:
 
 ```go
@@ -41,11 +43,11 @@ func (id ComplaintID) Validate() error {
     if id.IsEmpty() {
         return fmt.Errorf("ComplaintID cannot be empty")
     }
-    
+
     if !isValidUUID(id.String()) {
         return fmt.Errorf("ComplaintID must be valid UUID format")
     }
-    
+
     return nil
 }
 ```
@@ -53,6 +55,7 @@ func (id ComplaintID) Validate() error {
 ## 🛠️ **Comprehensive Validation Implementation**
 
 ### **Phase 1: UUID Validation Utilities**
+
 ```go
 // internal/validation/uuid.go
 package validation
@@ -80,11 +83,11 @@ func ValidateUUID(s string, fieldName string) error {
     if s == "" {
         return fmt.Errorf("%s cannot be empty", fieldName)
     }
-    
+
     if !IsValidUUID(s) {
         return fmt.Errorf("%s must be valid UUID v4 format, got: %s", fieldName, s)
     }
-    
+
     return nil
 }
 
@@ -93,12 +96,12 @@ func ParseUUID(s string, fieldName string) (uuid.UUID, error) {
     if err := ValidateUUID(s, fieldName); err != nil {
         return uuid.Nil, err
     }
-    
+
     parsed, err := uuid.Parse(s)
     if err != nil {
         return uuid.Nil, fmt.Errorf("%s contains invalid UUID: %w", fieldName, err)
     }
-    
+
     return parsed, nil
 }
 ```
@@ -106,6 +109,7 @@ func ParseUUID(s string, fieldName string) (uuid.UUID, error) {
 ### **Phase 2: ID Type Validation**
 
 #### **ComplaintID Validation**
+
 ```go
 // internal/domain/complaint_id.go
 package domain
@@ -123,7 +127,7 @@ func NewComplaintID() (ComplaintID, error) {
     if err != nil {
         return ComplaintID(""), fmt.Errorf("failed to generate ComplaintID: %w", err)
     }
-    
+
     return ComplaintID(id.String()), nil
 }
 
@@ -132,7 +136,7 @@ func ParseComplaintID(s string) (ComplaintID, error) {
     if err := validation.ValidateUUID(s, "ComplaintID"); err != nil {
         return ComplaintID(""), err
     }
-    
+
     return ComplaintID(s), nil
 }
 
@@ -150,7 +154,7 @@ func (id ComplaintID) Validate() error {
     if id.IsEmpty() {
         return fmt.Errorf("ComplaintID cannot be empty")
     }
-    
+
     return validation.ValidateUUID(id.String(), "ComplaintID")
 }
 
@@ -176,6 +180,7 @@ func (id ComplaintID) UUID() (uuid.UUID, error) {
 ```
 
 #### **AgentID Validation**
+
 ```go
 // internal/domain/agent_id.go
 package domain
@@ -195,11 +200,11 @@ type AgentID string
 // NewAgentID creates a new agent ID with validation
 func NewAgentID(name string) (AgentID, error) {
     name = strings.TrimSpace(name)
-    
+
     if err := validateAgentName(name); err != nil {
         return AgentID(""), err
     }
-    
+
     return AgentID(name), nil
 }
 
@@ -208,7 +213,7 @@ func ParseAgentID(s string) (AgentID, error) {
     if err := validateAgentName(s); err != nil {
         return AgentID(""), err
     }
-    
+
     return AgentID(s), nil
 }
 
@@ -234,24 +239,25 @@ func (id AgentID) String() string {
 
 func validateAgentName(name string) error {
     trimmed := strings.TrimSpace(name)
-    
+
     if trimmed == "" {
         return fmt.Errorf("agent name cannot be empty")
     }
-    
+
     if len(trimmed) > 100 {
         return fmt.Errorf("agent name cannot exceed 100 characters, got %d", len(trimmed))
     }
-    
+
     if !agentNamePattern.MatchString(trimmed) {
         return fmt.Errorf("agent name contains invalid characters: %s", name)
     }
-    
+
     return nil
 }
 ```
 
 #### **SessionID Validation**
+
 ```go
 // internal/domain/session_id.go
 package domain
@@ -271,11 +277,11 @@ type SessionID string
 // NewSessionID creates a new session ID with validation
 func NewSessionID(name string) (SessionID, error) {
     name = strings.TrimSpace(name)
-    
+
     if err := validateSessionName(name); err != nil {
         return SessionID(""), err
     }
-    
+
     return SessionID(name), nil
 }
 
@@ -284,7 +290,7 @@ func ParseSessionID(s string) (SessionID, error) {
     if err := validateSessionName(s); err != nil {
         return SessionID(""), err
     }
-    
+
     return SessionID(s), nil
 }
 
@@ -310,24 +316,25 @@ func (id SessionID) String() string {
 
 func validateSessionName(name string) error {
     trimmed := strings.TrimSpace(name)
-    
+
     if trimmed == "" {
         return fmt.Errorf("session name cannot be empty")
     }
-    
+
     if len(trimmed) > 100 {
         return fmt.Errorf("session name cannot exceed 100 characters, got %d", len(trimmed))
     }
-    
+
     if !sessionNamePattern.MatchString(trimmed) {
         return fmt.Errorf("session name contains invalid characters: %s", name)
     }
-    
+
     return nil
 }
 ```
 
 #### **ProjectID Validation**
+
 ```go
 // internal/domain/project_id.go
 package domain
@@ -347,11 +354,11 @@ type ProjectID string
 // NewProjectID creates a new project ID with validation
 func NewProjectID(name string) (ProjectID, error) {
     name = strings.TrimSpace(name)
-    
+
     if err := validateProjectName(name); err != nil {
         return ProjectID(""), err
     }
-    
+
     return ProjectID(name), nil
 }
 
@@ -360,7 +367,7 @@ func ParseProjectID(s string) (ProjectID, error) {
     if err := validateProjectName(s); err != nil {
         return ProjectID(""), err
     }
-    
+
     return ProjectID(s), nil
 }
 
@@ -386,24 +393,25 @@ func (id ProjectID) String() string {
 
 func validateProjectName(name string) error {
     trimmed := strings.TrimSpace(name)
-    
+
     if trimmed == "" {
         return fmt.Errorf("project name cannot be empty")
     }
-    
+
     if len(trimmed) > 100 {
         return fmt.Errorf("project name cannot exceed 100 characters, got %d", len(trimmed))
     }
-    
+
     if !projectNamePattern.MatchString(trimmed) {
         return fmt.Errorf("project name contains invalid characters: %s", name)
     }
-    
+
     return nil
 }
 ```
 
 ### **Phase 3: Centralized Validation Package**
+
 ```go
 // internal/validation/validation.go
 package validation
@@ -460,16 +468,17 @@ func ValidatePattern(value, pattern, fieldName string) error {
     if err != nil {
         return fmt.Errorf("invalid pattern for %s validation: %w", fieldName, err)
     }
-    
+
     if !matched {
         return fmt.Errorf("%s contains invalid characters", fieldName)
     }
-    
+
     return nil
 }
 ```
 
 ### **Phase 4: Validation in Domain Entities**
+
 ```go
 // internal/domain/complaint.go
 package domain
@@ -502,59 +511,59 @@ func (c *Complaint) Validate() error {
     if err := c.ID.Validate(); err != nil {
         return fmt.Errorf("invalid ComplaintID: %w", err)
     }
-    
+
     if err := c.AgentID.Validate(); err != nil {
         return fmt.Errorf("invalid AgentID: %w", err)
     }
-    
+
     if err := c.SessionID.Validate(); err != nil {
         return fmt.Errorf("invalid SessionID: %w", err)
     }
-    
+
     if err := c.ProjectID.Validate(); err != nil {
         return fmt.Errorf("invalid ProjectID: %w", err)
     }
-    
+
     // Validate string fields
     if err := validation.ValidateRequired(c.TaskDescription, "task description"); err != nil {
         return err
     }
-    
+
     if err := validation.ValidateMaxLength(c.TaskDescription, 1000, "task description"); err != nil {
         return err
     }
-    
+
     if err := validation.ValidateMaxLength(c.ContextInfo, 500, "context info"); err != nil {
         return err
     }
-    
+
     if err := validation.ValidateMaxLength(c.MissingInfo, 500, "missing info"); err != nil {
         return err
     }
-    
+
     if err := validation.ValidateMaxLength(c.ConfusedBy, 500, "confused by"); err != nil {
         return err
     }
-    
+
     if err := validation.ValidateMaxLength(c.FutureWishes, 500, "future wishes"); err != nil {
         return err
     }
-    
+
     // Validate severity
     if !c.Severity.IsValid() {
         return fmt.Errorf("invalid severity: %s", c.Severity)
     }
-    
+
     // Validate timestamp
     if c.Timestamp.IsZero() {
         return fmt.Errorf("timestamp cannot be zero")
     }
-    
+
     // Validate resolution state consistency
     if c.ResolutionState.IsResolved() != (c.ResolvedAt != nil) {
         return fmt.Errorf("resolution state and resolved_at timestamp are inconsistent")
     }
-    
+
     return nil
 }
 
@@ -567,6 +576,7 @@ func (c *Complaint) IsValid() bool {
 ## 🎯 **Benefits of This Implementation**
 
 ### **1. Centralized Validation Logic**
+
 ```go
 // ❌ Before: Validation scattered
 type ComplaintID struct {
@@ -579,6 +589,7 @@ func (id ComplaintID) Validate() error { ... }
 ```
 
 ### **2. Clear Error Messages**
+
 ```go
 // ❌ Before: Generic errors
 return fmt.Errorf("invalid ID")
@@ -588,6 +599,7 @@ return fmt.Errorf("ComplaintID must be valid UUID v4 format, got: %s", id)
 ```
 
 ### **3. Consistent Validation Patterns**
+
 ```go
 // All ID types follow same pattern:
 func New[T]ID(input string) (T, error)   // Constructor with validation
@@ -598,6 +610,7 @@ func (id T) IsEmpty() bool               // Empty check
 ```
 
 ### **4. Compile-Time Safety + Runtime Validation**
+
 ```go
 // Type safety prevents mixing
 agentID := domain.NewAgentID("AI-Assistant")
@@ -609,6 +622,7 @@ processComplaint(sessionID, agentID) // ❌ Compile error!
 ```
 
 ### **5. Better Testing Support**
+
 ```go
 // Easy to test validation
 func TestAgentID_Validation(t *testing.T) {
@@ -623,7 +637,7 @@ func TestAgentID_Validation(t *testing.T) {
         {"too long", strings.Repeat("a", 101), true, "cannot exceed 100 characters"},
         {"invalid chars", "AI@Assistant", true, "contains invalid characters"},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             _, err := domain.NewAgentID(tt.input)
@@ -641,6 +655,7 @@ func TestAgentID_Validation(t *testing.T) {
 ## 📋 **Files to Create/Modify**
 
 ### **New Files**
+
 - `internal/validation/uuid.go` - UUID validation utilities
 - `internal/validation/validation.go` - General validation utilities
 - `internal/domain/complaint_id.go` - ComplaintID with validation
@@ -649,6 +664,7 @@ func TestAgentID_Validation(t *testing.T) {
 - `internal/domain/project_id.go` - ProjectID with validation
 
 ### **Modified Files**
+
 - `internal/domain/complaint.go` - Update to use new ID types
 - `internal/delivery/mcp/mcp_server.go` - Update handlers with validation
 - `internal/service/complaint_service.go` - Update service validation
@@ -657,6 +673,7 @@ func TestAgentID_Validation(t *testing.T) {
 ## 🧪 **Testing Strategy**
 
 ### **Unit Tests for Each ID Type**
+
 ```go
 func TestComplaintID_New(t *testing.T) {
     tests := []struct {
@@ -665,7 +682,7 @@ func TestComplaintID_New(t *testing.T) {
     }{
         {"success", false},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             id, err := NewComplaintID()
@@ -693,7 +710,7 @@ func TestComplaintID_Parse(t *testing.T) {
         {"invalid format", "not-a-uuid", true, "must be valid UUID v4 format"},
         {"invalid version", "550e8400-e29b-41d4-a716-446655440123", true, "must be valid UUID v4 format"},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             id, err := ParseComplaintID(tt.input)
@@ -713,6 +730,7 @@ func TestComplaintID_Parse(t *testing.T) {
 ```
 
 ### **Integration Tests**
+
 ```go
 func TestComplaint_Validation(t *testing.T) {
     tests := []struct {
@@ -749,7 +767,7 @@ func TestComplaint_Validation(t *testing.T) {
             errorMsg: "task description is required",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := tt.complaint.Validate()
@@ -767,16 +785,19 @@ func TestComplaint_Validation(t *testing.T) {
 ## ⚠️ **Breaking Changes**
 
 ### **Constructor Changes**
+
 - **New Functions**: Now return `(ID, error)` instead of just `ID`
 - **Parse Functions**: Added validation with error handling
 - **Service Methods**: Need to handle validation errors
 
 ### **Migration Impact**
+
 - **Error Handling**: Call sites need to handle validation errors
 - **Test Updates**: Existing tests need to account for validation
 - **Documentation**: Update examples to show validation usage
 
 ### **Mitigation Strategy**
+
 - **Gradual Migration**: Add validation alongside existing code
 - **Backward Compatibility**: Provide both validated and unvalidated constructors
 - **Clear Migration Guide**: Step-by-step upgrade instructions
@@ -792,6 +813,7 @@ func TestComplaint_Validation(t *testing.T) {
 - [ ] Migration path is clear and documented
 
 ## 🏷️ **Labels**
+
 - `validation` - Data validation implementation
 - `type-safety` - Compile-time type safety improvements
 - `enhancement` - New feature addition
@@ -799,12 +821,14 @@ func TestComplaint_Validation(t *testing.T) {
 - `breaking-change` - Changes constructor signatures
 
 ## 📊 **Priority**: Medium
+
 - **Complexity**: Medium (validation logic + error handling)
 - **Value**: High (data integrity + error prevention)
 - **Risk**: Low (additive, doesn't break existing)
 - **Dependencies**: Issue #48 (phantom type foundation)
 
 ## 🤝 **Dependencies**
+
 - **Issue #48**: Must have phantom types implemented first
 - **Issue #49**: Should have all ID fields converted
 - **Issue #52**: Need tests for validation

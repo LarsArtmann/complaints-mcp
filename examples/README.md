@@ -5,6 +5,7 @@ This directory contains example configuration files for the complaints-mcp syste
 ## Files
 
 ### `cache-config.toml`
+
 Demonstrates various cache configuration scenarios:
 
 - **Basic Setup**: File repository without caching
@@ -16,11 +17,11 @@ Demonstrates various cache configuration scenarios:
 
 ## Cache Configuration Parameters
 
-| Parameter | Type | Range | Default | Description |
-|-----------|------|-------|---------|-------------|
-| `cache_enabled` | bool | - | `false` | Enable/disable caching |
-| `cache_max_size` | int | 1-100,000 | `1,000` | Maximum cache entries |
-| `cache_eviction` | string | `lru`, `fifo`, `none` | `lru` | Eviction policy |
+| Parameter        | Type   | Range                 | Default | Description            |
+| ---------------- | ------ | --------------------- | ------- | ---------------------- |
+| `cache_enabled`  | bool   | -                     | `false` | Enable/disable caching |
+| `cache_max_size` | int    | 1-100,000             | `1,000` | Maximum cache entries  |
+| `cache_eviction` | string | `lru`, `fifo`, `none` | `lru`   | Eviction policy        |
 
 ## Performance Guidelines
 
@@ -63,6 +64,7 @@ complaints-mcp
 Upgrading from older configurations:
 
 1. **Old Config** (unsafe):
+
    ```toml
    [storage]
    cache_max_size = 9223372036854775807  # Risky!

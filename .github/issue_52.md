@@ -3,6 +3,7 @@
 ## 🎯 **Enhancement: Complete Test Coverage for Phantom Type Implementation**
 
 ### **Current State Analysis**
+
 While implementing phantom types (#48, #49, #50) provides significant architectural improvements, we need comprehensive test coverage to ensure:
 
 - **Type Safety**: Compile-time protections work correctly
@@ -12,7 +13,9 @@ While implementing phantom types (#48, #49, #50) provides significant architectu
 - **Performance**: No performance regressions introduced
 
 ### **Testing Requirements**
+
 We need test coverage for:
+
 - **Phantom Type Construction**: New() and Parse() functions
 - **Validation Logic**: All validation rules and edge cases
 - **JSON Serialization**: Marshal/Unmarshal with flat structure
@@ -26,6 +29,7 @@ We need test coverage for:
 ### **Phase 1: Phantom Type Unit Tests**
 
 #### **ComplaintID Tests**
+
 ```go
 // internal/domain/complaint_id_test.go
 package domain
@@ -33,7 +37,7 @@ package domain
 import (
     "testing"
     "time"
-    
+
     "github.com/google/uuid"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
@@ -42,33 +46,33 @@ import (
 func TestNewComplaintID(t *testing.T) {
     t.Run("successful generation", func(t *testing.T) {
         id, err := NewComplaintID()
-        
+
         require.NoError(t, err)
         assert.False(t, id.IsEmpty())
         assert.True(t, id.IsValid())
-        
+
         // Verify UUID format
         parsed, err := uuid.Parse(id.String())
         require.NoError(t, err)
         assert.Equal(t, id.String(), parsed.String())
     })
-    
+
     t.Run("generates unique IDs", func(t *testing.T) {
         ids := make(map[ComplaintID]bool)
-        
+
         for i := 0; i < 1000; i++ {
             id, err := NewComplaintID()
             require.NoError(t, err)
-            
+
             assert.False(t, ids[id], "Generated duplicate ID: %s", id.String())
             ids[id] = true
         }
     })
-    
+
     t.Run("generates version 4 UUIDs", func(t *testing.T) {
         id, err := NewComplaintID()
         require.NoError(t, err)
-        
+
         parsed, err := id.UUID()
         require.NoError(t, err)
         assert.Equal(t, uuid.Version(4), parsed.Version())
@@ -131,11 +135,11 @@ func TestParseComplaintID(t *testing.T) {
             expectedID: ComplaintID(""),
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := ParseComplaintID(tt.input)
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -155,17 +159,17 @@ func TestParseComplaintID(t *testing.T) {
 func TestMustParseComplaintID(t *testing.T) {
     t.Run("valid UUID", func(t *testing.T) {
         validUUID := "550e8400-e29b-41d4-a716-446655440000"
-        
+
         assert.NotPanics(t, func() {
             id := MustParseComplaintID(validUUID)
             assert.Equal(t, ComplaintID(validUUID), id)
             assert.True(t, id.IsValid())
         })
     })
-    
+
     t.Run("invalid UUID", func(t *testing.T) {
         invalidUUID := "not-a-uuid"
-        
+
         assert.Panics(t, func() {
             MustParseComplaintID(invalidUUID)
         })
@@ -197,11 +201,11 @@ func TestComplaintID_Validate(t *testing.T) {
             errorMsg: "must be valid UUID v4 format",
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := tt.id.Validate()
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -223,7 +227,7 @@ func TestComplaintID_IsEmpty(t *testing.T) {
         {"valid UUID", ComplaintID("550e8400-e29b-41d4-a716-446655440000"), false},
         {"valid lowercase", ComplaintID("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"), false},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             assert.Equal(t, tt.expected, tt.id.IsEmpty())
@@ -243,7 +247,7 @@ func TestComplaintID_IsValid(t *testing.T) {
         {"valid UUID v4", ComplaintID("550e8400-e29b-41d4-a716-446655440000"), true},
         {"valid lowercase", ComplaintID("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"), true},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             assert.Equal(t, tt.expected, tt.id.IsValid())
@@ -254,7 +258,7 @@ func TestComplaintID_IsValid(t *testing.T) {
 func TestComplaintID_String(t *testing.T) {
     uuidStr := "550e8400-e29b-41d4-a716-446655440000"
     id := ComplaintID(uuidStr)
-    
+
     assert.Equal(t, uuidStr, id.String())
 }
 
@@ -262,23 +266,23 @@ func TestComplaintID_UUID(t *testing.T) {
     t.Run("valid ID", func(t *testing.T) {
         uuidStr := "550e8400-e29b-41d4-a716-446655440000"
         id := ComplaintID(uuidStr)
-        
+
         parsed, err := id.UUID()
         require.NoError(t, err)
         assert.Equal(t, uuidStr, parsed.String())
     })
-    
+
     t.Run("empty ID", func(t *testing.T) {
         id := ComplaintID("")
-        
+
         _, err := id.UUID()
         assert.Error(t, err)
         assert.Contains(t, err.Error(), "cannot be empty")
     })
-    
+
     t.Run("invalid ID", func(t *testing.T) {
         id := ComplaintID("not-a-uuid")
-        
+
         _, err := id.UUID()
         assert.Error(t, err)
         assert.Contains(t, err.Error(), "must be valid UUID v4 format")
@@ -287,6 +291,7 @@ func TestComplaintID_UUID(t *testing.T) {
 ```
 
 #### **AgentID Tests**
+
 ```go
 // internal/domain/agent_id_test.go
 package domain
@@ -294,7 +299,7 @@ package domain
 import (
     "strings"
     "testing"
-    
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 )
@@ -380,11 +385,11 @@ func TestNewAgentID(t *testing.T) {
             expectedID: AgentID(""),
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := NewAgentID(tt.input)
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -430,11 +435,11 @@ func TestParseAgentID(t *testing.T) {
             expectedID: AgentID(""),
         },
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             got, err := ParseAgentID(tt.input)
-            
+
             if tt.wantErr {
                 assert.Error(t, err)
                 assert.Contains(t, err.Error(), tt.errorMsg)
@@ -450,23 +455,23 @@ func TestAgentID_Methods(t *testing.T) {
     validID := AgentID("AI-Assistant")
     invalidID := AgentID("")
     emptyID := AgentID("")
-    
+
     t.Run("String method", func(t *testing.T) {
         assert.Equal(t, "AI-Assistant", validID.String())
         assert.Equal(t, "", emptyID.String())
     })
-    
+
     t.Run("IsEmpty method", func(t *testing.T) {
         assert.False(t, validID.IsEmpty())
         assert.True(t, emptyID.IsEmpty())
     })
-    
+
     t.Run("IsValid method", func(t *testing.T) {
         assert.True(t, validID.IsValid())
         assert.False(t, invalidID.IsValid())
         assert.False(t, emptyID.IsValid())
     })
-    
+
     t.Run("Validate method", func(t *testing.T) {
         assert.NoError(t, validID.Validate())
         assert.Error(t, invalidID.Validate())
@@ -475,6 +480,7 @@ func TestAgentID_Methods(t *testing.T) {
 ```
 
 #### **SessionID and ProjectID Tests**
+
 ```go
 // Similar comprehensive test coverage for SessionID and ProjectID
 // Follow same pattern as AgentID tests with appropriate validation rules
@@ -483,6 +489,7 @@ func TestAgentID_Methods(t *testing.T) {
 ### **Phase 2: JSON Serialization Tests**
 
 #### **Marshal/Unmarshal Tests**
+
 ```go
 // internal/domain/json_serialization_test.go
 package domain
@@ -491,7 +498,7 @@ import (
     "encoding/json"
     "testing"
     "time"
-    
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
 )
@@ -513,28 +520,28 @@ func TestComplaint_JSONSerialization_FlatIDs(t *testing.T) {
         ProjectName:     mustNewProjectName("my-project"),
         ResolutionState: ResolutionStateOpen,
     }
-    
+
     t.Run("Marshal produces flat JSON", func(t *testing.T) {
         data, err := json.Marshal(complaint)
         require.NoError(t, err)
-        
+
         // Verify flat structure
         var result map[string]any
         err = json.Unmarshal(data, &result)
         require.NoError(t, err)
-        
+
         // ID should be flat string, not nested object
         idValue, exists := result["id"]
         require.True(t, exists, "id field should exist")
-        
+
         idStr, isString := idValue.(string)
         assert.True(t, isString, "id should be string, got %T", idValue)
         assert.Equal(t, complaint.ID.String(), idStr)
-        
+
         // Verify no nested "Value" objects
         assert.NotContains(t, string(data), `"Value"`)
     })
-    
+
     t.Run("Unmarshal from flat JSON", func(t *testing.T) {
         // Create flat JSON
         jsonData := map[string]any{
@@ -546,22 +553,22 @@ func TestComplaint_JSONSerialization_FlatIDs(t *testing.T) {
             "severity":        "high",
             "timestamp":       complaint.Timestamp.Format(time.RFC3339),
         }
-        
+
         data, err := json.Marshal(jsonData)
         require.NoError(t, err)
-        
+
         // Unmarshal to complaint
         var unmarshaled Complaint
         err = json.Unmarshal(data, &unmarshaled)
         require.NoError(t, err)
-        
+
         // Verify phantom types
         assert.Equal(t, complaint.ID, unmarshaled.ID)
         assert.Equal(t, complaint.AgentID, unmarshaled.AgentID)
         assert.Equal(t, complaint.SessionID, unmarshaled.SessionID)
         assert.Equal(t, complaint.ProjectID, unmarshaled.ProjectID)
     })
-    
+
     t.Run("Reject nested ID format", func(t *testing.T) {
         // Create JSON with nested ID format (old format)
         nestedJSON := map[string]any{
@@ -571,30 +578,30 @@ func TestComplaint_JSONSerialization_FlatIDs(t *testing.T) {
             "task_description": complaint.TaskDescription,
             "severity":        "high",
         }
-        
+
         data, err := json.Marshal(nestedJSON)
         require.NoError(t, err)
-        
+
         // Attempting to unmarshal should handle gracefully
         // This depends on our unmarshaling strategy
         var unmarshaled Complaint
         err = json.Unmarshal(data, &unmarshaled)
-        
+
         // Either should error or handle gracefully based on implementation
         // For now, we expect some handling strategy
         // The exact behavior will depend on chosen implementation
     })
-    
+
     t.Run("Roundtrip preserves phantom types", func(t *testing.T) {
         // Marshal to JSON
         data, err := json.Marshal(complaint)
         require.NoError(t, err)
-        
+
         // Unmarshal back to complaint
         var unmarshaled Complaint
         err = json.Unmarshal(data, &unmarshaled)
         require.NoError(t, err)
-        
+
         // Verify all phantom types are preserved
         assert.Equal(t, complaint.ID, unmarshaled.ID)
         assert.Equal(t, complaint.AgentID, unmarshaled.AgentID)
@@ -617,35 +624,35 @@ func TestComplaintDTO_JSONSerialization_FlatIDs(t *testing.T) {
         Timestamp:       time.Date(2024, 11, 9, 12, 18, 30, 0, time.UTC),
         ResolutionState: ResolutionStateOpen,
     }
-    
+
     // Convert to DTO
     dto := ToDTO(complaint)
-    
+
     t.Run("DTO produces flat JSON", func(t *testing.T) {
         data, err := json.Marshal(dto)
         require.NoError(t, err)
-        
+
         // Verify flat structure
         var result map[string]any
         err = json.Unmarshal(data, &result)
         require.NoError(t, err)
-        
+
         // ID should be flat string
         idValue, exists := result["id"]
         require.True(t, exists, "id field should exist")
-        
+
         idStr, isString := idValue.(string)
         assert.True(t, isString, "id should be string, got %T", idValue)
         assert.Equal(t, complaint.ID.String(), idStr)
-        
+
         // Verify no nested objects
         assert.NotContains(t, string(data), `"Value"`)
     })
-    
+
     t.Run("DTO includes all expected fields", func(t *testing.T) {
         data, err := json.Marshal(dto)
         require.NoError(t, err)
-        
+
         // Verify key fields are present
         assert.Contains(t, string(data), `"id"`)
         assert.Contains(t, string(data), `"agent_name"`)
@@ -654,7 +661,7 @@ func TestComplaintDTO_JSONSerialization_FlatIDs(t *testing.T) {
         assert.Contains(t, string(data), `"task_description"`)
         assert.Contains(t, string(data), `"severity"`)
         assert.Contains(t, string(data), `"timestamp"`)
-        
+
         // Verify file paths are included
         assert.Contains(t, string(data), `"file_path"`)
         assert.Contains(t, string(data), `"docs_path"`)
@@ -665,6 +672,7 @@ func TestComplaintDTO_JSONSerialization_FlatIDs(t *testing.T) {
 ### **Phase 3: Integration Tests**
 
 #### **Service Layer Integration Tests**
+
 ```go
 // internal/service/complaint_service_integration_test.go
 package service
@@ -673,10 +681,10 @@ import (
     "context"
     "testing"
     "time"
-    
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
-    
+
     "github.com/larsartmann/complaints-mcp/internal/domain"
     "github.com/larsartmann/complaints-mcp/internal/repo"
     "github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -690,17 +698,17 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         logger := &mockLogger{}
         repository := repo.NewFileRepository(tempDir, tracer)
         service := NewComplaintService(repository, tracer, logger)
-        
+
         // Create typed IDs
         agentID, err := domain.NewAgentID("AI-Assistant")
         require.NoError(t, err)
-        
+
         sessionID, err := domain.NewSessionID("integration-test")
         require.NoError(t, err)
-        
+
         projectID, err := domain.NewProjectID("test-project")
         require.NoError(t, err)
-        
+
         // Create complaint with typed IDs
         complaint, err := service.CreateComplaint(
             context.Background(),
@@ -714,22 +722,22 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "medium",
             projectID.String(),
         )
-        
+
         require.NoError(t, err)
         require.NotNil(t, complaint)
-        
+
         // Verify phantom types are properly set
         assert.True(t, complaint.ID.IsValid())
         assert.True(t, complaint.AgentID.IsValid())
         assert.True(t, complaint.SessionID.IsValid())
         assert.True(t, complaint.ProjectID.IsValid())
-        
+
         // Verify string conversions work
         assert.Equal(t, "AI-Assistant", complaint.AgentID.String())
         assert.Equal(t, "integration-test", complaint.SessionID.String())
         assert.Equal(t, "test-project", complaint.ProjectID.String())
     })
-    
+
     t.Run("reject invalid typed IDs", func(t *testing.T) {
         // Setup
         tempDir := t.TempDir()
@@ -737,7 +745,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         logger := &mockLogger{}
         repository := repo.NewFileRepository(tempDir, tracer)
         service := NewComplaintService(repository, tracer, logger)
-        
+
         // Try to create complaint with invalid agent ID
         _, err := service.CreateComplaint(
             context.Background(),
@@ -748,11 +756,11 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "low",
             "test-project",
         )
-        
+
         assert.Error(t, err)
         assert.Contains(t, err.Error(), "invalid agent name")
     })
-    
+
     t.Run("get complaint returns typed IDs", func(t *testing.T) {
         // Setup
         tempDir := t.TempDir()
@@ -760,7 +768,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         logger := &mockLogger{}
         repository := repo.NewFileRepository(tempDir, tracer)
         service := NewComplaintService(repository, tracer, logger)
-        
+
         // Create complaint
         complaint, err := service.CreateComplaint(
             context.Background(),
@@ -772,19 +780,19 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "test-project",
         )
         require.NoError(t, err)
-        
+
         // Get complaint
         retrieved, err := service.GetComplaint(context.Background(), complaint.ID)
         require.NoError(t, err)
         require.NotNil(t, retrieved)
-        
+
         // Verify phantom types are preserved
         assert.Equal(t, complaint.ID, retrieved.ID)
         assert.Equal(t, complaint.AgentID, retrieved.AgentID)
         assert.Equal(t, complaint.SessionID, retrieved.SessionID)
         assert.Equal(t, complaint.ProjectID, retrieved.ProjectID)
     })
-    
+
     t.Run("list complaints preserves typed IDs", func(t *testing.T) {
         // Setup
         tempDir := t.TempDir()
@@ -792,10 +800,10 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         logger := &mockLogger{}
         repository := repo.NewFileRepository(tempDir, tracer)
         service := NewComplaintService(repository, tracer, logger)
-        
+
         // Create multiple complaints
         agentIDs := []string{"Agent-1", "Agent-2", "Agent-3"}
-        
+
         for _, agentID := range agentIDs {
             _, err := service.CreateComplaint(
                 context.Background(),
@@ -808,12 +816,12 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             )
             require.NoError(t, err)
         }
-        
+
         // List complaints
         complaints, err := service.ListComplaints(context.Background(), 100, 0)
         require.NoError(t, err)
         assert.Len(t, complaints, 3)
-        
+
         // Verify all phantom types are valid
         for _, complaint := range complaints {
             assert.True(t, complaint.ID.IsValid())
@@ -822,7 +830,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             assert.True(t, complaint.ProjectID.IsValid())
         }
     })
-    
+
     t.Run("resolve complaint with typed ID", func(t *testing.T) {
         // Setup
         tempDir := t.TempDir()
@@ -830,7 +838,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
         logger := &mockLogger{}
         repository := repo.NewFileRepository(tempDir, tracer)
         service := NewComplaintService(repository, tracer, logger)
-        
+
         // Create complaint
         complaint, err := service.CreateComplaint(
             context.Background(),
@@ -842,23 +850,23 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
             "test-project",
         )
         require.NoError(t, err)
-        
+
         // Resolve complaint with typed ID
         resolverID, err := domain.NewAgentID("Test-Resolver")
         require.NoError(t, err)
-        
+
         err = service.ResolveComplaint(
             context.Background(),
             complaint.ID,
             resolverID.String(),
         )
-        
+
         require.NoError(t, err)
-        
+
         // Verify resolution
         resolved, err := service.GetComplaint(context.Background(), complaint.ID)
         require.NoError(t, err)
-        
+
         assert.True(t, resolved.ResolutionState.IsResolved())
         assert.Equal(t, "Test-Resolver", resolved.ResolvedBy)
         assert.NotNil(t, resolved.ResolvedAt)
@@ -869,6 +877,7 @@ func TestComplaintService_WithPhantomTypes(t *testing.T) {
 ### **Phase 4: BDD Tests with Phantom Types**
 
 #### **Updated BDD Scenarios**
+
 ```gherkin
 // features/bdd/phantom_type_safety_bdd.feature
 Feature: Phantom Type Safety for Complaint Management
@@ -926,6 +935,7 @@ Feature: Phantom Type Safety for Complaint Management
 ```
 
 #### **BDD Test Implementation**
+
 ```go
 // features/bdd/phantom_type_safety_bdd_test.go
 package bdd
@@ -934,10 +944,10 @@ import (
     "context"
     "encoding/json"
     "fmt"
-    
+
     "github.com/cucumber/godog"
     "github.com/stretchr/testify/assert"
-    
+
     "github.com/larsartmann/complaints-mcp/internal/domain"
 )
 
@@ -953,22 +963,22 @@ type PhantomTypeBDDContext struct {
 
 func (ctx *PhantomTypeBDDContext) iHaveValidTypedIDs() error {
     var err error
-    
+
     ctx.agentID, err = domain.NewAgentID("AI-Assistant")
     if err != nil {
         return fmt.Errorf("failed to create agent ID: %w", err)
     }
-    
+
     ctx.sessionID, err = domain.NewSessionID("test-session")
     if err != nil {
         return fmt.Errorf("failed to create session ID: %w", err)
     }
-    
+
     ctx.projectID, err = domain.NewProjectID("test-project")
     if err != nil {
         return fmt.Errorf("failed to create project ID: %w", err)
     }
-    
+
     return nil
 }
 
@@ -976,12 +986,12 @@ func (ctx *PhantomTypeBDDContext) iFileComplaintWithTypeSafeIDs() error {
     // This would be implemented via the service layer
     // For BDD purposes, we'll create the complaint directly
     var err error
-    
+
     ctx.complaintID, err = domain.NewComplaintID()
     if err != nil {
         return fmt.Errorf("failed to create complaint ID: %w", err)
     }
-    
+
     ctx.complaint = &domain.Complaint{
         ID:             ctx.complaintID,
         AgentID:        ctx.agentID,
@@ -992,14 +1002,14 @@ func (ctx *PhantomTypeBDDContext) iFileComplaintWithTypeSafeIDs() error {
         Timestamp:       time.Now(),
         ResolutionState: domain.ResolutionStateOpen,
     }
-    
+
     // Create JSON response for verification
     dto := delivery.ToDTO(ctx.complaint)
     jsonData, err := json.Marshal(dto)
     if err != nil {
         return fmt.Errorf("failed to marshal complaint to JSON: %w", err)
     }
-    
+
     ctx.jsonResponse = string(jsonData)
     return nil
 }
@@ -1008,11 +1018,11 @@ func (ctx *PhantomTypeBDDContext) theComplaintShouldBeCreated() error {
     if ctx.lastError != nil {
         return fmt.Errorf("complaint creation failed: %w", ctx.lastError)
     }
-    
+
     if ctx.complaint == nil {
         return fmt.Errorf("complaint is nil after creation")
     }
-    
+
     return nil
 }
 
@@ -1026,7 +1036,7 @@ func (ctx *PhantomTypeBDDContext) allIDFieldsShouldBeValid() error {
         {"session ID", ctx.sessionID},
         {"project ID", ctx.projectID},
     }
-    
+
     for _, test := range tests {
         switch v := test.id.(type) {
         case domain.ComplaintID:
@@ -1047,7 +1057,7 @@ func (ctx *PhantomTypeBDDContext) allIDFieldsShouldBeValid() error {
             }
         }
     }
-    
+
     return nil
 }
 
@@ -1057,23 +1067,23 @@ func (ctx *PhantomTypeBDDContext) theJSONShouldUseFlatIDFormat() error {
     if err != nil {
         return fmt.Errorf("failed to parse JSON response: %w", err)
     }
-    
+
     // Check that ID is flat string
     idValue, exists := response["id"]
     if !exists {
         return fmt.Errorf("ID field not found in JSON response")
     }
-    
+
     _, isString := idValue.(string)
     if !isString {
         return fmt.Errorf("ID field is not flat string: %T", idValue)
     }
-    
+
     // Check that no nested "Value" objects exist
     if contains(ctx.jsonResponse, `"Value"`) {
         return fmt.Errorf("JSON response contains nested 'Value' objects")
     }
-    
+
     return nil
 }
 
@@ -1095,29 +1105,29 @@ func (ctx *PhantomTypeBDDContext) theErrorMessageShouldBeClear() error {
     if ctx.lastError == nil {
         return fmt.Errorf("expected error but got none")
     }
-    
+
     expectedSubstrings := []string{
         "invalid",
         "agent name",
         "character",
     }
-    
+
     errorStr := ctx.lastError.Error()
     for _, expected := range expectedSubstrings {
         if !contains(errorStr, expected) {
             return fmt.Errorf("error message '%s' should contain '%s'", errorStr, expected)
         }
     }
-    
+
     return nil
 }
 
 // Helper functions
 func contains(s, substr string) bool {
-    return len(s) >= len(substr) && (s == substr || 
-           (len(s) > len(substr) && 
-            (strings.HasPrefix(s, substr) || 
-             strings.HasSuffix(s, substr) || 
+    return len(s) >= len(substr) && (s == substr ||
+           (len(s) > len(substr) &&
+            (strings.HasPrefix(s, substr) ||
+             strings.HasSuffix(s, substr) ||
              indexOf(s, substr) >= 0)))
 }
 
@@ -1134,6 +1144,7 @@ func indexOf(s, substr string) int {
 ### **Phase 5: Performance Benchmarks**
 
 #### **Phantom Types vs Struct Performance**
+
 ```go
 // internal/benchmarks/phantom_type_benchmark_test.go
 package benchmarks
@@ -1141,7 +1152,7 @@ package benchmarks
 import (
     "encoding/json"
     "testing"
-    
+
     "github.com/google/uuid"
     "github.com/larsartmann/complaints-mcp/internal/domain"
 )
@@ -1155,7 +1166,7 @@ func BenchmarkPhantomType_NewComplaintID(b *testing.B) {
 
 func BenchmarkPhantomType_ParseComplaintID(b *testing.B) {
     validUUID := "550e8400-e29b-41d4-a716-446655440000"
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = domain.ParseComplaintID(validUUID)
@@ -1164,7 +1175,7 @@ func BenchmarkPhantomType_ParseComplaintID(b *testing.B) {
 
 func BenchmarkPhantomType_String(b *testing.B) {
     id, _ := domain.NewComplaintID()
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.String()
@@ -1173,7 +1184,7 @@ func BenchmarkPhantomType_String(b *testing.B) {
 
 func BenchmarkPhantomType_Validate(b *testing.B) {
     id, _ := domain.NewComplaintID()
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.Validate()
@@ -1190,7 +1201,7 @@ func BenchmarkPhantomType_MarshalJSON(b *testing.B) {
         Severity:        domain.SeverityMedium,
         Timestamp:       time.Now(),
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = json.Marshal(complaint)
@@ -1210,7 +1221,7 @@ func BenchmarkStructID_String(b *testing.B) {
     id := &OldComplaintID{
         Value: "550e8400-e29b-41d4-a716-446655440000",
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _ = id.String()
@@ -1227,7 +1238,7 @@ func BenchmarkStructID_MarshalJSON(b *testing.B) {
         Severity:        domain.SeverityMedium,
         Timestamp:       time.Now(),
     }
-    
+
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         _, _ = json.Marshal(complaint)
@@ -1255,13 +1266,14 @@ type OldComplaint struct {
 ### **Phase 6: Property-Based Tests**
 
 #### **Property-Based Testing with Gopter**
+
 ```go
 // internal/domain/property_based_test.go
 package domain
 
 import (
     "testing"
-    
+
     "github.com/leanovate/gopter"
     "github.com/leanovate/gopter/gen"
     "github.com/leanovate/gopter/prop"
@@ -1269,22 +1281,22 @@ import (
 
 func TestComplaintID_Properties(t *testing.T) {
     properties := gopter.NewProperties(nil)
-    
+
     // Property: Valid UUIDs should parse successfully
     properties.Property("valid UUIDs parse successfully", prop.ForAll(
         gen.UUID4(),
         func(uuidVal uuid.UUID) bool {
             uuidStr := uuidVal.String()
-            
+
             id, err := ParseComplaintID(uuidStr)
-            
-            return err == nil && 
-                   !id.IsEmpty() && 
-                   id.IsValid() && 
+
+            return err == nil &&
+                   !id.IsEmpty() &&
+                   id.IsValid() &&
                    id.String() == uuidStr
         },
     ))
-    
+
     // Property: Invalid UUIDs should fail parsing
     properties.Property("invalid UUIDs fail parsing", prop.ForAll(
         gen.AlphaString().WithMinLen(1).WithMaxLen(50),
@@ -1294,83 +1306,83 @@ func TestComplaintID_Properties(t *testing.T) {
             if err == nil {
                 return true // Skip valid UUIDs
             }
-            
+
             id, parseErr := ParseComplaintID(invalidStr)
-            
-            return parseErr != nil && 
-                   id.IsEmpty() && 
+
+            return parseErr != nil &&
+                   id.IsEmpty() &&
                    !id.IsValid()
         },
     ))
-    
+
     // Property: NewComplaintID always generates valid IDs
     properties.Property("NewComplaintID always generates valid IDs", prop.ForAll(
         gen.Unit(),
         func(_unit struct{}) bool {
             id, err := NewComplaintID()
-            
-            return err == nil && 
-                   !id.IsEmpty() && 
+
+            return err == nil &&
+                   !id.IsEmpty() &&
                    id.IsValid()
         },
     ))
-    
+
     // Property: String() is idempotent
     properties.Property("String() is idempotent", prop.ForAll(
         gen.UUID4(),
         func(uuidVal uuid.UUID) bool {
             uuidStr := uuidVal.String()
-            
+
             id, err := ParseComplaintID(uuidStr)
             if err != nil {
                 return true // Skip invalid UUIDs
             }
-            
+
             // Multiple calls to String() should return same result
             first := id.String()
             second := id.String()
-            
+
             return first == second
         },
     ))
-    
+
     // Run properties
     testing.RunT(t, gopter.NewDefaultTestingParameters().WithMinSuccessfulTests(1000), properties)
 }
 
 func TestAgentID_Properties(t *testing.T) {
     properties := gopter.NewProperties(nil)
-    
+
     // Property: Valid agent names parse successfully
     properties.Property("valid agent names parse successfully", prop.ForAll(
         gen.AlphaNumString().WithMinLen(1).WithMaxLen(100),
         func(name string) bool {
             id, err := NewAgentID(name)
-            
-            return err == nil && 
-                   !id.IsEmpty() && 
-                   id.IsValid() && 
+
+            return err == nil &&
+                   !id.IsEmpty() &&
+                   id.IsValid() &&
                    id.String() == name
         },
     ))
-    
+
     // Property: String() normalizes whitespace consistently
     properties.Property("String() normalizes whitespace", prop.ForAll(
         gen.AlphaNumString().WithMinLen(1).WithMaxLen(50),
         func(name string) bool {
             // Add random whitespace
             withSpaces := "  " + name + "  "
-            
+
             id, err := NewAgentID(withSpaces)
             if err != nil {
                 return true // Skip invalid names
             }
-            
+
             // String() should return trimmed version
             return id.String() == name
         },
     ))
-    
+
     testing.RunT(t, gopter.NewDefaultTestingParameters().WithMinSuccessfulTests(1000), properties)
 }
 ```
@@ -1378,6 +1390,7 @@ func TestAgentID_Properties(t *testing.T) {
 ## 🎯 **Test Coverage Goals**
 
 ### **Coverage Targets**
+
 - **Unit Tests**: 95%+ coverage for phantom type implementations
 - **Integration Tests**: 90%+ coverage for service layer with phantom types
 - **BDD Tests**: Complete workflow coverage with type safety scenarios
@@ -1385,6 +1398,7 @@ func TestAgentID_Properties(t *testing.T) {
 - **Property Tests**: 1000+ iterations for property-based validation
 
 ### **Test Categories**
+
 1. **Construction Tests**: New() and Parse() functions
 2. **Validation Tests**: All validation rules and edge cases
 3. **Conversion Tests**: String() and type conversions
@@ -1399,6 +1413,7 @@ func TestAgentID_Properties(t *testing.T) {
 ## 📋 **Files to Create**
 
 ### **Test Files**
+
 - `internal/domain/complaint_id_test.go` - ComplaintID unit tests
 - `internal/domain/agent_id_test.go` - AgentID unit tests
 - `internal/domain/session_id_test.go` - SessionID unit tests
@@ -1410,6 +1425,7 @@ func TestAgentID_Properties(t *testing.T) {
 - `internal/domain/property_based_test.go` - Property-based tests
 
 ### **Test Utilities**
+
 - `internal/testing/test_helpers.go` - Test helper functions
 - `internal/testing/fixtures.go` - Test data fixtures
 - `internal/testing/assertions.go` - Custom assertions
@@ -1427,6 +1443,7 @@ func TestAgentID_Properties(t *testing.T) {
 - [ ] Test documentation is complete and clear
 
 ## 🏷️ **Labels**
+
 - `testing` - Comprehensive test coverage
 - `quality-assurance` - Code quality validation
 - `type-safety` - Phantom type testing
@@ -1435,12 +1452,14 @@ func TestAgentID_Properties(t *testing.T) {
 - `medium-priority` - Important for reliability
 
 ## 📊 **Priority**: Medium
+
 - **Complexity**: High (comprehensive test suite)
 - **Value**: High (ensures reliability and correctness)
 - **Risk**: Low (testing is additive)
 - **Dependencies**: Issues #48, #49, #50
 
 ## 🤝 **Dependencies**
+
 - **Issue #48**: Must have phantom types implemented
 - **Issue #49**: Should have all ID fields converted
 - **Issue #50**: Need validation constructors for testing
