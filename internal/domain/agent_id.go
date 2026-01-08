@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-// AgentID represents an AI agent identifier using phantom type pattern
+// AgentID represents an AI agent identifier using phantom type pattern.
 type AgentID string
 
-// Agent ID validation pattern - support Unicode characters including emojis
+// Agent ID validation pattern - support Unicode characters including emojis.
 var agentIDPattern = regexp.MustCompile(`^.{1,100}$`)
 
-// NewAgentID creates a new valid AgentID
+// NewAgentID creates a new valid AgentID.
 func NewAgentID(name string) (AgentID, error) {
 	trimmed := strings.TrimSpace(name)
 	if err := validateAgentID(trimmed); err != nil {
@@ -22,7 +22,7 @@ func NewAgentID(name string) (AgentID, error) {
 	return AgentID(trimmed), nil
 }
 
-// ParseAgentID validates and creates an AgentID from string
+// ParseAgentID validates and creates an AgentID from string.
 func ParseAgentID(s string) (AgentID, error) {
 	// Allow empty strings for optional agent tracking
 	trimmed := strings.TrimSpace(s)
@@ -35,7 +35,7 @@ func ParseAgentID(s string) (AgentID, error) {
 	return AgentID(trimmed), nil
 }
 
-// MustParseAgentID creates an AgentID from string, panics on invalid input
+// MustParseAgentID creates an AgentID from string, panics on invalid input.
 func MustParseAgentID(s string) AgentID {
 	id, err := ParseAgentID(s)
 	if err != nil {
@@ -44,42 +44,42 @@ func MustParseAgentID(s string) AgentID {
 	return id
 }
 
-// Validate checks if AgentID is valid
+// Validate checks if AgentID is valid.
 func (id AgentID) Validate() error {
 	trimmed := strings.TrimSpace(string(id))
 	if trimmed == "" {
-		return fmt.Errorf("cannot be empty")
+		return errors.New("cannot be empty")
 	}
 	if len(trimmed) > 100 {
-		return fmt.Errorf("cannot exceed 100 characters")
+		return errors.New("cannot exceed 100 characters")
 	}
 	if !agentIDPattern.MatchString(trimmed) {
-		return fmt.Errorf("contains invalid characters")
+		return errors.New("contains invalid characters")
 	}
 	return nil
 }
 
-// IsValid returns true if AgentID is valid
+// IsValid returns true if AgentID is valid.
 func (id AgentID) IsValid() bool {
 	return id.Validate() == nil
 }
 
-// IsEmpty returns true if AgentID is empty
+// IsEmpty returns true if AgentID is empty.
 func (id AgentID) IsEmpty() bool {
 	return strings.TrimSpace(string(id)) == ""
 }
 
-// String returns string representation of AgentID
+// String returns string representation of AgentID.
 func (id AgentID) String() string {
 	return string(id)
 }
 
-// MarshalJSON implements json.Marshaler for flat JSON structure
+// MarshalJSON implements json.Marshaler for flat JSON structure.
 func (id AgentID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(id.String())
 }
 
-// UnmarshalJSON implements json.Unmarshaler for flat JSON structure
+// UnmarshalJSON implements json.Unmarshaler for flat JSON structure.
 func (id *AgentID) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -93,17 +93,17 @@ func (id *AgentID) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// validateAgentID validates AgentID format
+// validateAgentID validates AgentID format.
 func validateAgentID(s string) error {
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" {
-		return fmt.Errorf("cannot be empty")
+		return errors.New("cannot be empty")
 	}
 	if len(trimmed) > 100 {
-		return fmt.Errorf("cannot exceed 100 characters")
+		return errors.New("cannot exceed 100 characters")
 	}
 	if !agentIDPattern.MatchString(trimmed) {
-		return fmt.Errorf("contains invalid characters")
+		return errors.New("contains invalid characters")
 	}
 	return nil
 }

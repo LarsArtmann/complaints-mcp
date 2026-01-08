@@ -120,12 +120,12 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			// Step 3: List complaints
 			complaints, err := complaintService.ListComplaints(ctx, 10, 0)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(complaints)).To(BeNumerically(">=", 1))
+			Expect(complaints).ToNot(BeEmpty())
 
 			// Step 4: Search for the complaint
 			searchResults, err := complaintService.SearchComplaints(ctx, "End-to-end", 10)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(searchResults)).To(BeNumerically(">=", 1))
+			Expect(searchResults).ToNot(BeEmpty())
 
 			// Step 5: Resolve the complaint
 			resolvedComplaint, err := complaintService.ResolveComplaint(ctx, complaint.ID, "test-agent")

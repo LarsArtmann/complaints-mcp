@@ -13,7 +13,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// MCPServer represents MCP server implementation
+// MCPServer represents MCP server implementation.
 type MCPServer struct {
 	config  *config.Config
 	service *service.ComplaintService
@@ -22,7 +22,7 @@ type MCPServer struct {
 	server  *mcp.Server
 }
 
-// NewServer creates a new MCP server
+// NewServer creates a new MCP server.
 func NewServer(name, version string, complaintService *service.ComplaintService, logger *log.Logger, tracer tracing.Tracer) *MCPServer {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    name,
@@ -38,12 +38,12 @@ func NewServer(name, version string, complaintService *service.ComplaintService,
 	}
 }
 
-// SetConfig sets the configuration for the MCP server
+// SetConfig sets the configuration for the MCP server.
 func (m *MCPServer) SetConfig(cfg *config.Config) {
 	m.config = cfg
 }
 
-// Start starts the MCP server using stdio transport
+// Start starts the MCP server using stdio transport.
 func (m *MCPServer) Start(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
 
@@ -62,7 +62,7 @@ func (m *MCPServer) Start(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown gracefully shuts down the MCP server
+// Shutdown gracefully shuts down the MCP server.
 func (m *MCPServer) Shutdown(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
 	logger.Info("Shutting down MCP server")
@@ -71,7 +71,7 @@ func (m *MCPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// registerTools registers all available MCP tools
+// registerTools registers all available MCP tools.
 func (m *MCPServer) registerTools() error {
 	// File complaint tool
 	fileComplaintTool := &mcp.Tool{
@@ -224,7 +224,7 @@ func (m *MCPServer) registerTools() error {
 	return nil
 }
 
-// Input types for tool handlers
+// Input types for tool handlers.
 type FileComplaintInput struct {
 	AgentName       string `json:"agent_name"`
 	SessionName     string `json:"session_name"`
@@ -255,7 +255,7 @@ type SearchComplaintsInput struct {
 
 type GetCacheStatsInput struct{}
 
-// Output types for tool handlers
+// Output types for tool handlers.
 type FileComplaintOutput struct {
 	Success   bool         `json:"success"`
 	Message   string       `json:"message"`
@@ -283,7 +283,7 @@ type GetCacheStatsOutput struct {
 	Message      string          `json:"message"`
 }
 
-// handleFileComplaint handles the file_complaint tool
+// handleFileComplaint handles the file_complaint tool.
 func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleFileComplaint")
 	defer span.End()
@@ -332,7 +332,7 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	return nil, output, nil
 }
 
-// handleListComplaints handles the list_complaints tool
+// handleListComplaints handles the list_complaints tool.
 func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolRequest, input ListComplaintsInput) (*mcp.CallToolResult, ListComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleListComplaints")
 	defer span.End()
@@ -392,7 +392,7 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 	return nil, output, nil
 }
 
-// handleResolveComplaint handles the resolve_complaint tool
+// handleResolveComplaint handles the resolve_complaint tool.
 func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToolRequest, input ResolveComplaintInput) (*mcp.CallToolResult, ResolveComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleResolveComplaint")
 	defer span.End()
@@ -419,7 +419,7 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 	return nil, output, nil
 }
 
-// handleSearchComplaints handles the search_complaints tool
+// handleSearchComplaints handles the search_complaints tool.
 func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToolRequest, input SearchComplaintsInput) (*mcp.CallToolResult, SearchComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleSearchComplaints")
 	defer span.End()
@@ -454,7 +454,7 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 	return nil, output, nil
 }
 
-// handleGetCacheStats handles the get_cache_stats tool
+// handleGetCacheStats handles the get_cache_stats tool.
 func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRequest, input GetCacheStatsInput) (*mcp.CallToolResult, GetCacheStatsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleGetCacheStats")
 	defer span.End()

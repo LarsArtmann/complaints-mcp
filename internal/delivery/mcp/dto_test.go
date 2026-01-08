@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestToDTO tests the conversion from domain Complaint to DTO
+// TestToDTO tests the conversion from domain Complaint to DTO.
 func TestToDTO(t *testing.T) {
 	// Create test complaint with all fields
 	id, _ := domain.NewComplaintID()
@@ -56,7 +56,7 @@ func TestToDTO(t *testing.T) {
 	assert.Equal(t, "test-resolver", dto.ResolvedBy, "ResolvedBy should match")
 }
 
-// TestComplaintDTO_JSONSerialization tests that DTO serializes to valid JSON
+// TestComplaintDTO_JSONSerialization tests that DTO serializes to valid JSON.
 func TestComplaintDTO_JSONSerialization(t *testing.T) {
 	// Create test complaint
 	id, _ := domain.NewComplaintID()
@@ -81,7 +81,7 @@ func TestComplaintDTO_JSONSerialization(t *testing.T) {
 	assert.Empty(t, dto.ResolvedBy) // Should be omitted when empty
 }
 
-// TestComplaintDTO_OptionalFields tests optional field behavior
+// TestComplaintDTO_OptionalFields tests optional field behavior.
 func TestComplaintDTO_OptionalFields(t *testing.T) {
 	// Create minimal complaint
 	id, _ := domain.NewComplaintID()
@@ -98,18 +98,18 @@ func TestComplaintDTO_OptionalFields(t *testing.T) {
 	dto := ToDTO(complaint)
 
 	// Verify optional fields are empty/zero
-	assert.Equal(t, "", dto.SessionName)
-	assert.Equal(t, "", dto.ContextInfo)
-	assert.Equal(t, "", dto.MissingInfo)
-	assert.Equal(t, "", dto.ConfusedBy)
-	assert.Equal(t, "", dto.FutureWishes)
-	assert.Equal(t, "", dto.ProjectName)
+	assert.Empty(t, dto.SessionName)
+	assert.Empty(t, dto.ContextInfo)
+	assert.Empty(t, dto.MissingInfo)
+	assert.Empty(t, dto.ConfusedBy)
+	assert.Empty(t, dto.FutureWishes)
+	assert.Empty(t, dto.ProjectName)
 	assert.False(t, dto.Resolved)
 	assert.Nil(t, dto.ResolvedAt)
-	assert.Equal(t, "", dto.ResolvedBy)
+	assert.Empty(t, dto.ResolvedBy)
 }
 
-// TestListComplaintsOutput_TypeSafety tests the output struct is type-safe
+// TestListComplaintsOutput_TypeSafety tests the output struct is type-safe.
 func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	id1, _ := domain.NewComplaintID()
 	id2, _ := domain.NewComplaintID()
@@ -158,7 +158,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	assert.True(t, output.Complaints[1].Resolved)
 }
 
-// TestFileComplaintOutput_TypeSafety tests the file complaint output is type-safe
+// TestFileComplaintOutput_TypeSafety tests the file complaint output is type-safe.
 func TestFileComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	complaint := &domain.Complaint{
@@ -184,7 +184,7 @@ func TestFileComplaintOutput_TypeSafety(t *testing.T) {
 	assert.Equal(t, "medium", output.Complaint.Severity)
 }
 
-// TestResolveComplaintOutput_TypeSafety tests the resolve complaint output is type-safe
+// TestResolveComplaintOutput_TypeSafety tests the resolve complaint output is type-safe.
 func TestResolveComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
 	now := time.Now()

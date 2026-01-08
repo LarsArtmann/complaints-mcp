@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-// TracerType represents the type of tracer to use
+// TracerType represents the type of tracer to use.
 type TracerType string
 
 const (
@@ -13,7 +13,7 @@ const (
 	TracerTypeReal TracerType = "real"
 )
 
-// TracerConfig holds configuration for tracer creation
+// TracerConfig holds configuration for tracer creation.
 type TracerConfig struct {
 	Type        TracerType
 	ServiceName string
@@ -21,7 +21,7 @@ type TracerConfig struct {
 	SampleRate  float64
 }
 
-// DefaultTracerConfig returns default tracer configuration
+// DefaultTracerConfig returns default tracer configuration.
 func DefaultTracerConfig() TracerConfig {
 	// Default to production tracer for production deployments
 	tracerType := TracerTypeReal
@@ -44,7 +44,7 @@ func DefaultTracerConfig() TracerConfig {
 	}
 }
 
-// NewTracer creates a tracer based on configuration
+// NewTracer creates a tracer based on configuration.
 func NewTracer(config TracerConfig) Tracer {
 	switch config.Type {
 	case TracerTypeReal:

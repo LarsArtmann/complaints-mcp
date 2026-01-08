@@ -15,21 +15,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config represents the application configuration
+// Config represents the application configuration.
 type Config struct {
 	Server  ServerConfig  `mapstructure:"server"`
 	Storage StorageConfig `mapstructure:"storage"`
 	Log     LogConfig     `mapstructure:"log"`
 }
 
-// ServerConfig represents server configuration
+// ServerConfig represents server configuration.
 type ServerConfig struct {
 	Name string `mapstructure:"name" validate:"required"`
 	Host string `mapstructure:"host"`
 	Port uint16 `mapstructure:"port" validate:"min=1,max=65535"` // uint16: ports are 0-65535
 }
 
-// Address returns the full server address
+// Address returns the full server address.
 func (s ServerConfig) Address() string {
 	if s.Host == "" {
 		return fmt.Sprintf(":%d", s.Port)
@@ -37,12 +37,12 @@ func (s ServerConfig) Address() string {
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
-// StorageConfig represents storage configuration
+// StorageConfig represents storage configuration.
 type StorageConfig struct {
-	BaseDir    string `mapstructure:"base_dir" validate:"required"`
+	BaseDir    string `mapstructure:"base_dir"       validate:"required"`
 	GlobalDir  string `mapstructure:"global_dir"`
-	MaxSize    uint64 `mapstructure:"max_size" validate:"min=1024"` // uint64: file sizes cannot be negative
-	Retention  uint   `mapstructure:"retention_days"`               // 0 = infinite retention
+	MaxSize    uint64 `mapstructure:"max_size"       validate:"min=1024"` // uint64: file sizes cannot be negative
+	Retention  uint   `mapstructure:"retention_days"`                     // 0 = infinite retention
 	AutoBackup bool   `mapstructure:"auto_backup"`
 
 	// Documentation storage configuration
@@ -60,14 +60,14 @@ type StorageConfig struct {
 	EvictionPolicy types.CacheEvictionPolicy `mapstructure:"-"` // derived from CacheEviction
 }
 
-// LogConfig represents logging configuration
+// LogConfig represents logging configuration.
 type LogConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`
 	Output string `mapstructure:"output"`
 }
 
-// Load loads configuration from various sources
+// Load loads configuration from various sources.
 func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 	logger := log.FromContext(ctx)
 
@@ -108,7 +108,8 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 
 	// Read configuration
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			logger.Info("Config file not found, using defaults")
 		} else {
 			logger.Warn("Failed to read config file", "error", err, "config_file", v.ConfigFileUsed())
@@ -199,19 +200,19 @@ func postProcessConfig(cfg *Config) error {
 func validateConfig(cfg *Config) error {
 	// Basic validation
 	if cfg.Server.Name == "" {
-		return fmt.Errorf("server.name is required")
+		return errors.New("server.name is required")
 	}
 
 	if cfg.Server.Port <= 0 || cfg.Server.Port > 65535 {
-		return fmt.Errorf("server.port must be between 1 and 65535")
+		return errors.New("server.port must be between 1 and 65535")
 	}
 
 	if cfg.Storage.BaseDir == "" {
-		return fmt.Errorf("storage.base_dir is required")
+		return errors.New("storage.base_dir is required")
 	}
 
 	if cfg.Storage.MaxSize <= 0 {
-		return fmt.Errorf("storage.max_size must be positive")
+		return errors.New("storage.max_size must be positive")
 	}
 
 	// Storage configuration validation (0 = infinite retention is valid)
@@ -226,10 +227,10 @@ func validateConfig(cfg *Config) error {
 	}
 
 	if cfg.Storage.CacheMaxSize <= 0 {
-		return fmt.Errorf("storage.cache_max_size must be positive")
+		return errors.New("storage.cache_max_size must be positive")
 	}
 	if cfg.Storage.CacheMaxSize > 100000 {
-		return fmt.Errorf("storage.cache_max_size must be <= 100000")
+		return errors.New("storage.cache_max_size must be <= 100000")
 	}
 
 	// Populate type-safe cache configuration

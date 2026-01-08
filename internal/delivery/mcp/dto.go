@@ -6,7 +6,7 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 )
 
-// ComplaintDTO represents a type-safe transfer object for complaint data
+// ComplaintDTO represents a type-safe transfer object for complaint data.
 type ComplaintDTO struct {
 	ID              string     `json:"id"`
 	AgentName       string     `json:"agent_name"`
@@ -26,12 +26,12 @@ type ComplaintDTO struct {
 	DocsPath        string     `json:"docs_path,omitempty"`
 }
 
-// ToDTO converts a domain Complaint to a type-safe DTO (standalone function)
+// ToDTO converts a domain Complaint to a type-safe DTO (standalone function).
 func ToDTO(c *domain.Complaint) ComplaintDTO {
 	return ToDTOWithPaths(c, "", "")
 }
 
-// ToDTOWithPaths converts a domain Complaint to a type-safe DTO with optional file paths
+// ToDTOWithPaths converts a domain Complaint to a type-safe DTO with optional file paths.
 func ToDTOWithPaths(c *domain.Complaint, filePath, docsPath string) ComplaintDTO {
 	return ComplaintDTO{
 		ID:              c.ID.String(),

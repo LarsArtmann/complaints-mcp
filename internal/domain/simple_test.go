@@ -30,7 +30,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 
 		// ✅ CRITICAL FIX: Should produce flat string, not nested object
 		jsonStr := string(data)
-		assert.Equal(t, `"550e8400-e29b-41d4-a716-446655440000"`, jsonStr)
+		assert.JSONEq(t, `"550e8400-e29b-41d4-a716-446655440000"`, jsonStr)
 
 		// ✅ CRITICAL FIX: Should not contain nested "Value" objects
 		assert.NotContains(t, jsonStr, `"Value"`, "Should not have nested Value objects")
@@ -99,5 +99,5 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 }
 
-// Test helper
+// Test helper.
 var testTimestamp = time.Date(2024, 11, 9, 12, 18, 30, 0, time.UTC)

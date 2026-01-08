@@ -9,13 +9,13 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// ComplaintID represents a unique complaint identifier using phantom type pattern (string-based)
+// ComplaintID represents a unique complaint identifier using phantom type pattern (string-based).
 type ComplaintID string
 
-// UUID v4 pattern for validation
+// UUID v4 pattern for validation.
 var complaintIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 
-// NewComplaintID creates a new valid ComplaintID with UUID v4 format
+// NewComplaintID creates a new valid ComplaintID with UUID v4 format.
 func NewComplaintID() (ComplaintID, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -24,34 +24,34 @@ func NewComplaintID() (ComplaintID, error) {
 	return ComplaintID(id.String()), nil
 }
 
-// String returns string representation of ComplaintID
+// String returns string representation of ComplaintID.
 func (id ComplaintID) String() string {
 	return string(id)
 }
 
-// Validate checks if ComplaintID is valid
+// Validate checks if ComplaintID is valid.
 func (id ComplaintID) Validate() error {
 	s := string(id)
 	if s == "" {
-		return fmt.Errorf("cannot be empty")
+		return errors.New("cannot be empty")
 	}
 	if !complaintIDPattern.MatchString(s) {
-		return fmt.Errorf("must be valid UUID v4 format")
+		return errors.New("must be valid UUID v4 format")
 	}
 	return nil
 }
 
-// IsValid returns true if ComplaintID is valid
+// IsValid returns true if ComplaintID is valid.
 func (id ComplaintID) IsValid() bool {
 	return id.Validate() == nil
 }
 
-// MarshalJSON implements json.Marshaler for flat JSON structure
+// MarshalJSON implements json.Marshaler for flat JSON structure.
 func (id ComplaintID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(id.String())
 }
 
-// UnmarshalJSON implements json.Unmarshaler for flat JSON structure
+// UnmarshalJSON implements json.Unmarshaler for flat JSON structure.
 func (id *ComplaintID) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -64,7 +64,7 @@ func (id *ComplaintID) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ParseComplaintID validates and creates a ComplaintID from string
+// ParseComplaintID validates and creates a ComplaintID from string.
 func ParseComplaintID(s string) (ComplaintID, error) {
 	if err := validateComplaintID(s); err != nil {
 		return ComplaintID(""), fmt.Errorf("invalid ComplaintID: %w", err)
@@ -72,23 +72,23 @@ func ParseComplaintID(s string) (ComplaintID, error) {
 	return ComplaintID(s), nil
 }
 
-// IsEmpty returns true if ComplaintID is empty
+// IsEmpty returns true if ComplaintID is empty.
 func (id ComplaintID) IsEmpty() bool {
 	return string(id) == ""
 }
 
-// validateComplaintID validates ComplaintID format
+// validateComplaintID validates ComplaintID format.
 func validateComplaintID(s string) error {
 	if s == "" {
-		return fmt.Errorf("cannot be empty")
+		return errors.New("cannot be empty")
 	}
 	if !complaintIDPattern.MatchString(s) {
-		return fmt.Errorf("must be valid UUID v4 format")
+		return errors.New("must be valid UUID v4 format")
 	}
 	return nil
 }
 
-// ResolutionState represents the resolution state of a complaint
+// ResolutionState represents the resolution state of a complaint.
 type ResolutionState string
 
 const (
@@ -96,12 +96,12 @@ const (
 	ResolutionStateResolved ResolutionState = "resolved"
 )
 
-// IsResolved returns true if the complaint is resolved
+// IsResolved returns true if the complaint is resolved.
 func (r ResolutionState) IsResolved() bool {
 	return r == ResolutionStateResolved
 }
 
-// Severity represents the severity level of a complaint
+// Severity represents the severity level of a complaint.
 type Severity string
 
 const (
@@ -111,7 +111,7 @@ const (
 	SeverityCritical Severity = "critical"
 )
 
-// Complaint represents a structured complaint with phantom type ID
+// Complaint represents a structured complaint with phantom type ID.
 type Complaint struct {
 	ID              ComplaintID     `json:"id"`         // ✅ Phantom type - flat JSON
 	AgentID         AgentID         `json:"agent_id"`   // ✅ Phantom type for consistency
@@ -129,7 +129,7 @@ type Complaint struct {
 	ResolvedBy      string          `json:"resolved_by,omitempty"`
 }
 
-// Validate checks if all fields are valid
+// Validate checks if all fields are valid.
 func (c *Complaint) Validate() error {
 	// Validate phantom type ID
 	if err := c.ID.Validate(); err != nil {
@@ -156,21 +156,21 @@ func (c *Complaint) Validate() error {
 	}
 
 	if c.TaskDescription == "" {
-		return fmt.Errorf("task description is required")
+		return errors.New("task description is required")
 	}
 
 	return nil
 }
 
-// IsValid returns true if the complaint is valid
+// IsValid returns true if the complaint is valid.
 func (c *Complaint) IsValid() bool {
 	return c.Validate() == nil
 }
 
-// Resolve marks a complaint as resolved
+// Resolve marks a complaint as resolved.
 func (c *Complaint) Resolve(resolvedBy string) error {
 	if resolvedBy == "" {
-		return fmt.Errorf("resolver name cannot be empty")
+		return errors.New("resolver name cannot be empty")
 	}
 
 	// Idempotent: if already resolved, just update resolvedBy if different
@@ -190,7 +190,7 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 	return nil
 }
 
-// IsResolved returns true if the complaint is resolved
+// IsResolved returns true if the complaint is resolved.
 func (c *Complaint) IsResolved() bool {
 	return c.ResolutionState.IsResolved()
 }

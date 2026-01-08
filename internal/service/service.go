@@ -10,13 +10,13 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
-// ComplaintService handles complaint business logic
+// ComplaintService handles complaint business logic.
 type ComplaintService struct {
 	repo   repo.Repository
 	tracer tracing.Tracer
 }
 
-// NewComplaintService creates a new complaint service
+// NewComplaintService creates a new complaint service.
 func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *ComplaintService {
 	return &ComplaintService{
 		repo:   repository,
@@ -24,7 +24,7 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 	}
 }
 
-// CreateComplaint creates a new complaint
+// CreateComplaint creates a new complaint.
 func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity domain.Severity, projectName string) (*domain.Complaint, error) {
 	// Generate phantom type ID
 	id, err := domain.NewComplaintID()
@@ -75,17 +75,17 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 	return complaint, nil
 }
 
-// GetComplaint retrieves a complaint by ID
+// GetComplaint retrieves a complaint by ID.
 func (s *ComplaintService) GetComplaint(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
-// ListComplaints retrieves a list of complaints
+// ListComplaints retrieves a list of complaints.
 func (s *ComplaintService) ListComplaints(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
 	return s.repo.FindAll(ctx, limit, offset)
 }
 
-// ResolveComplaint marks a complaint as resolved
+// ResolveComplaint marks a complaint as resolved.
 func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID, resolvedBy string) (*domain.Complaint, error) {
 	complaint, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 	return complaint, nil
 }
 
-// GetFilePaths returns file and docs paths for a complaint
+// GetFilePaths returns file and docs paths for a complaint.
 func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.ComplaintID) (filePath, docsPath string, err error) {
 	filePath, err = s.repo.GetFilePath(ctx, id)
 	if err != nil {
@@ -118,27 +118,27 @@ func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.Complaint
 	return filePath, docsPath, nil
 }
 
-// GetComplaintsBySeverity retrieves complaints by severity level
+// GetComplaintsBySeverity retrieves complaints by severity level.
 func (s *ComplaintService) GetComplaintsBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
 	return s.repo.FindBySeverity(ctx, severity, limit)
 }
 
-// SearchComplaints searches complaints by text query
+// SearchComplaints searches complaints by text query.
 func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
 	return s.repo.Search(ctx, query, limit)
 }
 
-// GetCacheStats returns cache statistics
+// GetCacheStats returns cache statistics.
 func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 	return s.repo.GetCacheStats()
 }
 
-// ListComplaintsByProject retrieves complaints by project name
+// ListComplaintsByProject retrieves complaints by project name.
 func (s *ComplaintService) ListComplaintsByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
 	return s.repo.FindByProject(ctx, projectName, limit)
 }
 
-// ListUnresolvedComplaints retrieves unresolved complaints
+// ListUnresolvedComplaints retrieves unresolved complaints.
 func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	return s.repo.FindUnresolved(ctx, limit)
 }

@@ -14,17 +14,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// RealTracer implements production-ready tracing with OpenTelemetry
+// RealTracer implements production-ready tracing with OpenTelemetry.
 type RealTracer struct {
 	tracer trace.Tracer
 }
 
-// RealSpan adapts OpenTelemetry span to our Span interface
+// RealSpan adapts OpenTelemetry span to our Span interface.
 type RealSpan struct {
 	span trace.Span
 }
 
-// NewRealTracer creates a new production tracer with Jaeger export
+// NewRealTracer creates a new production tracer with Jaeger export.
 func NewRealTracer(serviceName string) *RealTracer {
 	// Create Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
@@ -51,13 +51,13 @@ func NewRealTracer(serviceName string) *RealTracer {
 	}
 }
 
-// Start creates a new span
+// Start creates a new span.
 func (t *RealTracer) Start(ctx context.Context, name string) (context.Context, Span) {
 	ctx, span := t.tracer.Start(ctx, name)
 	return ctx, &RealSpan{span: span}
 }
 
-// Close shuts down tracer
+// Close shuts down tracer.
 func (t *RealTracer) Close() error {
 	// Shutdown tracer provider
 	if tp, ok := otel.GetTracerProvider().(*sdktrace.TracerProvider); ok {
@@ -66,7 +66,7 @@ func (t *RealTracer) Close() error {
 	return nil
 }
 
-// RealSpan adapter methods
+// RealSpan adapter methods.
 func (rs *RealSpan) End() {
 	rs.span.End()
 }

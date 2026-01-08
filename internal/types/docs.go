@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// DocsFormat represents supported documentation export formats
+// DocsFormat represents supported documentation export formats.
 type DocsFormat string
 
 const (
@@ -16,7 +16,7 @@ const (
 	DocsFormatText     DocsFormat = "text"
 )
 
-// IsValid validates that the docs format is supported
+// IsValid validates that the docs format is supported.
 func (df DocsFormat) IsValid() bool {
 	switch df {
 	case DocsFormatMarkdown, DocsFormatHTML, DocsFormatText:
@@ -26,12 +26,12 @@ func (df DocsFormat) IsValid() bool {
 	}
 }
 
-// String returns string representation
+// String returns string representation.
 func (df DocsFormat) String() string {
 	return string(df)
 }
 
-// FileExtension returns the file extension for this format
+// FileExtension returns the file extension for this format.
 func (df DocsFormat) FileExtension() string {
 	switch df {
 	case DocsFormatMarkdown:
@@ -45,7 +45,7 @@ func (df DocsFormat) FileExtension() string {
 	}
 }
 
-// GenerateFilename generates a safe filename for documentation export
+// GenerateFilename generates a safe filename for documentation export.
 func GenerateFilename(timestamp time.Time, sessionName string, format DocsFormat) string {
 	// Format timestamp
 	timeStr := timestamp.Format("2006-01-02_15-04-05")
@@ -85,10 +85,10 @@ func GenerateFilename(timestamp time.Time, sessionName string, format DocsFormat
 	return fmt.Sprintf("%s-%s%s", timeStr, sessionName, format.FileExtension())
 }
 
-// ValidateDocsDir ensures docs directory is valid and safe
+// ValidateDocsDir ensures docs directory is valid and safe.
 func ValidateDocsDir(docsDir string) error {
 	if docsDir == "" {
-		return fmt.Errorf("docs directory cannot be empty")
+		return errors.New("docs directory cannot be empty")
 	}
 
 	// Clean path
@@ -107,14 +107,14 @@ func ValidateDocsDir(docsDir string) error {
 	return nil
 }
 
-// DocsConfig represents strongly-typed documentation configuration
+// DocsConfig represents strongly-typed documentation configuration.
 type DocsConfig struct {
 	Dir     string     `validate:"required,dir"`
 	Format  DocsFormat `validate:"required,oneof=markdown html text"`
 	Enabled bool       `validate:"boolean"`
 }
 
-// Validate validates the docs configuration
+// Validate validates the docs configuration.
 func (dc DocsConfig) Validate() error {
 	if err := ValidateDocsDir(dc.Dir); err != nil {
 		return fmt.Errorf("invalid docs directory: %w", err)
@@ -127,7 +127,7 @@ func (dc DocsConfig) Validate() error {
 	return nil
 }
 
-// String returns string representation of config
+// String returns string representation of config.
 func (dc DocsConfig) String() string {
 	return fmt.Sprintf("DocsConfig{Dir: %s, Format: %s, Enabled: %t}",
 		dc.Dir, dc.Format, dc.Enabled)

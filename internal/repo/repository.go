@@ -20,7 +20,7 @@ const (
 	defaultDocsDir       = "docs/complaints"
 )
 
-// Repository interface for complaint storage
+// Repository interface for complaint storage.
 type Repository interface {
 	Save(ctx context.Context, complaint *domain.Complaint) error
 	FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error)
@@ -39,14 +39,14 @@ type Repository interface {
 	FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error)
 }
 
-// FileRepository implements Repository interface using file system
+// FileRepository implements Repository interface using file system.
 type FileRepository struct {
 	complaintsDir string
 	docsDir       string
 	tracer        tracing.Tracer
 }
 
-// NewFileRepository creates a new file repository
+// NewFileRepository creates a new file repository.
 func NewFileRepository(baseDir string, tracer tracing.Tracer) *FileRepository {
 	complaintsDir := filepath.Join(baseDir, defaultComplaintsDir)
 	docsDir := filepath.Join(baseDir, defaultDocsDir)
@@ -58,7 +58,7 @@ func NewFileRepository(baseDir string, tracer tracing.Tracer) *FileRepository {
 	}
 }
 
-// Save saves a complaint to file system with FLAT JSON
+// Save saves a complaint to file system with FLAT JSON.
 func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
 	if err := complaint.Validate(); err != nil {
 		return fmt.Errorf("invalid complaint: %w", err)
@@ -71,18 +71,18 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 	}
 
 	// Use phantom type ID for file naming
-	fileName := fmt.Sprintf("%s.json", complaint.ID.String())
+	fileName := complaint.ID.String() + ".json"
 	return r.writeFile(fileName, data)
 }
 
-// FindByID finds a complaint by ID
+// FindByID finds a complaint by ID.
 func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
 	if err := id.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid ComplaintID: %w", err)
 	}
 
 	// Load from file
-	fileName := fmt.Sprintf("%s.json", id.String())
+	fileName := id.String() + ".json"
 	data, err := r.readFile(fileName)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
 	return &complaint, nil
 }
 
-// FindAll finds all complaints
+// FindAll finds all complaints.
 func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
 	files, err := r.listComplaintFiles()
 	if err != nil {
@@ -142,7 +142,7 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	return complaints, nil
 }
 
-// FindBySeverity finds complaints by severity
+// FindBySeverity finds complaints by severity.
 func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -160,7 +160,7 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 	return filtered, nil
 }
 
-// FindUnresolved finds unresolved complaints
+// FindUnresolved finds unresolved complaints.
 func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -178,18 +178,18 @@ func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*doma
 	return unresolved, nil
 }
 
-// Update updates a complaint
+// Update updates a complaint.
 func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint) error {
 	return r.Save(ctx, complaint)
 }
 
-// Delete deletes a complaint by ID
+// Delete deletes a complaint by ID.
 func (r *FileRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
-	fileName := fmt.Sprintf("%s.json", id.String())
+	fileName := id.String() + ".json"
 	return os.Remove(filepath.Join(r.complaintsDir, fileName))
 }
 
-// Search searches complaints by text
+// Search searches complaints by text.
 func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -210,12 +210,12 @@ func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([
 	return results, nil
 }
 
-// WarmCache loads all complaints into cache
+// WarmCache loads all complaints into cache.
 func (r *FileRepository) WarmCache(ctx context.Context) error {
 	return nil // No cache in minimal version
 }
 
-// GetCacheStats returns cache statistics
+// GetCacheStats returns cache statistics.
 func (r *FileRepository) GetCacheStats() CacheStats {
 	return CacheStats{
 		CachedComplaints: int64(0),
@@ -229,13 +229,13 @@ func (r *FileRepository) GetCacheStats() CacheStats {
 	}
 }
 
-// GetFilePath returns file path for a complaint
+// GetFilePath returns file path for a complaint.
 func (r *FileRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
-	fileName := fmt.Sprintf("%s.json", id.String())
+	fileName := id.String() + ".json"
 	return filepath.Join(r.complaintsDir, fileName), nil
 }
 
-// GetDocsPath returns documentation path for a complaint
+// GetDocsPath returns documentation path for a complaint.
 func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
 	complaint, err := r.FindByID(ctx, id)
 	if err != nil {
@@ -249,7 +249,7 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	return filepath.Join(r.docsDir, fileName), nil
 }
 
-// FindBySession finds complaints by session
+// FindBySession finds complaints by session.
 func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -267,7 +267,7 @@ func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, li
 	return filtered, nil
 }
 
-// FindByProject finds complaints by project
+// FindByProject finds complaints by project.
 func (r *FileRepository) FindByProject(ctx context.Context, projectID string, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -285,7 +285,7 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectID string, li
 	return filtered, nil
 }
 
-// FindByAgent finds complaints by agent
+// FindByAgent finds complaints by agent.
 func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
@@ -303,7 +303,7 @@ func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit 
 	return filtered, nil
 }
 
-// CacheStats represents cache statistics
+// CacheStats represents cache statistics.
 type CacheStats struct {
 	CachedComplaints int64   `json:"cached_complaints"`
 	MaxCacheSize     int64   `json:"max_cache_size"`
@@ -315,7 +315,7 @@ type CacheStats struct {
 	HitRate          float64 `json:"hit_rate_percent"`
 }
 
-// listComplaintFiles lists all complaint files
+// listComplaintFiles lists all complaint files.
 func (r *FileRepository) listComplaintFiles() ([]os.DirEntry, error) {
 	entries, err := os.ReadDir(r.complaintsDir)
 	if err != nil {
@@ -333,7 +333,7 @@ func (r *FileRepository) listComplaintFiles() ([]os.DirEntry, error) {
 	return files, nil
 }
 
-// writeFile writes data to a file
+// writeFile writes data to a file.
 func (r *FileRepository) writeFile(fileName string, data []byte) error {
 	if err := os.MkdirAll(r.complaintsDir, 0o755); err != nil {
 		return err
@@ -342,14 +342,14 @@ func (r *FileRepository) writeFile(fileName string, data []byte) error {
 	return os.WriteFile(filePath, data, 0o644)
 }
 
-// NewRepositoryFromConfig creates a repository based on configuration
+// NewRepositoryFromConfig creates a repository based on configuration.
 func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Repository {
 	// For now, always return a FileRepository
 	// In the future, this could check cfg.Storage.CacheEnabled to return a cached repository
 	return NewFileRepository(cfg.Storage.BaseDir, tracer)
 }
 
-// SimpleCachedRepository provides basic caching functionality
+// SimpleCachedRepository provides basic caching functionality.
 type SimpleCachedRepository struct {
 	base    Repository
 	cache   map[domain.ComplaintID]*domain.Complaint
@@ -358,7 +358,7 @@ type SimpleCachedRepository struct {
 	mu      sync.RWMutex
 }
 
-// NewSimpleCachedRepository creates a simple cached repository wrapper
+// NewSimpleCachedRepository creates a simple cached repository wrapper.
 func NewSimpleCachedRepository(base Repository, maxSize int) Repository {
 	return &SimpleCachedRepository{
 		base:    base,
@@ -370,7 +370,7 @@ func NewSimpleCachedRepository(base Repository, maxSize int) Repository {
 	}
 }
 
-// Save implements Repository interface
+// Save implements Repository interface.
 func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Complaint) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -386,7 +386,7 @@ func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Com
 	return nil
 }
 
-// FindByID implements Repository interface
+// FindByID implements Repository interface.
 func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
 	r.mu.RLock()
 
@@ -419,7 +419,7 @@ func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.Complai
 	return complaint, nil
 }
 
-// GetCacheStats implements Repository interface
+// GetCacheStats implements Repository interface.
 func (r *SimpleCachedRepository) GetCacheStats() CacheStats {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -427,7 +427,7 @@ func (r *SimpleCachedRepository) GetCacheStats() CacheStats {
 	return r.stats
 }
 
-// updateCacheSize updates current cache size and eviction logic
+// updateCacheSize updates current cache size and eviction logic.
 func (r *SimpleCachedRepository) updateCacheSize() {
 	currentSize := int64(len(r.cache))
 	r.stats.CurrentSize = currentSize
@@ -449,7 +449,7 @@ func (r *SimpleCachedRepository) updateCacheSize() {
 	r.stats.CachedComplaints = currentSize
 }
 
-// Delegate other methods to base repository
+// Delegate other methods to base repository.
 func (r *SimpleCachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
 	return r.base.FindAll(ctx, limit, offset)
 }
@@ -466,7 +466,7 @@ func (r *SimpleCachedRepository) FindUnresolved(ctx context.Context, limit int) 
 	return r.base.FindUnresolved(ctx, limit)
 }
 
-// Add missing methods from Repository interface
+// Add missing methods from Repository interface.
 func (r *SimpleCachedRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
 	return r.base.FindBySeverity(ctx, severity, limit)
 }
@@ -522,7 +522,7 @@ func (r *SimpleCachedRepository) GetDocsPath(ctx context.Context, id domain.Comp
 	return r.base.GetDocsPath(ctx, id)
 }
 
-// NewCachedRepository creates a cached repository with minimal cache implementation
+// NewCachedRepository creates a cached repository with minimal cache implementation.
 func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 	// Create file repository as base
 	baseRepo := NewFileRepository(baseDir, tracer)
@@ -531,7 +531,7 @@ func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 	return NewSimpleCachedRepository(baseRepo, 1000)
 }
 
-// readFile reads data from a file
+// readFile reads data from a file.
 func (r *FileRepository) readFile(fileName string) ([]byte, error) {
 	filePath := filepath.Join(r.complaintsDir, fileName)
 	data, err := os.ReadFile(filePath)
