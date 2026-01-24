@@ -12,7 +12,7 @@ Currently, ComplaintID is implemented as a struct with nested Value field, causi
 ```json
 {
   "id": {
-    "Value": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"  // ❌ Nested!
+    "Value": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6" // ❌ Nested!
   }
 }
 ```
@@ -21,7 +21,7 @@ This needs to be flattened to:
 
 ```json
 {
-  "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"  // ✅ Flat!
+  "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6" // ✅ Flat!
 }
 ```
 

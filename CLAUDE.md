@@ -262,9 +262,9 @@ The repository factory supports configurable caching:
 
 ```yaml
 storage:
-  cache_enabled: true        # Use CachedRepository vs FileRepository
-  cache_max_size: 1000       # LRU cache size
-  cache_eviction: "lru"      # Eviction policy (lru, fifo, none)
+  cache_enabled: true # Use CachedRepository vs FileRepository
+  cache_max_size: 1000 # LRU cache size
+  cache_eviction: "lru" # Eviction policy (lru, fifo, none)
 ```
 
 CLI Flags:

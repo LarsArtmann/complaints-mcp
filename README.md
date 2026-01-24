@@ -208,8 +208,8 @@ storage:
   docs_dir: "docs/complaints"
   docs_enabled: true
   docs_format: "markdown"
-  max_size: 10485760  # 10MB
-  retention_days: 0  # Infinite retention
+  max_size: 10485760 # 10MB
+  retention_days: 0 # Infinite retention
   auto_backup: true
   cache_enabled: true
   cache_max_size: 1000
@@ -251,15 +251,15 @@ The server exposes the following MCP tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "agent_name": {"type": "string", "minLength": 1, "maxLength": 100},
-      "session_name": {"type": "string", "maxLength": 100},
-      "task_description": {"type": "string", "minLength": 1, "maxLength": 1000},
-      "context_info": {"type": "string", "maxLength": 500},
-      "missing_info": {"type": "string", "maxLength": 500},
-      "confused_by": {"type": "string", "maxLength": 500},
-      "future_wishes": {"type": "string", "maxLength": 500},
-      "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
-      "project_name": {"type": "string", "maxLength": 100}
+      "agent_name": { "type": "string", "minLength": 1, "maxLength": 100 },
+      "session_name": { "type": "string", "maxLength": 100 },
+      "task_description": { "type": "string", "minLength": 1, "maxLength": 1000 },
+      "context_info": { "type": "string", "maxLength": 500 },
+      "missing_info": { "type": "string", "maxLength": 500 },
+      "confused_by": { "type": "string", "maxLength": 500 },
+      "future_wishes": { "type": "string", "maxLength": 500 },
+      "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+      "project_name": { "type": "string", "maxLength": 100 }
     },
     "required": ["agent_name", "task_description", "severity"]
   }
@@ -275,9 +275,9 @@ The server exposes the following MCP tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "limit": {"type": "integer", "minimum": 1, "maximum": 100},
-      "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
-      "resolved": {"type": "boolean"}
+      "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+      "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+      "resolved": { "type": "boolean" }
     }
   }
 }
@@ -292,8 +292,11 @@ The server exposes the following MCP tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "complaint_id": {"type": "string", "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"},
-      "resolved_by": {"type": "string", "minLength": 1, "maxLength": 100}
+      "complaint_id": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+      },
+      "resolved_by": { "type": "string", "minLength": 1, "maxLength": 100 }
     },
     "required": ["complaint_id", "resolved_by"]
   }
@@ -309,8 +312,8 @@ The server exposes the following MCP tools:
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": {"type": "string", "minLength": 1, "maxLength": 200},
-      "limit": {"type": "integer", "minimum": 1, "maximum": 50}
+      "query": { "type": "string", "minLength": 1, "maxLength": 200 },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 50 }
     },
     "required": ["query"]
   }

@@ -925,17 +925,17 @@ server:
   name: "complaints-mcp"
 
 storage:
-  type: "file"  # file, memory, cached
+  type: "file" # file, memory, cached
   cache_enabled: true
   cache_max_size: 1000
-  cache_eviction: "lru"  # lru, fifo, none
+  cache_eviction: "lru" # lru, fifo, none
   docs_dir: "docs/complaints"
-  docs_format: "markdown"  # markdown, html, text
+  docs_format: "markdown" # markdown, html, text
   docs_enabled: true
 
 logging:
-  level: "info"  # trace, debug, info, warn, error
-  format: "json"  # json, text
+  level: "info" # trace, debug, info, warn, error
+  format: "json" # json, text
   report_caller: false
   report_timestamp: true
 ```

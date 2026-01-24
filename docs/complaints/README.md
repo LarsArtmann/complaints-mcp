@@ -35,8 +35,8 @@ Documentation export can be configured via:
 storage:
   docs_enabled: true
   docs_dir: "docs/complaints"
-  docs_format: "markdown"  # markdown, html, text
-  retention_days: 0       # 0 = infinite retention
+  docs_format: "markdown" # markdown, html, text
+  retention_days: 0 # 0 = infinite retention
 ```
 
 ### Command Line Flags:

@@ -449,6 +449,7 @@ getCacheStatsTool := &mcp.Tool{
 ## MCP Tool Interface
 
 ### file_complaint
+
 ```json
 {
   "name": "file_complaint",
@@ -473,6 +474,7 @@ getCacheStatsTool := &mcp.Tool{
     "required": ["agent_name", "task_description", "severity"]
   }
 }
+```
 ````
 
 #### **API Migration Guide**
@@ -483,12 +485,14 @@ getCacheStatsTool := &mcp.Tool{
 ### ID Field Structure Changes
 
 #### Before (Nested)
+
 ```json
 {
   "complaint_id": {
     "Value": "550e8400-e29b-41d4-a716-446655440000"
   }
 }
+```
 ````
 
 #### After (Flat)

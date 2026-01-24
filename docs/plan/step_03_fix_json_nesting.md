@@ -11,7 +11,7 @@ Current JSON output:
 ```json
 {
   "id": {
-    "Value": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"  // ❌ Nested!
+    "Value": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6" // ❌ Nested!
   }
 }
 ```
@@ -20,7 +20,7 @@ Required JSON output:
 
 ```json
 {
-  "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"  // ✅ Flat!
+  "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6" // ✅ Flat!
 }
 ```
 
@@ -180,7 +180,7 @@ Expected response with flat ID:
 {
   "success": true,
   "complaint": {
-    "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6",  // ✅ Flat!
+    "id": "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6" // ✅ Flat!
     // ... other fields
   }
 }

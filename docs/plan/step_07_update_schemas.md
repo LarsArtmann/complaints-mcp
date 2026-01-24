@@ -448,6 +448,7 @@ Feature: MCP Tool Schema Validation
 ## MCP Tool Interface
 
 ### file_complaint
+
 ```json
 {
   "name": "file_complaint",
@@ -472,6 +473,7 @@ Feature: MCP Tool Schema Validation
     "required": ["agent_name", "task_description", "severity"]
   }
 }
+```
 ````
 
 ## 🧪 Verification Steps

@@ -8,7 +8,7 @@ cache_enabled = false
 
 ## SMALL CACHE FOR DEVELOPMENT
 [storage]
-base_dir = "./data/complaints" 
+base_dir = "./data/complaints"
 cache_enabled = true
 cache_max_size = 50
 cache_eviction = "lru"

@@ -1244,19 +1244,19 @@ This storage flow analysis provides comprehensive documentation of the complaint
 # Optimal cache configurations by system size
 cache_configs:
   small_system:
-    cache_size: 100          # ~5MB memory
+    cache_size: 100 # ~5MB memory
     eviction_policy: "lru"
     warm_cache: true
     hit_rate_target: 70%
 
   medium_system:
-    cache_size: 1000         # ~50MB memory
+    cache_size: 1000 # ~50MB memory
     eviction_policy: "lru"
     warm_cache: true
     hit_rate_target: 85%
 
   large_system:
-    cache_size: 10000        # ~500MB memory
+    cache_size: 10000 # ~500MB memory
     eviction_policy: "lru"
     warm_cache: true
     hit_rate_target: 90%

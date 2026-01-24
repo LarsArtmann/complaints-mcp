@@ -1476,7 +1476,7 @@ This comprehensive complaint filing workflow analysis provides both immediate op
 complaint_filing:
   # Storage settings
   storage:
-    type: "cached"          # cached, file, memory
+    type: "cached" # cached, file, memory
     cache_enabled: true
     cache_max_size: 1000
     cache_eviction: "lru"
@@ -1484,7 +1484,7 @@ complaint_filing:
   # Documentation settings
   documentation:
     enabled: true
-    format: "markdown"       # markdown, html, text
+    format: "markdown" # markdown, html, text
     directory: "docs/complaints"
     async_export: true
 
