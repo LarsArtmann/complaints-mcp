@@ -1,841 +1,841 @@
 version: "2"
 run:
-    timeout: 5m
-    go: "1.25"
-    build-tags: []
-    modules-download-mode: readonly
-    allow-parallel-runners: true
-    allow-serial-runners: false
-    issues-exit-code: 1
-    tests: true
+  timeout: 5m
+  go: "1.25"
+  build-tags: []
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+  allow-serial-runners: false
+  issues-exit-code: 1
+  tests: true
 output:
-    formats: {}
+  formats: {}
 linters:
-    enable:
-        - canonicalheader
-        - loggercheck
-        - bodyclose
-        - cyclop
-        - tparallel
-        - gochecknoinits
-        - zerologlint
-        - govet
-        - protogetter
-        - errorlint
-        - exhaustive
-        - mnd
-        - unqueryvet
-        - prealloc
-        - nilerr
-        - wrapcheck
-        - promlinter
-        - godoclint
-        - perfsprint
-        - testableexamples
-        - gochecksumtype
-        - ineffassign
-        - mirror
-        - gocyclo
-        - nosprintfhostport
-        - revive
-        - unconvert
-        - testpackage
-        - ginkgolinter
-        - importas
-        - ireturn
-        - modernize
-        - errcheck
-        - godox
-        - inamedparam
-        - gocritic
-        - gocognit
-        - unused
-        - intrange
-        - copyloopvar
-        - sqlclosecheck
-        - decorder
-        - testifylint
-        - fatcontext
-        - gomoddirectives
-        - gochecknoglobals
-        - goconst
-        - thelper
-        - whitespace
-        - contextcheck
-        - durationcheck
-        - lll
-        - nestif
-        - maintidx
-        - forbidigo
-        - sloglint
-        - usetesting
-        - gosec
-        - rowserrcheck
-        - funlen
-        - asasalint
-        - godot
-        - usestdlibvars
-        - dupword
-        - nonamedreturns
-        - nilnesserr
-        - wastedassign
-        - containedctx
-        - grouper
-        - iface
-        - varnamelen
-        - makezero
-        - embeddedstructfieldcheck
-        - tagalign
-        - gomodguard
-        - bidichk
-        - nolintlint
-        - interfacebloat
-        - funcorder
-        - nakedret
-        - noctx
-        - misspell
-        - spancheck
-        - dupl
-        - unparam
-        - goprintffuncname
-        - staticcheck
-        - tagliatelle
-        - recvcheck
-    settings:
-        asasalint:
-            exclude:
-                - .*\.pb\.go$
-                - .*_gen\.go$
-            use-builtin-exclusions: true
-        bidichk:
-            first-strong-isolate: true
-            left-to-right-embedding: true
-            left-to-right-isolate: true
-            left-to-right-override: true
-            pop-directional-formatting: true
-            pop-directional-isolate: true
-            right-to-left-embedding: true
-            right-to-left-isolate: true
-            right-to-left-override: true
-        containedctx:
-            check-all: true
-        contextcheck:
-            check-all: true
-        cyclop:
-            max-complexity: 10
-            package-average: 5
-            skip-tests: false
-        decorder:
-            dec-order:
-                - type
-                - const
-                - var
-                - func
-            disable-dec-num-check: false
-            disable-dec-order-check: false
-            disable-init-func-first-check: false
-            ignore-underscore-vars: false
-        depguard:
-            rules:
-                main:
-                    deny:
-                        - desc: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
-                          pkg: github.com/dgrijalva/jwt-go
-                    list-mode: lax
-                tests:
-                    deny: []
-                    list-mode: lax
-        dupl:
-            threshold: 150
-        dupword:
-            comments-only: true
-            ignore:
-                - 0C0C
-            keywords:
-                - TODO
-                - FIXME
-                - NOTE
-                - WARNING
-        embeddedstructfieldcheck:
-            empty-line: true
-            forbid-mutex: true
+  enable:
+    - canonicalheader
+    - loggercheck
+    - bodyclose
+    - cyclop
+    - tparallel
+    - gochecknoinits
+    - zerologlint
+    - govet
+    - protogetter
+    - errorlint
+    - exhaustive
+    - mnd
+    - unqueryvet
+    - prealloc
+    - nilerr
+    - wrapcheck
+    - promlinter
+    - godoclint
+    - perfsprint
+    - testableexamples
+    - gochecksumtype
+    - ineffassign
+    - mirror
+    - gocyclo
+    - nosprintfhostport
+    - revive
+    - unconvert
+    - testpackage
+    - ginkgolinter
+    - importas
+    - ireturn
+    - modernize
+    - errcheck
+    - godox
+    - inamedparam
+    - gocritic
+    - gocognit
+    - unused
+    - intrange
+    - copyloopvar
+    - sqlclosecheck
+    - decorder
+    - testifylint
+    - fatcontext
+    - gomoddirectives
+    - gochecknoglobals
+    - goconst
+    - thelper
+    - whitespace
+    - contextcheck
+    - durationcheck
+    - lll
+    - nestif
+    - maintidx
+    - forbidigo
+    - sloglint
+    - usetesting
+    - gosec
+    - rowserrcheck
+    - funlen
+    - asasalint
+    - godot
+    - usestdlibvars
+    - dupword
+    - nonamedreturns
+    - nilnesserr
+    - wastedassign
+    - containedctx
+    - grouper
+    - iface
+    - varnamelen
+    - makezero
+    - embeddedstructfieldcheck
+    - tagalign
+    - gomodguard
+    - bidichk
+    - nolintlint
+    - interfacebloat
+    - funcorder
+    - nakedret
+    - noctx
+    - misspell
+    - spancheck
+    - dupl
+    - unparam
+    - goprintffuncname
+    - staticcheck
+    - tagliatelle
+    - recvcheck
+  settings:
+    asasalint:
+      exclude:
+        - .*\.pb\.go$
+        - .*_gen\.go$
+      use-builtin-exclusions: true
+    bidichk:
+      first-strong-isolate: true
+      left-to-right-embedding: true
+      left-to-right-isolate: true
+      left-to-right-override: true
+      pop-directional-formatting: true
+      pop-directional-isolate: true
+      right-to-left-embedding: true
+      right-to-left-isolate: true
+      right-to-left-override: true
+    containedctx:
+      check-all: true
+    contextcheck:
+      check-all: true
+    cyclop:
+      max-complexity: 10
+      package-average: 5
+      skip-tests: false
+    decorder:
+      dec-order:
+        - type
+        - const
+        - var
+        - func
+      disable-dec-num-check: false
+      disable-dec-order-check: false
+      disable-init-func-first-check: false
+      ignore-underscore-vars: false
+    depguard:
+      rules:
+        main:
+          deny:
+            - desc: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
+              pkg: github.com/dgrijalva/jwt-go
+          list-mode: lax
+        tests:
+          deny: []
+          list-mode: lax
+    dupl:
+      threshold: 150
+    dupword:
+      comments-only: true
+      ignore:
+        - 0C0C
+      keywords:
+        - TODO
+        - FIXME
+        - NOTE
+        - WARNING
+    embeddedstructfieldcheck:
+      empty-line: true
+      forbid-mutex: true
+    errcheck:
+      check-blank: true
+      check-type-assertions: true
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net.Conn).Close
+        - (*net.TCPConn).Close
+        - (*net.UDPConn).Close
+        - (*sql.DB).Close
+        - (*sql.Rows).Close
+        - (*sql.Stmt).Close
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Print
+        - fmt.Printf
+        - fmt.Println
+        - (*bytes.Buffer).Write
+        - (*bytes.Buffer).WriteByte
+        - (*bytes.Buffer).WriteRune
+        - (*bytes.Buffer).WriteString
+        - (*strings.Builder).Write
+        - (*strings.Builder).WriteByte
+        - (*strings.Builder).WriteRune
+        - (*strings.Builder).WriteString
+    errorlint:
+      asserts: true
+      comparison: true
+      errorf: true
+      errorf-multi: true
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-case-required: false
+      default-signifies-exhaustive: false
+      explicit-exhaustive-map: false
+      explicit-exhaustive-switch: false
+      ignore-enum-members: Example.+
+      ignore-enum-types: Example.+
+      package-scope-only: false
+    fatcontext:
+      check-struct-pointers: true
+      ignore-len: 3
+    forbidigo:
+      analyze-types: true
+      exclude-godoc-examples: false
+      forbid:
+        - msg: "\U0001F6A8 BANNED: interface{} erases type safety. Use specific types or generics"
+          pattern: interface\{\}
+        - msg: "\U0001F6A8 BANNED: any erases type safety. Use specific types or generics"
+          pattern: \bany\b
+        - msg: "\U0001F6A8 BANNED: panic() crashes programs. Return errors instead"
+          pattern: panic\(
+        - msg: "\U0001F6A8 BANNED: Direct error creation. Use pkg/errors predefined types instead"
+          pattern: errors\.New\(
+        - msg: "\U0001F6A8 BANNED: Direct error formatting. Use pkg/errors predefined types instead"
+          pattern: fmt\.Errorf\(
+        - msg: "\U0001F6A8 BANNED: Anonymous error structs. Use pkg/errors Error type instead"
+          pattern: error\(\s*{
+        - msg: "\U0001F6A8 BANNED: Do not commit print statements. Use structured logging instead"
+          pattern: ^fmt\.Print.*$
+        - msg: "\U0001F6A8 BANNED: Do not commit print statements. Use structured logging instead"
+          pattern: ^print$|^println$
+        - msg: "\U0001F6A8 BANNED: Use structured logging instead of fmt.Printf. Prefer log.Info() with fields"
+          pattern: fmt\.Printf.*
+        - msg: "\U0001F6A8 BANNED: log.Fatal calls os.Exit, which can't be recovered from. Return errors instead"
+          pattern: log\.Fatal
+        - msg: "\U0001F6A8 BANNED: log.Panic is equivalent to panic(). Use structured error returns instead"
+          pattern: log\.Panic
+    funcorder:
+      alphabetical: true
+      constructor: true
+      struct-method: true
+    funlen:
+      ignore-comments: false
+      lines: 50
+      statements: 30
+    ginkgolinter:
+      allow-havelen-zero: false
+      forbid-focus-container: true
+      forbid-spec-pollution: true
+      force-expect-to: true
+      suppress-err-assertion: false
+      suppress-len-assertion: false
+      suppress-nil-assertion: false
+      validate-async-intervals: true
+    gochecknoglobals:
+      exclude-files:
+        - main\.go$
+        - .*_test\.go$
+    gochecknoinits: {}
+    gochecksumtype:
+      default-signifies-exhaustive: false
+      exhaustive: true
+    gocognit:
+      min-complexity: 10
+    goconst:
+      eval-const-expressions: true
+      find-duplicates: true
+      ignore-calls: false
+      ignore-string-values:
+        - foo.+
+      match-constant: true
+      max: 1000
+      min: 2
+      min-len: 2
+      min-occurrences: 2
+      numbers: true
+    gocritic:
+      disabled-checks: []
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      settings:
+        appendAssign: {}
+        dogsled:
+          max-blank-identifiers: 2
         errcheck:
-            check-blank: true
-            check-type-assertions: true
-            exclude-functions:
-                - (io.Closer).Close
-                - (*os.File).Close
-                - (net.Conn).Close
-                - (*net.TCPConn).Close
-                - (*net.UDPConn).Close
-                - (*sql.DB).Close
-                - (*sql.Rows).Close
-                - (*sql.Stmt).Close
-                - fmt.Fprint
-                - fmt.Fprintf
-                - fmt.Fprintln
-                - fmt.Print
-                - fmt.Printf
-                - fmt.Println
-                - (*bytes.Buffer).Write
-                - (*bytes.Buffer).WriteByte
-                - (*bytes.Buffer).WriteRune
-                - (*bytes.Buffer).WriteString
-                - (*strings.Builder).Write
-                - (*strings.Builder).WriteByte
-                - (*strings.Builder).WriteRune
-                - (*strings.Builder).WriteString
-        errorlint:
-            asserts: true
-            comparison: true
-            errorf: true
-            errorf-multi: true
-        exhaustive:
-            check:
-                - switch
-                - map
-            default-case-required: false
-            default-signifies-exhaustive: false
-            explicit-exhaustive-map: false
-            explicit-exhaustive-switch: false
-            ignore-enum-members: Example.+
-            ignore-enum-types: Example.+
-            package-scope-only: false
-        fatcontext:
-            check-struct-pointers: true
-            ignore-len: 3
-        forbidigo:
-            analyze-types: true
-            exclude-godoc-examples: false
-            forbid:
-                - msg: "\U0001F6A8 BANNED: interface{} erases type safety. Use specific types or generics"
-                  pattern: interface\{\}
-                - msg: "\U0001F6A8 BANNED: any erases type safety. Use specific types or generics"
-                  pattern: \bany\b
-                - msg: "\U0001F6A8 BANNED: panic() crashes programs. Return errors instead"
-                  pattern: panic\(
-                - msg: "\U0001F6A8 BANNED: Direct error creation. Use pkg/errors predefined types instead"
-                  pattern: errors\.New\(
-                - msg: "\U0001F6A8 BANNED: Direct error formatting. Use pkg/errors predefined types instead"
-                  pattern: fmt\.Errorf\(
-                - msg: "\U0001F6A8 BANNED: Anonymous error structs. Use pkg/errors Error type instead"
-                  pattern: error\(\s*{
-                - msg: "\U0001F6A8 BANNED: Do not commit print statements. Use structured logging instead"
-                  pattern: ^fmt\.Print.*$
-                - msg: "\U0001F6A8 BANNED: Do not commit print statements. Use structured logging instead"
-                  pattern: ^print$|^println$
-                - msg: "\U0001F6A8 BANNED: Use structured logging instead of fmt.Printf. Prefer log.Info() with fields"
-                  pattern: fmt\.Printf.*
-                - msg: "\U0001F6A8 BANNED: log.Fatal calls os.Exit, which can't be recovered from. Return errors instead"
-                  pattern: log\.Fatal
-                - msg: "\U0001F6A8 BANNED: log.Panic is equivalent to panic(). Use structured error returns instead"
-                  pattern: log\.Panic
-        funcorder:
-            alphabetical: true
-            constructor: true
-            struct-method: true
-        funlen:
-            ignore-comments: false
-            lines: 50
-            statements: 30
-        ginkgolinter:
-            allow-havelen-zero: false
-            forbid-focus-container: true
-            forbid-spec-pollution: true
-            force-expect-to: true
-            suppress-err-assertion: false
-            suppress-len-assertion: false
-            suppress-nil-assertion: false
-            validate-async-intervals: true
-        gochecknoglobals:
-            exclude-files:
-                - main\.go$
-                - .*_test\.go$
-        gochecknoinits: {}
-        gochecksumtype:
-            default-signifies-exhaustive: false
-            exhaustive: true
-        gocognit:
-            min-complexity: 10
-        goconst:
-            eval-const-expressions: true
-            find-duplicates: true
-            ignore-calls: false
-            ignore-string-values:
-                - foo.+
-            match-constant: true
-            max: 1000
-            min: 2
-            min-len: 2
-            min-occurrences: 2
-            numbers: true
-        gocritic:
-            disabled-checks: []
-            enabled-tags:
-                - diagnostic
-                - experimental
-                - opinionated
-                - performance
-                - style
-            settings:
-                appendAssign: {}
-                dogsled:
-                    max-blank-identifiers: 2
-                errcheck:
-                    check-blank: true
-                    check-type-assertions: true
-                hexLiteral:
-                    allowedUpperCaseDigits: 0
-                paramTypeCombine:
-                    maxParams: 5
-                rangeExprCopy:
-                    sizeThreshold: 512
-                    skipTestFuncs: false
-                rangeValCopy:
-                    sizeThreshold: 128
-                    skipTestFuncs: false
-                ruleguard:
-                    failOn: dsl,import
-                unimport: {}
-        gocyclo:
-            min-complexity: 10
-        godoclint:
-            default: all
-        godot:
-            capital: false
-            exclude: []
-            scope: declarations
-        godox:
-            keywords:
-                - TODO
-                - FIXME
-                - HACK
-                - BUG
-                - XXX
-                - SECURITY
-                - PERFORMANCE
-                - DEBT
-                - REVIEW
-                - REFACTOR
-                - TEST
-                - DEPRECATED
-        gomodguard:
-            allowed:
-                domains:
-                    - golang.org
-                    - google.golang.org
-                    - go.opentelemetry.io
-                    - gopkg.in
-                modules:
-                    - golang.org/x/*
-                    - google.golang.org/*
-                    - go.opentelemetry.io/otel/*
-                    - github.com/a-h/templ
-                    - github.com/charmbracelet/*
-                    - github.com/gin-gonic/gin
-                    - github.com/spf13/viper
-                    - github.com/sqlc-dev/sqlc
-                    - github.com/samber/lo
-                    - github.com/samber/do
-                    - github.com/maypok86/otter/v2
-                    - github.com/onsi/ginkgo/v2
-                    - github.com/google/uuid
-                    - github.com/klauspost/cpuid/v2
-                    - github.com/cockroachdb/errors
-                    - github.com/larsartmann/uniflow
-                    - github.com/go-faster/yaml
-                    - github.com/dominikbraun/graph
-                    - github.com/hashicorp/raft
-                    - github.com/failsafe-go/failsafe-go
-                    - github.com/mennanov/limiters
-                    - github.com/cenkalti/backoff/v4
-                    - github.com/casbin/casbin
-                    - github.com/govalues/money
-                    - github.com/shopspring/decimal
-                    - golang.org/x/text/message
-            blocked:
-                modules:
-                    - github.com/dgrijalva/jwt-go:
-                        reason: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
-                        recommendations:
-                            - github.com/golang-jwt/jwt/v5
-                    - github.com/square/go-jose/v3:
-                        reason: 'CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes'
-                        recommendations:
-                            - github.com/go-jose/go-jose/v4
-                    - crypto/md5:
-                        reason: 'CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks'
-                        recommendations:
-                            - crypto/sha256
-                    - crypto/sha1:
-                        reason: 'CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks'
-                        recommendations:
-                            - crypto/sha256
-                    - math/rand:
-                        reason: 'CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation'
-                        recommendations:
-                            - crypto/rand
-                    - github.com/featurebasedb/featurebase:
-                        reason: 'CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks'
-                        recommendations:
-                            - github.com/ClickHouse/clickhouse-go
-                    - github.com/mitchellh/go-homedir:
-                        reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead'
-                        recommendations:
-                            - os
-                    - github.com/mitchellh/mapstructure:
-                        reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives'
-                        recommendations:
-                            - encoding/json
-                    - github.com/russross/blackfriday:
-                        reason: 'CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk'
-                        recommendations:
-                            - github.com/gomarkdown/markdown
-                    - github.com/blang/vfs:
-                        reason: 'CRITICAL: Inactive since 2018 - unmaintained library with security risks'
-                        recommendations:
-                            - io/fs
-                    - github.com/siddontang/ledisdb:
-                        reason: 'CRITICAL: Project abandoned for 3+ years - no updates or security patches'
-                        recommendations:
-                            - github.com/go-redis/redis/v8
-                    - github.com/gorgonia/gorgonia:
-                        reason: 'CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration'
-                        recommendations:
-                            - github.com/klauspost/cpuid/v2
-                    - github.com/patrickmn/go-cache:
-                        reason: Otter v2 provides 11x better performance (141M vs 12M ops/s) with superior hit rates (99.5% vs 92%)
-                        recommendations:
-                            - github.com/maypok86/otter/v2
-                    - github.com/dgraph-io/ristretto/v2:
-                        reason: ristretto has critical hit rate issues (85% vs 99.5%) and poor performance despite its popularity
-                        recommendations:
-                            - github.com/maypok86/otter/v2
-                    - github.com/allegro/bigcache/v3:
-                        reason: Otter v2 offers 300x better performance (141M vs 441ns ops) with modern generics and superior eviction policies
-                        recommendations:
-                            - github.com/maypok86/otter/v2
-                    - github.com/coocood/freecache:
-                        reason: Otter v2 provides better performance, modern API, and proven production track record over freecache
-                        recommendations:
-                            - github.com/maypok86/otter/v2
-                    - github.com/hashicorp/golang-lru/v2:
-                        reason: Otter v2 provides advanced W-TinyLFU eviction vs simple LRU, with dramatically better performance and features
-                        recommendations:
-                            - github.com/maypok86/otter/v2
-                    - github.com/satori/go.uuid:
-                        reason: Poor performance - 497ns vs google/uuid 108ns (4.6x slower)
-                        recommendations:
-                            - github.com/google/uuid
-                    - github.com/golang/protobuf:
-                        reason: Use google.golang.org/protobuf instead
-                        recommendations:
-                            - google.golang.org/protobuf
-                    - github.com/onsi/gomega:
-                        reason: Use Ginkgo's built-in assertions instead of Gomega dependencies
-                        recommendations:
-                            - github.com/onsi/ginkgo/v2
-                    - github.com/cucumber/godog:
-                        reason: Prefer Ginkgo for BDD-style testing in Go
-                        recommendations:
-                            - github.com/onsi/ginkgo/v2
-                    - github.com/gorilla/mux:
-                        reason: Gin provides better performance, middleware ecosystem, and integrated HTTP features
-                        recommendations:
-                            - github.com/gin-gonic/gin
-                    - github.com/labstack/echo/v4:
-                        reason: Gin has better community adoption and middleware ecosystem
-                        recommendations:
-                            - github.com/gin-gonic/gin
-                    - github.com/kelseyhightower/envconfig:
-                        reason: Viper provides more comprehensive configuration management with multiple sources
-                        recommendations:
-                            - github.com/spf13/viper
-                    - gorm.io/gorm:
-                        reason: Use sqlc for type-safe SQL without ORM magic
-                        recommendations:
-                            - github.com/sqlc-dev/sqlc
-                    - github.com/oklog/run:
-                        reason: samber/do provides comprehensive dependency injection vs simple goroutine coordination
-                        recommendations:
-                            - github.com/samber/do
-                    - github.com/google/wire:
-                        reason: samber/do provides simpler dependency injection with better runtime flexibility
-                        recommendations:
-                            - github.com/samber/do
-                    - github.com/urfave/cli/v2:
-                        reason: fang provides better integration with cobra ecosystem and battery-included features
-                        recommendations:
-                            - github.com/charmbracelet/fang
-                    - github.com/pkg/errors:
-                        reason: Use cockroachdb/errors or our LarsArtmann/uniflow for better error handling
-                        recommendations:
-                            - github.com/larsartmann/uniflow
-                    - github.com/prometheus/client_golang:
-                        reason: Use OpenTelemetry metrics exporter for unified observability instead of separate Prometheus client
-                        recommendations:
-                            - go.opentelemetry.io/otel/exporters/prometheus
-                    - github.com/uber/jaeger-client-go:
-                        reason: Use OpenTelemetry OTLP exporter for standardized tracing instead of Jaeger-specific client
-                        recommendations:
-                            - go.opentelemetry.io/otel/exporters/otlp/otlptrace
-                    - github.com/openzipkin/zipkin-go:
-                        reason: Use OpenTelemetry tracing exporters instead of Zipkin-specific implementations
-                        recommendations:
-                            - go.opentelemetry.io/otel/exporters/zipkin
-                    - github.com/opentracing/opentracing-go:
-                        reason: OpenTracing is deprecated - migrate to OpenTelemetry for CNCF standard observability
-                        recommendations:
-                            - go.opentelemetry.io/otel
-                    - github.com/sirupsen/logrus:
-                        reason: Use structured logging with OpenTelemetry or standard library logger
-                        recommendations:
-                            - go.opentelemetry.io/otel
-                    - github.com/rs/zerolog:
-                        reason: Use charmbracelet/fang for better CLI logging integration or OpenTelemetry for observability
-                        recommendations:
-                            - github.com/charmbracelet/fang
-                    - go.uber.org/zap:
-                        reason: Use charmbracelet/fang for better CLI logging integration or OpenTelemetry for observability
-                        recommendations:
-                            - github.com/charmbracelet/fang
-            local-replace-directives: true
-        gosec:
-            confidence: medium
-            config:
-                G101:
-                    entropy_threshold: "80.0"
-                    ignore_entropy: false
-                    pattern: (?i)passwd|pass|password|pwd|secret|token|pw|apiKey|bearer|cred
-                    per_char_threshold: "3.0"
-                    truncate: "32"
-                G104:
-                    fmt:
-                        - Fscanf
-                G301: "0750"
-                G302: "0600"
-                G306: "0600"
-                global:
-                    audit: false
-                    nosec: false
-                    show-ignored: false
-            excludes:
-                - G106
-            includes:
-                - G101
-                - G102
-                - G103
-                - G104
-                - G107
-                - G108
-                - G109
-                - G110
-                - G111
-                - G112
-                - G114
-                - G115
-                - G201
-                - G202
-                - G203
-                - G204
-                - G301
-                - G302
-                - G304
-                - G305
-                - G306
-                - G307
-                - G401
-                - G402
-                - G403
-                - G404
-                - G405
-                - G406
-                - G501
-                - G502
-                - G503
-                - G504
-                - G505
-                - G506
-                - G507
-                - G601
-                - G602
-            severity: medium
-        govet:
-            enable-all: true
-        grouper:
-            const-require-grouping: true
-            const-require-single-const: true
-            import-require-grouping: true
-            import-require-single-import: true
-            type-require-grouping: true
-            type-require-single-type: true
-            var-require-grouping: true
-            var-require-single-var: true
-        iface:
-            enable:
-                - identical
-                - unused
-                - opaque
-                - unexported
-        importas:
-            alias:
-                - alias: ginkgo
-                  pkg: github.com/onsi/ginkgo/v2
-                - alias: gomega
-                  pkg: github.com/onsi/gomega
-            no-extra-aliases: true
-            no-unaliased: true
-        inamedparam:
-            skip-single-param: false
-        interfacebloat:
-            max: 10
-        intrange:
-            skip-generated-code: true
-        ireturn:
-            allow:
-                - anon
-                - error
-                - empty
-                - stdlib
-        lll:
-            line-length: 120
-            tab-width: 4
-        loggercheck:
-            kitlog: false
-            klog: false
-            logr: false
-            no-printf-like: true
-            require-string-key: true
-            slog: true
-            zap: false
-        maintidx:
-            under: 50
-        makezero:
-            always: true
-        mirror: null
-        misspell:
-            extra-words:
-                - correction: if
-                  typo: iff
-                - correction: cancellation
-                  typo: cancelation
-            ignore-rules:
-                - someword
-            locale: US
-            mode: restricted
-        mnd:
-            ignored-functions:
-                - strconv.ParseInt
-                - strconv.ParseFloat
-                - time.Sleep
-                - time.Duration
-            ignored-numbers:
-                - "0"
-                - "1"
-                - "2"
-                - "10"
-                - "100"
-                - "1000"
-        modernize:
-            disable:
-                - omitzero
-                - simplify-range
-        nestif:
-            min-complexity: 4
-        nilnesserr:
-            check-cap: true
-            check-len: true
-        nonamedreturns:
-            report-error-in-defer: true
-        paralleltest:
-            ignore-missing: false
-            ignore-missing-subtests: true
-        perfsprint:
-            err-error: true
-            int-conversion: true
-            sprintf1: true
-            strconcat: true
-        prealloc:
-            for-loops: false
-            range-loops: true
-            simple: true
-        promlinter:
-            disabled-linters:
-                - Help
-                - MetricUnits
-                - Counter
-                - HistogramSummaryReserved
-                - MetricTypeInName
-                - ReservedChars
-                - CamelCase
-                - UnitAbbreviations
-            strict: true
-        protogetter:
-            skip-any-generated: true
-        recvcheck:
-            disable-builtin: false
-        revive:
-            enable-all-rules: true
-            rules:
-                - arguments:
-                    - max: 400
-                  name: file-length-limit
-                  severity: error
-            severity: error
-        sloglint:
-            args-on-sep-lines: false
-            attr-only: false
-            context: all
-            forbidden-keys:
-                - time
-                - level
-                - msg
-                - source
-            key-naming-case: ""
-            kv-only: false
-            msg-style: ""
-            no-global: all
-            no-mixed-args: true
-            no-raw-keys: true
-            static-msg: true
-        spancheck:
-            checks:
-                - end
-                - record-error
-                - set-status
-            extra-start-span-signatures:
-                - github.com/larsartmann/uniflow/telemetry.Start:opentelemetry
-            ignore-check-signatures:
-                - telemetry.Record
-                - telemetry.RecordError
-        staticcheck:
-            checks:
-                - all
-        stylecheck:
-            checks:
-                - all
-        tagalign:
-            align: true
-            order:
-                - json
-                - yaml
-                - yml
-                - toml
-                - mapstructure
-                - binding
-                - validate
-                - db
-                - gorm
-            sort: true
-            strict: true
-        tagliatelle:
-            case:
-                rules:
-                    avro: snake
-                    bson: camel
-                    env: upperSnake
-                    envconfig: upperSnake
-                    json: camel
-                    mapstructure: kebab
-                    toml: camel
-                    xml: camel
-                    yaml: camel
-            use-field-name: true
-        testableexamples: null
-        testifylint:
-            bool-compare:
-                ignore-custom-types: true
-            enable-all: true
-            expected-actual:
-                pattern: ^expected
-            formatter:
-                check-format-string: true
-                require-f-funcs: true
-                require-string-msg: true
-            go-require:
-                ignore-http-handlers: true
-            require-error:
-                fn-pattern: ^(Errorf?|NoErrorf?)$
-            suite-extra-assert-call:
-                mode: remove
-        testpackage:
-            skip-regexp: .*_internal_test\.go$
-        thelper:
-            benchmark:
-                begin: true
-                first: true
-                name: true
-            tb:
-                begin: true
-                first: true
-                name: true
-            test:
-                begin: true
-                first: true
-                name: true
-        unparam:
-            check-exported: true
-        unqueryvet:
-            allowed-patterns:
-                - SELECT \* FROM information_schema\..*
-                - SELECT \* FROM pg_catalog\..*
-                - SELECT COUNT\(\*\)
-                - SELECT MAX\(\*\)
-                - SELECT MIN\(\*\)
-            check-sql-builders: true
-        unused: {}
-        usestdlibvars:
-            crypto-hash: true
-            default-rpc-path: true
-            http-method: true
-            http-status-code: true
-            time-layout: true
-            time-month: true
-            time-weekday: true
-        usetesting:
-            context-background: true
-            context-todo: true
-            os-chdir: false
-            os-create-temp: false
-            os-mkdir-temp: false
-            os-setenv: false
-            os-temp-dir: false
-        varnamelen:
-            check-receiver: true
-            check-return: true
-            check-type-param: true
-            ignore-chan-recv-ok: true
-            ignore-decls:
-                - c echo.Context
-                - t testing.T
-                - f *foo.Bar
-                - e error
-                - i int
-                - const C
-                - T any
-            ignore-map-index-ok: true
-            ignore-names:
-                - err
-                - ok
-                - id
-                - ctx
-                - wg
-                - db
-            ignore-type-assert-ok: true
-            max-distance: 5
-            min-name-length: 3
-        wastedassign: null
-        wrapcheck:
-            ignorePackageGlobs:
-                - encoding/*
-                - github.com/pkg/*
-            ignoreSigRegexps:
-                - \.New.*Error\(
-            ignoreSigs:
-                - .Errorf(
-                - errors.New(
-                - errors.Unwrap(
-                - .Wrap(
-                - .Wrapf(
-        zerologlint: null
+          check-blank: true
+          check-type-assertions: true
+        hexLiteral:
+          allowedUpperCaseDigits: 0
+        paramTypeCombine:
+          maxParams: 5
+        rangeExprCopy:
+          sizeThreshold: 512
+          skipTestFuncs: false
+        rangeValCopy:
+          sizeThreshold: 128
+          skipTestFuncs: false
+        ruleguard:
+          failOn: dsl,import
+        unimport: {}
+    gocyclo:
+      min-complexity: 10
+    godoclint:
+      default: all
+    godot:
+      capital: false
+      exclude: []
+      scope: declarations
+    godox:
+      keywords:
+        - TODO
+        - FIXME
+        - HACK
+        - BUG
+        - XXX
+        - SECURITY
+        - PERFORMANCE
+        - DEBT
+        - REVIEW
+        - REFACTOR
+        - TEST
+        - DEPRECATED
+    gomodguard:
+      allowed:
+        domains:
+          - golang.org
+          - google.golang.org
+          - go.opentelemetry.io
+          - gopkg.in
+        modules:
+          - golang.org/x/*
+          - google.golang.org/*
+          - go.opentelemetry.io/otel/*
+          - github.com/a-h/templ
+          - github.com/charmbracelet/*
+          - github.com/gin-gonic/gin
+          - github.com/spf13/viper
+          - github.com/sqlc-dev/sqlc
+          - github.com/samber/lo
+          - github.com/samber/do
+          - github.com/maypok86/otter/v2
+          - github.com/onsi/ginkgo/v2
+          - github.com/google/uuid
+          - github.com/klauspost/cpuid/v2
+          - github.com/cockroachdb/errors
+          - github.com/larsartmann/uniflow
+          - github.com/go-faster/yaml
+          - github.com/dominikbraun/graph
+          - github.com/hashicorp/raft
+          - github.com/failsafe-go/failsafe-go
+          - github.com/mennanov/limiters
+          - github.com/cenkalti/backoff/v4
+          - github.com/casbin/casbin
+          - github.com/govalues/money
+          - github.com/shopspring/decimal
+          - golang.org/x/text/message
+      blocked:
+        modules:
+          - github.com/dgrijalva/jwt-go:
+              reason: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
+              recommendations:
+                - github.com/golang-jwt/jwt/v5
+          - github.com/square/go-jose/v3:
+              reason: "CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes"
+              recommendations:
+                - github.com/go-jose/go-jose/v4
+          - crypto/md5:
+              reason: "CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks"
+              recommendations:
+                - crypto/sha256
+          - crypto/sha1:
+              reason: "CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks"
+              recommendations:
+                - crypto/sha256
+          - math/rand:
+              reason: "CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation"
+              recommendations:
+                - crypto/rand
+          - github.com/featurebasedb/featurebase:
+              reason: "CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks"
+              recommendations:
+                - github.com/ClickHouse/clickhouse-go
+          - github.com/mitchellh/go-homedir:
+              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead"
+              recommendations:
+                - os
+          - github.com/mitchellh/mapstructure:
+              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives"
+              recommendations:
+                - encoding/json
+          - github.com/russross/blackfriday:
+              reason: "CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk"
+              recommendations:
+                - github.com/gomarkdown/markdown
+          - github.com/blang/vfs:
+              reason: "CRITICAL: Inactive since 2018 - unmaintained library with security risks"
+              recommendations:
+                - io/fs
+          - github.com/siddontang/ledisdb:
+              reason: "CRITICAL: Project abandoned for 3+ years - no updates or security patches"
+              recommendations:
+                - github.com/go-redis/redis/v8
+          - github.com/gorgonia/gorgonia:
+              reason: "CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration"
+              recommendations:
+                - github.com/klauspost/cpuid/v2
+          - github.com/patrickmn/go-cache:
+              reason: Otter v2 provides 11x better performance (141M vs 12M ops/s) with superior hit rates (99.5% vs 92%)
+              recommendations:
+                - github.com/maypok86/otter/v2
+          - github.com/dgraph-io/ristretto/v2:
+              reason: ristretto has critical hit rate issues (85% vs 99.5%) and poor performance despite its popularity
+              recommendations:
+                - github.com/maypok86/otter/v2
+          - github.com/allegro/bigcache/v3:
+              reason: Otter v2 offers 300x better performance (141M vs 441ns ops) with modern generics and superior eviction policies
+              recommendations:
+                - github.com/maypok86/otter/v2
+          - github.com/coocood/freecache:
+              reason: Otter v2 provides better performance, modern API, and proven production track record over freecache
+              recommendations:
+                - github.com/maypok86/otter/v2
+          - github.com/hashicorp/golang-lru/v2:
+              reason: Otter v2 provides advanced W-TinyLFU eviction vs simple LRU, with dramatically better performance and features
+              recommendations:
+                - github.com/maypok86/otter/v2
+          - github.com/satori/go.uuid:
+              reason: Poor performance - 497ns vs google/uuid 108ns (4.6x slower)
+              recommendations:
+                - github.com/google/uuid
+          - github.com/golang/protobuf:
+              reason: Use google.golang.org/protobuf instead
+              recommendations:
+                - google.golang.org/protobuf
+          - github.com/onsi/gomega:
+              reason: Use Ginkgo's built-in assertions instead of Gomega dependencies
+              recommendations:
+                - github.com/onsi/ginkgo/v2
+          - github.com/cucumber/godog:
+              reason: Prefer Ginkgo for BDD-style testing in Go
+              recommendations:
+                - github.com/onsi/ginkgo/v2
+          - github.com/gorilla/mux:
+              reason: Gin provides better performance, middleware ecosystem, and integrated HTTP features
+              recommendations:
+                - github.com/gin-gonic/gin
+          - github.com/labstack/echo/v4:
+              reason: Gin has better community adoption and middleware ecosystem
+              recommendations:
+                - github.com/gin-gonic/gin
+          - github.com/kelseyhightower/envconfig:
+              reason: Viper provides more comprehensive configuration management with multiple sources
+              recommendations:
+                - github.com/spf13/viper
+          - gorm.io/gorm:
+              reason: Use sqlc for type-safe SQL without ORM magic
+              recommendations:
+                - github.com/sqlc-dev/sqlc
+          - github.com/oklog/run:
+              reason: samber/do provides comprehensive dependency injection vs simple goroutine coordination
+              recommendations:
+                - github.com/samber/do
+          - github.com/google/wire:
+              reason: samber/do provides simpler dependency injection with better runtime flexibility
+              recommendations:
+                - github.com/samber/do
+          - github.com/urfave/cli/v2:
+              reason: fang provides better integration with cobra ecosystem and battery-included features
+              recommendations:
+                - github.com/charmbracelet/fang
+          - github.com/pkg/errors:
+              reason: Use cockroachdb/errors or our LarsArtmann/uniflow for better error handling
+              recommendations:
+                - github.com/larsartmann/uniflow
+          - github.com/prometheus/client_golang:
+              reason: Use OpenTelemetry metrics exporter for unified observability instead of separate Prometheus client
+              recommendations:
+                - go.opentelemetry.io/otel/exporters/prometheus
+          - github.com/uber/jaeger-client-go:
+              reason: Use OpenTelemetry OTLP exporter for standardized tracing instead of Jaeger-specific client
+              recommendations:
+                - go.opentelemetry.io/otel/exporters/otlp/otlptrace
+          - github.com/openzipkin/zipkin-go:
+              reason: Use OpenTelemetry tracing exporters instead of Zipkin-specific implementations
+              recommendations:
+                - go.opentelemetry.io/otel/exporters/zipkin
+          - github.com/opentracing/opentracing-go:
+              reason: OpenTracing is deprecated - migrate to OpenTelemetry for CNCF standard observability
+              recommendations:
+                - go.opentelemetry.io/otel
+          - github.com/sirupsen/logrus:
+              reason: Use structured logging with OpenTelemetry or standard library logger
+              recommendations:
+                - go.opentelemetry.io/otel
+          - github.com/rs/zerolog:
+              reason: Use charmbracelet/fang for better CLI logging integration or OpenTelemetry for observability
+              recommendations:
+                - github.com/charmbracelet/fang
+          - go.uber.org/zap:
+              reason: Use charmbracelet/fang for better CLI logging integration or OpenTelemetry for observability
+              recommendations:
+                - github.com/charmbracelet/fang
+      local-replace-directives: true
+    gosec:
+      confidence: medium
+      config:
+        G101:
+          entropy_threshold: "80.0"
+          ignore_entropy: false
+          pattern: (?i)passwd|pass|password|pwd|secret|token|pw|apiKey|bearer|cred
+          per_char_threshold: "3.0"
+          truncate: "32"
+        G104:
+          fmt:
+            - Fscanf
+        G301: "0750"
+        G302: "0600"
+        G306: "0600"
+        global:
+          audit: false
+          nosec: false
+          show-ignored: false
+      excludes:
+        - G106
+      includes:
+        - G101
+        - G102
+        - G103
+        - G104
+        - G107
+        - G108
+        - G109
+        - G110
+        - G111
+        - G112
+        - G114
+        - G115
+        - G201
+        - G202
+        - G203
+        - G204
+        - G301
+        - G302
+        - G304
+        - G305
+        - G306
+        - G307
+        - G401
+        - G402
+        - G403
+        - G404
+        - G405
+        - G406
+        - G501
+        - G502
+        - G503
+        - G504
+        - G505
+        - G506
+        - G507
+        - G601
+        - G602
+      severity: medium
+    govet:
+      enable-all: true
+    grouper:
+      const-require-grouping: true
+      const-require-single-const: true
+      import-require-grouping: true
+      import-require-single-import: true
+      type-require-grouping: true
+      type-require-single-type: true
+      var-require-grouping: true
+      var-require-single-var: true
+    iface:
+      enable:
+        - identical
+        - unused
+        - opaque
+        - unexported
+    importas:
+      alias:
+        - alias: ginkgo
+          pkg: github.com/onsi/ginkgo/v2
+        - alias: gomega
+          pkg: github.com/onsi/gomega
+      no-extra-aliases: true
+      no-unaliased: true
+    inamedparam:
+      skip-single-param: false
+    interfacebloat:
+      max: 10
+    intrange:
+      skip-generated-code: true
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+    lll:
+      line-length: 120
+      tab-width: 4
+    loggercheck:
+      kitlog: false
+      klog: false
+      logr: false
+      no-printf-like: true
+      require-string-key: true
+      slog: true
+      zap: false
+    maintidx:
+      under: 50
+    makezero:
+      always: true
+    mirror: null
+    misspell:
+      extra-words:
+        - correction: if
+          typo: iff
+        - correction: cancellation
+          typo: cancelation
+      ignore-rules:
+        - someword
+      locale: US
+      mode: restricted
+    mnd:
+      ignored-functions:
+        - strconv.ParseInt
+        - strconv.ParseFloat
+        - time.Sleep
+        - time.Duration
+      ignored-numbers:
+        - "0"
+        - "1"
+        - "2"
+        - "10"
+        - "100"
+        - "1000"
+    modernize:
+      disable:
+        - omitzero
+        - simplify-range
+    nestif:
+      min-complexity: 4
+    nilnesserr:
+      check-cap: true
+      check-len: true
+    nonamedreturns:
+      report-error-in-defer: true
+    paralleltest:
+      ignore-missing: false
+      ignore-missing-subtests: true
+    perfsprint:
+      err-error: true
+      int-conversion: true
+      sprintf1: true
+      strconcat: true
+    prealloc:
+      for-loops: false
+      range-loops: true
+      simple: true
+    promlinter:
+      disabled-linters:
+        - Help
+        - MetricUnits
+        - Counter
+        - HistogramSummaryReserved
+        - MetricTypeInName
+        - ReservedChars
+        - CamelCase
+        - UnitAbbreviations
+      strict: true
+    protogetter:
+      skip-any-generated: true
+    recvcheck:
+      disable-builtin: false
+    revive:
+      enable-all-rules: true
+      rules:
+        - arguments:
+            - max: 400
+          name: file-length-limit
+          severity: error
+      severity: error
+    sloglint:
+      args-on-sep-lines: false
+      attr-only: false
+      context: all
+      forbidden-keys:
+        - time
+        - level
+        - msg
+        - source
+      key-naming-case: ""
+      kv-only: false
+      msg-style: ""
+      no-global: all
+      no-mixed-args: true
+      no-raw-keys: true
+      static-msg: true
+    spancheck:
+      checks:
+        - end
+        - record-error
+        - set-status
+      extra-start-span-signatures:
+        - github.com/larsartmann/uniflow/telemetry.Start:opentelemetry
+      ignore-check-signatures:
+        - telemetry.Record
+        - telemetry.RecordError
+    staticcheck:
+      checks:
+        - all
+    stylecheck:
+      checks:
+        - all
+    tagalign:
+      align: true
+      order:
+        - json
+        - yaml
+        - yml
+        - toml
+        - mapstructure
+        - binding
+        - validate
+        - db
+        - gorm
+      sort: true
+      strict: true
+    tagliatelle:
+      case:
+        rules:
+          avro: snake
+          bson: camel
+          env: upperSnake
+          envconfig: upperSnake
+          json: camel
+          mapstructure: kebab
+          toml: camel
+          xml: camel
+          yaml: camel
+      use-field-name: true
+    testableexamples: null
+    testifylint:
+      bool-compare:
+        ignore-custom-types: true
+      enable-all: true
+      expected-actual:
+        pattern: ^expected
+      formatter:
+        check-format-string: true
+        require-f-funcs: true
+        require-string-msg: true
+      go-require:
+        ignore-http-handlers: true
+      require-error:
+        fn-pattern: ^(Errorf?|NoErrorf?)$
+      suite-extra-assert-call:
+        mode: remove
+    testpackage:
+      skip-regexp: .*_internal_test\.go$
+    thelper:
+      benchmark:
+        begin: true
+        first: true
+        name: true
+      tb:
+        begin: true
+        first: true
+        name: true
+      test:
+        begin: true
+        first: true
+        name: true
+    unparam:
+      check-exported: true
+    unqueryvet:
+      allowed-patterns:
+        - SELECT \* FROM information_schema\..*
+        - SELECT \* FROM pg_catalog\..*
+        - SELECT COUNT\(\*\)
+        - SELECT MAX\(\*\)
+        - SELECT MIN\(\*\)
+      check-sql-builders: true
+    unused: {}
+    usestdlibvars:
+      crypto-hash: true
+      default-rpc-path: true
+      http-method: true
+      http-status-code: true
+      time-layout: true
+      time-month: true
+      time-weekday: true
+    usetesting:
+      context-background: true
+      context-todo: true
+      os-chdir: false
+      os-create-temp: false
+      os-mkdir-temp: false
+      os-setenv: false
+      os-temp-dir: false
+    varnamelen:
+      check-receiver: true
+      check-return: true
+      check-type-param: true
+      ignore-chan-recv-ok: true
+      ignore-decls:
+        - c echo.Context
+        - t testing.T
+        - f *foo.Bar
+        - e error
+        - i int
+        - const C
+        - T any
+      ignore-map-index-ok: true
+      ignore-names:
+        - err
+        - ok
+        - id
+        - ctx
+        - wg
+        - db
+      ignore-type-assert-ok: true
+      max-distance: 5
+      min-name-length: 3
+    wastedassign: null
+    wrapcheck:
+      ignorePackageGlobs:
+        - encoding/*
+        - github.com/pkg/*
+      ignoreSigRegexps:
+        - \.New.*Error\(
+      ignoreSigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - .Wrap(
+        - .Wrapf(
+    zerologlint: null
 issues: {}
