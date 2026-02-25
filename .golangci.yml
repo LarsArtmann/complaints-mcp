@@ -12,95 +12,115 @@ output:
   formats: {}
 linters:
   enable:
-    - canonicalheader
-    - loggercheck
-    - bodyclose
-    - cyclop
-    - tparallel
-    - gochecknoinits
-    - zerologlint
-    - govet
-    - protogetter
-    - errorlint
-    - exhaustive
-    - mnd
-    - unqueryvet
-    - prealloc
-    - nilerr
-    - wrapcheck
-    - promlinter
-    - godoclint
-    - perfsprint
-    - testableexamples
-    - gochecksumtype
-    - ineffassign
-    - mirror
-    - gocyclo
-    - nosprintfhostport
-    - revive
-    - unconvert
-    - testpackage
-    - ginkgolinter
-    - importas
-    - ireturn
-    - modernize
-    - errcheck
-    - godox
-    - inamedparam
-    - gocritic
-    - gocognit
-    - unused
-    - intrange
-    - copyloopvar
+    - arangolint
+    - recvcheck
+    - noinlineerr
     - sqlclosecheck
-    - decorder
-    - testifylint
+    - usetesting
+    - errcheck
+    - bodyclose
+    - promlinter
+    - asasalint
+    - prealloc
+    - gocognit
+    - grouper
+    - noctx
+    - wsl_v5
+    - inamedparam
     - fatcontext
+    - godoclint
+    - iotamixing
+    - durationcheck
+    - spancheck
+    - godox
+    - varnamelen
+    - unparam
+    - predeclared
+    - cyclop
+    - copyloopvar
+    - nosprintfhostport
+    - makezero
+    - goheader
+    - errorlint
+    - unconvert
+    - nilnesserr
+    - sloglint
+    - usestdlibvars
+    - gochecksumtype
+    - gomodguard
+    - forbidigo
+    - gocritic
+    - decorder
+    - zerologlint
+    - canonicalheader
+    - gosmopolitan
+    - rowserrcheck
+    - depguard
+    - dupl
+    - nilnil
+    - funlen
+    - dupword
+    - importas
     - gomoddirectives
+    - govet
+    - nilerr
+    - perfsprint
+    - err113
+    - unused
+    - godot
+    - ineffassign
+    - whitespace
+    - mnd
+    - nakedret
+    - goprintffuncname
+    - asciicheck
+    - interfacebloat
+    - maintidx
+    - thelper
+    - contextcheck
+    - revive
+    - exhaustruct
+    - paralleltest
+    - gocheckcompilerdirectives
+    - nlreturn
+    - gochecknoinits
+    - exhaustive
+    - forcetypeassert
+    - ireturn
+    - funcorder
+    - gocyclo
+    - dogsled
+    - misspell
+    - unqueryvet
+    - staticcheck
+    - wrapcheck
+    - nolintlint
+    - tagliatelle
+    - intrange
+    - iface
+    - testpackage
+    - exptostd
+    - loggercheck
+    - nonamedreturns
+    - modernize
+    - errname
+    - mirror
+    - testableexamples
+    - reassign
+    - nestif
+    - tagalign
+    - tparallel
+    - embeddedstructfieldcheck
+    - containedctx
+    - wastedassign
+    - gosec
     - gochecknoglobals
     - goconst
-    - thelper
-    - whitespace
-    - contextcheck
-    - durationcheck
-    - lll
-    - nestif
-    - maintidx
-    - forbidigo
-    - sloglint
-    - usetesting
-    - gosec
-    - rowserrcheck
-    - funlen
-    - asasalint
-    - godot
-    - usestdlibvars
-    - dupword
-    - nonamedreturns
-    - nilnesserr
-    - wastedassign
-    - containedctx
-    - grouper
-    - iface
-    - varnamelen
-    - makezero
-    - embeddedstructfieldcheck
-    - tagalign
-    - gomodguard
     - bidichk
-    - nolintlint
-    - interfacebloat
-    - funcorder
-    - nakedret
-    - noctx
-    - misspell
-    - spancheck
-    - dupl
-    - unparam
-    - goprintffuncname
-    - staticcheck
-    - tagliatelle
-    - recvcheck
+    - ginkgolinter
+    - lll
+    - protogetter
+    - testifylint
   settings:
     asasalint:
       exclude:
@@ -838,4 +858,7 @@ linters:
         - .Wrap(
         - .Wrapf(
     zerologlint: null
+formatters:
+  enable:
+    - golines
 issues: {}
