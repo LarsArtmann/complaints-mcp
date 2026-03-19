@@ -1,15 +1,7 @@
 version: "2"
 run:
   timeout: 5m
-  go: "1.25"
-  build-tags: []
-  modules-download-mode: readonly
-  allow-parallel-runners: true
-  allow-serial-runners: false
-  issues-exit-code: 1
   tests: true
-output:
-  formats: {}
 linters:
   enable:
     - arangolint
@@ -137,14 +129,9 @@ linters:
       right-to-left-embedding: true
       right-to-left-isolate: true
       right-to-left-override: true
-    containedctx:
-      check-all: true
-    contextcheck:
-      check-all: true
     cyclop:
       max-complexity: 10
       package-average: 5
-      skip-tests: false
     decorder:
       dec-order:
         - type
@@ -159,7 +146,7 @@ linters:
       rules:
         main:
           deny:
-            - desc: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
+            - desc: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
               pkg: github.com/dgrijalva/jwt-go
           list-mode: lax
         tests:
@@ -223,7 +210,6 @@ linters:
       package-scope-only: false
     fatcontext:
       check-struct-pointers: true
-      ignore-len: 3
     forbidigo:
       analyze-types: true
       exclude-godoc-examples: false
@@ -267,14 +253,8 @@ linters:
       suppress-len-assertion: false
       suppress-nil-assertion: false
       validate-async-intervals: true
-    gochecknoglobals:
-      exclude-files:
-        - main\.go$
-        - .*_test\.go$
-    gochecknoinits: {}
     gochecksumtype:
       default-signifies-exhaustive: false
-      exhaustive: true
     gocognit:
       min-complexity: 10
     goconst:
@@ -298,16 +278,6 @@ linters:
         - performance
         - style
       settings:
-        appendAssign: {}
-        dogsled:
-          max-blank-identifiers: 2
-        errcheck:
-          check-blank: true
-          check-type-assertions: true
-        hexLiteral:
-          allowedUpperCaseDigits: 0
-        paramTypeCombine:
-          maxParams: 5
         rangeExprCopy:
           sizeThreshold: 512
           skipTestFuncs: false
@@ -316,7 +286,6 @@ linters:
           skipTestFuncs: false
         ruleguard:
           failOn: dsl,import
-        unimport: {}
     gocyclo:
       min-complexity: 10
     godoclint:
@@ -376,51 +345,51 @@ linters:
       blocked:
         modules:
           - github.com/dgrijalva/jwt-go:
-              reason: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
+              reason: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
               recommendations:
                 - github.com/golang-jwt/jwt/v5
           - github.com/square/go-jose/v3:
-              reason: "CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes"
+              reason: 'CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes'
               recommendations:
                 - github.com/go-jose/go-jose/v4
           - crypto/md5:
-              reason: "CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks"
+              reason: 'CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks'
               recommendations:
                 - crypto/sha256
           - crypto/sha1:
-              reason: "CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks"
+              reason: 'CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks'
               recommendations:
                 - crypto/sha256
           - math/rand:
-              reason: "CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation"
+              reason: 'CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation'
               recommendations:
                 - crypto/rand
           - github.com/featurebasedb/featurebase:
-              reason: "CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks"
+              reason: 'CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks'
               recommendations:
                 - github.com/ClickHouse/clickhouse-go
           - github.com/mitchellh/go-homedir:
-              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead"
+              reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead'
               recommendations:
                 - os
           - github.com/mitchellh/mapstructure:
-              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives"
+              reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives'
               recommendations:
                 - encoding/json
           - github.com/russross/blackfriday:
-              reason: "CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk"
+              reason: 'CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk'
               recommendations:
                 - github.com/gomarkdown/markdown
           - github.com/blang/vfs:
-              reason: "CRITICAL: Inactive since 2018 - unmaintained library with security risks"
+              reason: 'CRITICAL: Inactive since 2018 - unmaintained library with security risks'
               recommendations:
                 - io/fs
           - github.com/siddontang/ledisdb:
-              reason: "CRITICAL: Project abandoned for 3+ years - no updates or security patches"
+              reason: 'CRITICAL: Project abandoned for 3+ years - no updates or security patches'
               recommendations:
                 - github.com/go-redis/redis/v8
           - github.com/gorgonia/gorgonia:
-              reason: "CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration"
+              reason: 'CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration'
               recommendations:
                 - github.com/klauspost/cpuid/v2
           - github.com/patrickmn/go-cache:
@@ -519,7 +488,6 @@ linters:
               reason: Use charmbracelet/fang for better CLI logging integration or OpenTelemetry for observability
               recommendations:
                 - github.com/charmbracelet/fang
-      local-replace-directives: true
     gosec:
       confidence: medium
       config:
@@ -609,8 +577,6 @@ linters:
       skip-single-param: false
     interfacebloat:
       max: 10
-    intrange:
-      skip-generated-code: true
     ireturn:
       allow:
         - anon
@@ -632,7 +598,6 @@ linters:
       under: 50
     makezero:
       always: true
-    mirror: null
     misspell:
       extra-words:
         - correction: if
@@ -662,9 +627,6 @@ linters:
         - simplify-range
     nestif:
       min-complexity: 4
-    nilnesserr:
-      check-cap: true
-      check-len: true
     nonamedreturns:
       report-error-in-defer: true
     paralleltest:
@@ -711,7 +673,6 @@ linters:
         - level
         - msg
         - source
-      key-naming-case: ""
       kv-only: false
       msg-style: ""
       no-global: all
@@ -729,9 +690,6 @@ linters:
         - telemetry.Record
         - telemetry.RecordError
     staticcheck:
-      checks:
-        - all
-    stylecheck:
       checks:
         - all
     tagalign:
@@ -760,8 +718,6 @@ linters:
           toml: camel
           xml: camel
           yaml: camel
-      use-field-name: true
-    testableexamples: null
     testifylint:
       bool-compare:
         ignore-custom-types: true
@@ -803,7 +759,6 @@ linters:
         - SELECT MAX\(\*\)
         - SELECT MIN\(\*\)
       check-sql-builders: true
-    unused: {}
     usestdlibvars:
       crypto-hash: true
       default-rpc-path: true
@@ -844,21 +799,6 @@ linters:
       ignore-type-assert-ok: true
       max-distance: 5
       min-name-length: 3
-    wastedassign: null
-    wrapcheck:
-      ignorePackageGlobs:
-        - encoding/*
-        - github.com/pkg/*
-      ignoreSigRegexps:
-        - \.New.*Error\(
-      ignoreSigs:
-        - .Errorf(
-        - errors.New(
-        - errors.Unwrap(
-        - .Wrap(
-        - .Wrapf(
-    zerologlint: null
 formatters:
   enable:
     - golines
-issues: {}

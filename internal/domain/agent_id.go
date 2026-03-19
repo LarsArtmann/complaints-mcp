@@ -1,15 +1,19 @@
 package domain
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/larsartmann/go-composable-business-types/id"
 )
 
-// AgentID represents an AI agent identifier using phantom type pattern.
-type AgentID string
+// AgentBrand is the phantom type brand for AgentID.
+type AgentBrand struct{}
+
+// AgentID represents an AI agent identifier using branded ID type.
+type AgentID = id.ID[AgentBrand, string]
 
 // Agent ID validation pattern - support Unicode characters including emojis.
 var agentIDPattern = regexp.MustCompile(`^.{1,100}$`)
@@ -18,92 +22,42 @@ var agentIDPattern = regexp.MustCompile(`^.{1,100}$`)
 func NewAgentID(name string) (AgentID, error) {
 	trimmed := strings.TrimSpace(name)
 	if err := validateAgentID(trimmed); err != nil {
-		return AgentID(""), fmt.Errorf("invalid AgentID: %w", err)
+		return id.NewID[AgentBrand](""), fmt.Errorf("invalid AgentID: %w", err)
 	}
-	return AgentID(trimmed), nil
+	return id.NewID[AgentBrand](trimmed), nil
 }
 
 // ParseAgentID validates and creates an AgentID from string.
+// Allow empty strings for optional agent tracking.
 func ParseAgentID(s string) (AgentID, error) {
-	// Allow empty strings for optional agent tracking
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" {
-		return AgentID(""), nil // Empty is valid for optional agent
+		return id.NewID[AgentBrand](""), nil // Empty is valid for optional agent
 	}
 	if err := validateAgentID(trimmed); err != nil {
-		return AgentID(""), fmt.Errorf("invalid AgentID: %w", err)
+		return id.NewID[AgentBrand](""), fmt.Errorf("invalid AgentID: %w", err)
 	}
-	return AgentID(trimmed), nil
+	return id.NewID[AgentBrand](trimmed), nil
 }
 
 // MustParseAgentID creates an AgentID from string, panics on invalid input.
 func MustParseAgentID(s string) AgentID {
-	id, err := ParseAgentID(s)
+	agentID, err := ParseAgentID(s)
 	if err != nil {
 		panic(fmt.Sprintf("invalid AgentID: %s", err))
 	}
-	return id
-}
-
-// Validate checks if AgentID is valid.
-func (id AgentID) Validate() error {
-	trimmed := strings.TrimSpace(string(id))
-	if trimmed == "" {
-		return errors.New("cannot be empty")
-	}
-	if len(trimmed) > 100 {
-		return errors.New("cannot exceed 100 characters")
-	}
-	if !agentIDPattern.MatchString(trimmed) {
-		return errors.New("contains invalid characters")
-	}
-	return nil
-}
-
-// IsValid returns true if AgentID is valid.
-func (id AgentID) IsValid() bool {
-	return id.Validate() == nil
-}
-
-// IsEmpty returns true if AgentID is empty.
-func (id AgentID) IsEmpty() bool {
-	return strings.TrimSpace(string(id)) == ""
-}
-
-// String returns string representation of AgentID.
-func (id AgentID) String() string {
-	return string(id)
-}
-
-// MarshalJSON implements json.Marshaler for flat JSON structure.
-func (id AgentID) MarshalJSON() ([]byte, error) {
-	return json.Marshal(id.String())
-}
-
-// UnmarshalJSON implements json.Unmarshaler for flat JSON structure.
-func (id *AgentID) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	parsed, err := ParseAgentID(s)
-	if err != nil {
-		return err
-	}
-	*id = parsed
-	return nil
+	return agentID
 }
 
 // validateAgentID validates AgentID format.
 func validateAgentID(s string) error {
-	trimmed := strings.TrimSpace(s)
-	if trimmed == "" {
+	if s == "" {
 		return errors.New("cannot be empty")
 	}
-	if len(trimmed) > 100 {
+	if len(s) > 100 {
 		return errors.New("cannot exceed 100 characters")
 	}
-	if !agentIDPattern.MatchString(trimmed) {
+	if !agentIDPattern.MatchString(s) {
 		return errors.New("contains invalid characters")
 	}
 	return nil

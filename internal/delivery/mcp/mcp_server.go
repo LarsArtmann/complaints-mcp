@@ -400,7 +400,11 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 	logger := m.logger.With("component", "mcp-server", "tool", "resolve_complaint")
 	logger.Info("Handling resolve complaint request")
 
-	complaintID := domain.ComplaintID(input.ComplaintID)
+	complaintID, err := domain.ParseComplaintID(input.ComplaintID)
+	if err != nil {
+		logger.Error("Invalid complaint ID", "error", err, "complaint_id", input.ComplaintID)
+		return nil, ResolveComplaintOutput{}, fmt.Errorf("invalid complaint ID: %w", err)
+	}
 
 	complaint, err := m.service.ResolveComplaint(ctx, complaintID, input.ResolvedBy)
 	if err != nil {

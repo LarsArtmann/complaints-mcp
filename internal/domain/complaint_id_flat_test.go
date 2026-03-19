@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/larsartmann/go-composable-business-types/id"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("CRITICAL BUG FIX - flat JSON structure", func(t *testing.T) {
-		id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
-		data, err := json.Marshal(id)
+		data, err := json.Marshal(complaintID)
 		require.NoError(t, err)
 
 		// CRITICAL: Verify flat structure - main bug fix
@@ -28,9 +29,9 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	})
 
 	t.Run("marshal produces flat JSON string", func(t *testing.T) {
-		id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
-		data, err := json.Marshal(id)
+		data, err := json.Marshal(complaintID)
 		require.NoError(t, err)
 
 		// The result should be just the string, wrapped in JSON quotes
@@ -43,43 +44,43 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("unmarshal from flat JSON string works", func(t *testing.T) {
 		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
 
-		var id ComplaintID
-		err := json.Unmarshal([]byte(jsonData), &id)
+		var complaintID ComplaintID
+		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
-		assert.Equal(t, ComplaintID("550e8400-e29b-41d4-a716-446655440000"), id)
-		assert.True(t, id.IsValid())
+		assert.Equal(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), complaintID)
+		assert.False(t, complaintID.IsZero())
 	})
 
 	t.Run("unmarshal from JSON object with flat ID works", func(t *testing.T) {
 		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
 
-		var id ComplaintID
-		err := json.Unmarshal([]byte(jsonData), &id)
+		var complaintID ComplaintID
+		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
-		assert.Equal(t, ComplaintID("550e8400-e29b-41d4-a716-446655440000"), id)
-		assert.True(t, id.IsValid())
+		assert.Equal(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), complaintID)
+		assert.False(t, complaintID.IsZero())
 	})
 
 	t.Run("reject nested JSON format - old buggy structure", func(t *testing.T) {
 		// This is the old buggy structure we're fixing
 		jsonData := `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`
 
-		var id ComplaintID
-		err := json.Unmarshal([]byte(jsonData), &id)
+		var complaintID ComplaintID
+		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		assert.Error(t, err)
 	})
 
 	t.Run("complete flat JSON structure test", func(t *testing.T) {
-		id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
 		// Verify the complete JSON structure is flat
 		type ComplaintWrapper struct {
 			ID ComplaintID `json:"id"`
 		}
 
-		wrapper := ComplaintWrapper{ID: id}
+		wrapper := ComplaintWrapper{ID: complaintID}
 		wrapperData, err := json.Marshal(wrapper)
 		require.NoError(t, err)
 

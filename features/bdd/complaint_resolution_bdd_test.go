@@ -13,6 +13,7 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/larsartmann/go-composable-business-types/id"
 )
 
 var _ = Describe("Complaint Resolution BDD Tests", func() {
@@ -125,15 +126,15 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// Try to resolve non-existent complaint
 			_, err = complaintService.ResolveComplaint(ctx, nonExistentID, "test-agent")
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("complaint not found"))
+			Expect(err.Error()).To(ContainSubstring("failed to find complaint"))
 		})
 
 		It("should return specific error for empty complaint ID", func(ctx SpecContext) {
 			// Try to resolve with empty complaint ID
-			emptyID := domain.ComplaintID("")
+			emptyID := id.NewID[domain.ComplaintBrand]("")
 			_, err := complaintService.ResolveComplaint(ctx, emptyID, "test-agent")
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("complaint not found"))
+			Expect(err.Error()).To(ContainSubstring("failed to find complaint"))
 		})
 	})
 

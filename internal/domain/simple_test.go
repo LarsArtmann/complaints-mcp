@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-composable-business-types/id"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,10 +23,10 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 
 	t.Run("✅ NEW FIX - flat JSON structure", func(t *testing.T) {
-		id := ComplaintID("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
 		// Serialize to JSON
-		data, err := json.Marshal(id)
+		data, err := json.Marshal(complaintID)
 		require.NoError(t, err)
 
 		// ✅ CRITICAL FIX: Should produce flat string, not nested object
@@ -38,10 +39,10 @@ func TestCriticalJSONBugFix(t *testing.T) {
 
 	t.Run("✅ NEW FIX - complete complaint with flat IDs", func(t *testing.T) {
 		complaint := &Complaint{
-			ID:              ComplaintID("550e8400-e29b-41d4-a716-446655440000"),
-			AgentID:         AgentID("AI-Assistant"),
-			SessionID:       SessionID("dev-session"),
-			ProjectName:     ProjectID("my-project"),
+			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
+			AgentID:         MustParseAgentID("AI-Assistant"),
+			SessionID:       MustParseSessionID("dev-session"),
+			ProjectName:     MustParseProjectID("my-project"),
 			TaskDescription: "Test complaint description",
 			Severity:        SeverityMedium,
 			Timestamp:       testTimestamp,
@@ -66,10 +67,10 @@ func TestCriticalJSONBugFix(t *testing.T) {
 
 	t.Run("✅ NEW FIX - roundtrip with flat IDs", func(t *testing.T) {
 		originalComplaint := &Complaint{
-			ID:              ComplaintID("550e8400-e29b-41d4-a716-446655440000"),
-			AgentID:         AgentID("AI-Assistant"),
-			SessionID:       SessionID("dev-session"),
-			ProjectName:     ProjectID("my-project"),
+			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
+			AgentID:         MustParseAgentID("AI-Assistant"),
+			SessionID:       MustParseSessionID("dev-session"),
+			ProjectName:     MustParseProjectID("my-project"),
 			TaskDescription: "Test complaint description",
 			Severity:        SeverityMedium,
 			Timestamp:       testTimestamp,
@@ -91,11 +92,11 @@ func TestCriticalJSONBugFix(t *testing.T) {
 		assert.Equal(t, originalComplaint.SessionID, restoredComplaint.SessionID)
 		assert.Equal(t, originalComplaint.ProjectName, restoredComplaint.ProjectName)
 
-		// ✅ All should still be valid
-		assert.True(t, restoredComplaint.ID.IsValid())
-		assert.True(t, restoredComplaint.AgentID.IsValid())
-		assert.True(t, restoredComplaint.SessionID.IsValid())
-		assert.True(t, restoredComplaint.ProjectName.IsValid())
+		// ✅ All should still be valid (not zero)
+		assert.False(t, restoredComplaint.ID.IsZero())
+		assert.False(t, restoredComplaint.AgentID.IsZero())
+		assert.False(t, restoredComplaint.SessionID.IsZero())
+		assert.False(t, restoredComplaint.ProjectName.IsZero())
 	})
 }
 

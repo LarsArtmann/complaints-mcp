@@ -77,8 +77,8 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 
 // FindByID finds a complaint by ID.
 func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
-	if err := id.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid ComplaintID: %w", err)
+	if id.IsZero() {
+		return nil, fmt.Errorf("invalid ComplaintID: cannot be empty")
 	}
 
 	// Load from file
@@ -130,7 +130,10 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 
 		// Extract ID from filename
 		idStr := fileName[:len(fileName)-5]
-		id := domain.ComplaintID(idStr)
+		id, err := domain.ParseComplaintID(idStr)
+		if err != nil {
+			continue
+		}
 		complaint, err := r.FindByID(ctx, id)
 		if err != nil {
 			continue

@@ -26,6 +26,17 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 
 // CreateComplaint creates a new complaint.
 func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity domain.Severity, projectName string) (*domain.Complaint, error) {
+	// Validate required fields
+	if agentName == "" {
+		return nil, fmt.Errorf("agent name is required")
+	}
+	if sessionName == "" {
+		return nil, fmt.Errorf("session name is required")
+	}
+	if projectName == "" {
+		return nil, fmt.Errorf("project name is required")
+	}
+
 	// Generate phantom type ID
 	id, err := domain.NewComplaintID()
 	if err != nil {

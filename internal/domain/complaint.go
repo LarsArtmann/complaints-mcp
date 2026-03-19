@@ -1,81 +1,48 @@
 package domain
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/larsartmann/go-composable-business-types/id"
 )
 
-// ComplaintID represents a unique complaint identifier using phantom type pattern (string-based).
-type ComplaintID string
+// ComplaintBrand is the phantom type brand for ComplaintID.
+type ComplaintBrand struct{}
+
+// ComplaintID represents a unique complaint identifier using branded ID type.
+type ComplaintID = id.ID[ComplaintBrand, string]
 
 // UUID v4 pattern for validation.
 var complaintIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
 
 // NewComplaintID creates a new valid ComplaintID with UUID v4 format.
 func NewComplaintID() (ComplaintID, error) {
-	id, err := uuid.NewV4()
+	uuidValue, err := uuid.NewV4()
 	if err != nil {
-		return ComplaintID(""), fmt.Errorf("failed to generate ComplaintID: %w", err)
+		return id.NewID[ComplaintBrand](""), fmt.Errorf("failed to generate ComplaintID: %w", err)
 	}
-	return ComplaintID(id.String()), nil
-}
-
-// String returns string representation of ComplaintID.
-func (id ComplaintID) String() string {
-	return string(id)
-}
-
-// Validate checks if ComplaintID is valid.
-func (id ComplaintID) Validate() error {
-	s := string(id)
-	if s == "" {
-		return errors.New("cannot be empty")
-	}
-	if !complaintIDPattern.MatchString(s) {
-		return errors.New("must be valid UUID v4 format")
-	}
-	return nil
-}
-
-// IsValid returns true if ComplaintID is valid.
-func (id ComplaintID) IsValid() bool {
-	return id.Validate() == nil
-}
-
-// MarshalJSON implements json.Marshaler for flat JSON structure.
-func (id ComplaintID) MarshalJSON() ([]byte, error) {
-	return json.Marshal(id.String())
-}
-
-// UnmarshalJSON implements json.Unmarshaler for flat JSON structure.
-func (id *ComplaintID) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	if err := validateComplaintID(s); err != nil {
-		return err
-	}
-	*id = ComplaintID(s)
-	return nil
+	return id.NewID[ComplaintBrand](uuidValue.String()), nil
 }
 
 // ParseComplaintID validates and creates a ComplaintID from string.
 func ParseComplaintID(s string) (ComplaintID, error) {
 	if err := validateComplaintID(s); err != nil {
-		return ComplaintID(""), fmt.Errorf("invalid ComplaintID: %w", err)
+		return id.NewID[ComplaintBrand](""), fmt.Errorf("invalid ComplaintID: %w", err)
 	}
-	return ComplaintID(s), nil
+	return id.NewID[ComplaintBrand](s), nil
 }
 
-// IsEmpty returns true if ComplaintID is empty.
-func (id ComplaintID) IsEmpty() bool {
-	return string(id) == ""
+// MustParseComplaintID parses a ComplaintID from string, panicking on error.
+func MustParseComplaintID(s string) ComplaintID {
+	complaintID, err := ParseComplaintID(s)
+	if err != nil {
+		panic(fmt.Sprintf("invalid ComplaintID: %v", err))
+	}
+	return complaintID
 }
 
 // validateComplaintID validates ComplaintID format.
@@ -87,6 +54,11 @@ func validateComplaintID(s string) error {
 		return errors.New("must be valid UUID v4 format")
 	}
 	return nil
+}
+
+// IsValidComplaintID returns true if the string is a valid ComplaintID.
+func IsValidComplaintID(s string) bool {
+	return validateComplaintID(s) == nil
 }
 
 // ResolutionState represents the resolution state of a complaint.
@@ -112,12 +84,12 @@ const (
 	SeverityCritical Severity = "critical"
 )
 
-// Complaint represents a structured complaint with phantom type ID.
+// Complaint represents a structured complaint with branded ID.
 type Complaint struct {
-	ID              ComplaintID     `json:"id"`         // ✅ Phantom type - flat JSON
-	AgentID         AgentID         `json:"agent_id"`   // ✅ Phantom type for consistency
-	SessionID       SessionID       `json:"session_id"` // ✅ Phantom type for consistency
-	ProjectName     ProjectID       `json:"project_id"` // ✅ Phantom type for consistency
+	ID              ComplaintID     `json:"id"`
+	AgentID         AgentID         `json:"agent_id"`
+	SessionID       SessionID       `json:"session_id"`
+	ProjectName     ProjectID       `json:"project_id"`
 	TaskDescription string          `json:"task_description"`
 	ContextInfo     string          `json:"context_info"`
 	MissingInfo     string          `json:"missing_info"`
@@ -132,8 +104,11 @@ type Complaint struct {
 
 // Validate checks if all fields are valid.
 func (c *Complaint) Validate() error {
-	// Validate phantom type ID
-	if err := c.ID.Validate(); err != nil {
+	// Validate branded ID
+	if c.ID.IsZero() {
+		return errors.New("complaint ID cannot be empty")
+	}
+	if err := validateComplaintID(c.ID.Get()); err != nil {
 		return fmt.Errorf("invalid ComplaintID: %w", err)
 	}
 
@@ -145,15 +120,23 @@ func (c *Complaint) Validate() error {
 		return fmt.Errorf("invalid severity: %s", c.Severity)
 	}
 
-	// Validate required phantom types
-	if err := c.AgentID.Validate(); err != nil {
-		return fmt.Errorf("invalid AgentID: %w", err)
+	// Validate optional branded types (only validate format if not empty)
+	if !c.AgentID.IsZero() {
+		if err := validateAgentID(c.AgentID.Get()); err != nil {
+			return fmt.Errorf("invalid AgentID: %w", err)
+		}
 	}
-	if err := c.SessionID.Validate(); err != nil {
-		return fmt.Errorf("invalid SessionID: %w", err)
+
+	if !c.SessionID.IsZero() {
+		if err := validateSessionID(c.SessionID.Get()); err != nil {
+			return fmt.Errorf("invalid SessionID: %w", err)
+		}
 	}
-	if err := c.ProjectName.Validate(); err != nil {
-		return fmt.Errorf("invalid ProjectID: %w", err)
+
+	if !c.ProjectName.IsZero() {
+		if err := validateProjectID(c.ProjectName.Get()); err != nil {
+			return fmt.Errorf("invalid ProjectID: %w", err)
+		}
 	}
 
 	if c.TaskDescription == "" {
