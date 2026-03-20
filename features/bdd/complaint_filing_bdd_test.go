@@ -54,7 +54,9 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(complaint.AgentID.String()).To(Equal("AI Assistant"))
 			Expect(complaint.SessionID.String()).To(Equal("test-session"))
 			Expect(complaint.TaskDescription).To(Equal("Implement authentication system"))
-			Expect(complaint.ContextInfo).To(Equal("Need to add JWT authentication to API endpoints"))
+			Expect(
+				complaint.ContextInfo,
+			).To(Equal("Need to add JWT authentication to API endpoints"))
 			Expect(complaint.MissingInfo).To(Equal("Unclear error handling patterns"))
 			Expect(complaint.ConfusedBy).To(Equal("Documentation missing for error responses"))
 			Expect(complaint.FutureWishes).To(Equal("Add comprehensive error handling examples"))
@@ -220,8 +222,12 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
 			Expect(complaint.AgentID.String()).To(Equal("AI Assistant 🤖"))
-			Expect(complaint.TaskDescription).To(Equal("Test with special chars: quotes, newlines, tabs"))
-			Expect(complaint.ContextInfo).To(Equal("Content with \"quotes\" and \t\t tabs\nnewlines"))
+			Expect(
+				complaint.TaskDescription,
+			).To(Equal("Test with special chars: quotes, newlines, tabs"))
+			Expect(
+				complaint.ContextInfo,
+			).To(Equal("Content with \"quotes\" and \t\t tabs\nnewlines"))
 		})
 	})
 

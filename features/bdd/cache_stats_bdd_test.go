@@ -59,9 +59,13 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 
 				// Assert - Verify cache has entries but no access yet
 				Expect(stats.MaxSize).To(Equal(int64(1000)), "Cache max size should be 1000")
-				Expect(stats.CurrentSize).To(Equal(int64(2)), "Cache should have 2 entries from creation")
+				Expect(
+					stats.CurrentSize,
+				).To(Equal(int64(2)), "Cache should have 2 entries from creation")
 				Expect(stats.Hits).To(Equal(int64(0)), "No hits yet - just cached from creation")
-				Expect(stats.Misses).To(Equal(int64(0)), "No misses yet - just cached from creation")
+				Expect(
+					stats.Misses,
+				).To(Equal(int64(0)), "No misses yet - just cached from creation")
 				Expect(stats.HitRate).To(Equal(float64(0.0)), "Hit rate should be 0% (no accesses)")
 
 				// Now create cache hits by retrieving complaints
@@ -80,10 +84,18 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				finalStats := complaintService.GetCacheStats()
 
 				// Assert - Verify cache hit statistics
-				Expect(finalStats.CurrentSize).To(Equal(int64(2)), "Cache should still have 2 entries")
-				Expect(finalStats.Hits).To(Equal(int64(4)), "Should have 4 hits from retrieving twice each")
-				Expect(finalStats.Misses).To(Equal(int64(0)), "No misses since items were cached from creation")
-				Expect(finalStats.HitRate).To(Equal(float64(100.0)), "Hit rate should be 100% (all accesses were hits")
+				Expect(
+					finalStats.CurrentSize,
+				).To(Equal(int64(2)), "Cache should still have 2 entries")
+				Expect(
+					finalStats.Hits,
+				).To(Equal(int64(4)), "Should have 4 hits from retrieving twice each")
+				Expect(
+					finalStats.Misses,
+				).To(Equal(int64(0)), "No misses since items were cached from creation")
+				Expect(
+					finalStats.HitRate,
+				).To(Equal(float64(100.0)), "Hit rate should be 100% (all accesses were hits")
 			})
 
 			It("should show cache enabled flag", func() {
@@ -91,7 +103,9 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				stats := complaintService.GetCacheStats()
 
 				// Assert
-				Expect(stats.MaxSize).To(BeNumerically(">", 0), "CachedRepository should have max size > 0")
+				Expect(
+					stats.MaxSize,
+				).To(BeNumerically(">", 0), "CachedRepository should have max size > 0")
 			})
 		})
 
@@ -108,11 +122,17 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 
 				// Assert
 				Expect(stats.MaxSize).To(Equal(int64(0)), "FileRepository should have max size 0")
-				Expect(stats.CurrentSize).To(Equal(int64(0)), "FileRepository should have current size 0")
+				Expect(
+					stats.CurrentSize,
+				).To(Equal(int64(0)), "FileRepository should have current size 0")
 				Expect(stats.Hits).To(Equal(int64(0)), "FileRepository should have 0 hits")
 				Expect(stats.Misses).To(Equal(int64(0)), "FileRepository should have 0 misses")
-				Expect(stats.Evictions).To(Equal(int64(0)), "FileRepository should have 0 evictions")
-				Expect(stats.HitRate).To(Equal(float64(0.0)), "FileRepository should have 0% hit rate")
+				Expect(
+					stats.Evictions,
+				).To(Equal(int64(0)), "FileRepository should have 0 evictions")
+				Expect(
+					stats.HitRate,
+				).To(Equal(float64(0.0)), "FileRepository should have 0% hit rate")
 			})
 		})
 
@@ -144,7 +164,9 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				// Assert - Verify tracking accuracy (all hits since cached from creation)
 				Expect(stats.Hits+stats.Misses).To(Equal(int64(3)), "Should have 3 total lookups")
 				Expect(stats.Hits).To(Equal(int64(3)), "Should have 3 hits (all accesses)")
-				Expect(stats.Misses).To(Equal(int64(0)), "Should have 0 misses (cached from creation)")
+				Expect(
+					stats.Misses,
+				).To(Equal(int64(0)), "Should have 0 misses (cached from creation)")
 				Expect(stats.HitRate).To(Equal(float64(100.0)), "Hit rate should be 100%")
 			})
 		})

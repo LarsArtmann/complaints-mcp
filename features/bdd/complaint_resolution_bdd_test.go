@@ -91,7 +91,9 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			Expect(resolvedComplaint.FutureWishes).To(Equal(testComplaint.FutureWishes))
 			Expect(resolvedComplaint.Severity).To(Equal(testComplaint.Severity))
 			Expect(resolvedComplaint.ProjectName).To(Equal(testComplaint.ProjectName))
-			Expect(resolvedComplaint.Timestamp.Format(time.RFC3339Nano)).To(Equal(testComplaint.Timestamp.Format(time.RFC3339Nano)))
+			Expect(
+				resolvedComplaint.Timestamp.Format(time.RFC3339Nano),
+			).To(Equal(testComplaint.Timestamp.Format(time.RFC3339Nano)))
 			Expect(resolvedComplaint.IsResolved()).To(BeTrue()) // Only this should change
 		})
 
@@ -195,8 +197,12 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			}
 
 			// At least one operation should succeed, and none should be critical failures
-			Expect(successCount).To(BeNumerically(">=", 1), "At least one concurrent resolution should succeed")
-			Expect(errorCount).To(BeNumerically("<=", 3), "Some concurrent operations might fail but not all")
+			Expect(
+				successCount,
+			).To(BeNumerically(">=", 1), "At least one concurrent resolution should succeed")
+			Expect(
+				errorCount,
+			).To(BeNumerically("<=", 3), "Some concurrent operations might fail but not all")
 
 			// Verify complaint is resolved
 			resolvedComplaint, err := complaintService.GetComplaint(ctx, testComplaint.ID)

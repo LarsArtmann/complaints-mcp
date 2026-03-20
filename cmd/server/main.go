@@ -32,14 +32,17 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringP("config", "c", "", "config file path")
-	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "log level (trace, debug, info, warn, error)")
+	rootCmd.PersistentFlags().
+		StringP("log-level", "l", "info", "log level (trace, debug, info, warn, error)")
 	rootCmd.PersistentFlags().BoolP("dev", "d", false, "development mode")
 	rootCmd.PersistentFlags().Bool("version", false, "show version information")
 
 	// Cache configuration flags
-	rootCmd.PersistentFlags().Bool("cache-enabled", true, "enable complaint caching for performance")
+	rootCmd.PersistentFlags().
+		Bool("cache-enabled", true, "enable complaint caching for performance")
 	rootCmd.PersistentFlags().Int("cache-max-size", 1000, "maximum number of complaints to cache")
-	rootCmd.PersistentFlags().String("cache-eviction", "lru", "cache eviction policy (lru, fifo, none)")
+	rootCmd.PersistentFlags().
+		String("cache-eviction", "lru", "cache eviction policy (lru, fifo, none)")
 }
 
 func main() {

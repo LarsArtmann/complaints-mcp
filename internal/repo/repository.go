@@ -25,7 +25,11 @@ type Repository interface {
 	Save(ctx context.Context, complaint *domain.Complaint) error
 	FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error)
 	FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error)
-	FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error)
+	FindBySeverity(
+		ctx context.Context,
+		severity domain.Severity,
+		limit int,
+	) ([]*domain.Complaint, error)
 	FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error)
 	Update(ctx context.Context, complaint *domain.Complaint) error
 	Delete(ctx context.Context, id domain.ComplaintID) error
@@ -76,7 +80,10 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 }
 
 // FindByID finds a complaint by ID.
-func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+func (r *FileRepository) FindByID(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (*domain.Complaint, error) {
 	if id.IsZero() {
 		return nil, fmt.Errorf("invalid ComplaintID: cannot be empty")
 	}
@@ -97,7 +104,10 @@ func (r *FileRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*
 }
 
 // FindAll finds all complaints.
-func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindAll(
+	ctx context.Context,
+	limit, offset int,
+) ([]*domain.Complaint, error) {
 	files, err := r.listComplaintFiles()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list complaint files: %w", err)
@@ -146,7 +156,11 @@ func (r *FileRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 }
 
 // FindBySeverity finds complaints by severity.
-func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindBySeverity(
+	ctx context.Context,
+	severity domain.Severity,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -164,7 +178,10 @@ func (r *FileRepository) FindBySeverity(ctx context.Context, severity domain.Sev
 }
 
 // FindUnresolved finds unresolved complaints.
-func (r *FileRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindUnresolved(
+	ctx context.Context,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -193,7 +210,11 @@ func (r *FileRepository) Delete(ctx context.Context, id domain.ComplaintID) erro
 }
 
 // Search searches complaints by text.
-func (r *FileRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) Search(
+	ctx context.Context,
+	query string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -245,7 +266,12 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 		return "", err
 	}
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
-	fileName := fmt.Sprintf("%s-%s-%s.md", timestamp, complaint.SessionID.String(), complaint.TaskDescription[:20])
+	fileName := fmt.Sprintf(
+		"%s-%s-%s.md",
+		timestamp,
+		complaint.SessionID.String(),
+		complaint.TaskDescription[:20],
+	)
 	if len(fileName) > 100 {
 		fileName = fileName[:100]
 	}
@@ -253,7 +279,11 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 }
 
 // FindBySession finds complaints by session.
-func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindBySession(
+	ctx context.Context,
+	sessionID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -271,7 +301,11 @@ func (r *FileRepository) FindBySession(ctx context.Context, sessionID string, li
 }
 
 // FindByProject finds complaints by project.
-func (r *FileRepository) FindByProject(ctx context.Context, projectID string, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindByProject(
+	ctx context.Context,
+	projectID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -289,7 +323,11 @@ func (r *FileRepository) FindByProject(ctx context.Context, projectID string, li
 }
 
 // FindByAgent finds complaints by agent.
-func (r *FileRepository) FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error) {
+func (r *FileRepository) FindByAgent(
+	ctx context.Context,
+	agentID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	all, err := r.FindAll(ctx, 1000, 0)
 	if err != nil {
 		return nil, err
@@ -390,7 +428,10 @@ func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Com
 }
 
 // FindByID implements Repository interface.
-func (r *SimpleCachedRepository) FindByID(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindByID(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (*domain.Complaint, error) {
 	r.mu.RLock()
 
 	// Check cache first
@@ -453,32 +494,58 @@ func (r *SimpleCachedRepository) updateCacheSize() {
 }
 
 // Delegate other methods to base repository.
-func (r *SimpleCachedRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindAll(
+	ctx context.Context,
+	limit, offset int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindAll(ctx, limit, offset)
 }
 
-func (r *SimpleCachedRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) Search(
+	ctx context.Context,
+	query string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.Search(ctx, query, limit)
 }
 
-func (r *SimpleCachedRepository) FindByProject(ctx context.Context, projectID string, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindByProject(
+	ctx context.Context,
+	projectID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindByProject(ctx, projectID, limit)
 }
 
-func (r *SimpleCachedRepository) FindUnresolved(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindUnresolved(
+	ctx context.Context,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindUnresolved(ctx, limit)
 }
 
 // Add missing methods from Repository interface.
-func (r *SimpleCachedRepository) FindBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindBySeverity(
+	ctx context.Context,
+	severity domain.Severity,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindBySeverity(ctx, severity, limit)
 }
 
-func (r *SimpleCachedRepository) FindBySession(ctx context.Context, sessionID string, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindBySession(
+	ctx context.Context,
+	sessionID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindBySession(ctx, sessionID, limit)
 }
 
-func (r *SimpleCachedRepository) FindByAgent(ctx context.Context, agentID string, limit int) ([]*domain.Complaint, error) {
+func (r *SimpleCachedRepository) FindByAgent(
+	ctx context.Context,
+	agentID string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return r.base.FindByAgent(ctx, agentID, limit)
 }
 
@@ -517,11 +584,17 @@ func (r *SimpleCachedRepository) WarmCache(ctx context.Context) error {
 	return r.base.WarmCache(ctx)
 }
 
-func (r *SimpleCachedRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
+func (r *SimpleCachedRepository) GetFilePath(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (string, error) {
 	return r.base.GetFilePath(ctx, id)
 }
 
-func (r *SimpleCachedRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID) (string, error) {
+func (r *SimpleCachedRepository) GetDocsPath(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (string, error) {
 	return r.base.GetDocsPath(ctx, id)
 }
 

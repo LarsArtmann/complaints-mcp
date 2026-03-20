@@ -17,7 +17,9 @@ type ComplaintBrand struct{}
 type ComplaintID = id.ID[ComplaintBrand, string]
 
 // UUID v4 pattern for validation.
-var complaintIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
+var complaintIDPattern = regexp.MustCompile(
+	`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`,
+)
 
 // NewComplaintID creates a new valid ComplaintID with UUID v4 format.
 func NewComplaintID() (ComplaintID, error) {

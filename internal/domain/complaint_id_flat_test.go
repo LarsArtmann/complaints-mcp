@@ -48,7 +48,11 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
-		assert.Equal(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), complaintID)
+		assert.Equal(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			complaintID,
+		)
 		assert.False(t, complaintID.IsZero())
 	})
 
@@ -59,7 +63,11 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
-		assert.Equal(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), complaintID)
+		assert.Equal(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			complaintID,
+		)
 		assert.False(t, complaintID.IsZero())
 	})
 

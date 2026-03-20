@@ -27,7 +27,9 @@ type RealSpan struct {
 // NewRealTracer creates a new production tracer with Jaeger export.
 func NewRealTracer(serviceName string) *RealTracer {
 	// Create Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
+	exp, err := jaeger.New(
+		jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")),
+	)
 	if err != nil {
 		// Fallback to stdout exporter
 		exp, _ = jaeger.New(jaeger.WithAgentEndpoint(jaeger.WithAgentHost("localhost")))

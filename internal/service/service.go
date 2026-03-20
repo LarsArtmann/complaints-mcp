@@ -25,7 +25,12 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 }
 
 // CreateComplaint creates a new complaint.
-func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string, severity domain.Severity, projectName string) (*domain.Complaint, error) {
+func (s *ComplaintService) CreateComplaint(
+	ctx context.Context,
+	agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string,
+	severity domain.Severity,
+	projectName string,
+) (*domain.Complaint, error) {
 	// Validate required fields
 	if agentName == "" {
 		return nil, fmt.Errorf("agent name is required")
@@ -87,17 +92,27 @@ func (s *ComplaintService) CreateComplaint(ctx context.Context, agentName, sessi
 }
 
 // GetComplaint retrieves a complaint by ID.
-func (s *ComplaintService) GetComplaint(ctx context.Context, id domain.ComplaintID) (*domain.Complaint, error) {
+func (s *ComplaintService) GetComplaint(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (*domain.Complaint, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
 // ListComplaints retrieves a list of complaints.
-func (s *ComplaintService) ListComplaints(ctx context.Context, limit, offset int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) ListComplaints(
+	ctx context.Context,
+	limit, offset int,
+) ([]*domain.Complaint, error) {
 	return s.repo.FindAll(ctx, limit, offset)
 }
 
 // ResolveComplaint marks a complaint as resolved.
-func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.ComplaintID, resolvedBy string) (*domain.Complaint, error) {
+func (s *ComplaintService) ResolveComplaint(
+	ctx context.Context,
+	id domain.ComplaintID,
+	resolvedBy string,
+) (*domain.Complaint, error) {
 	complaint, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find complaint: %w", err)
@@ -115,7 +130,10 @@ func (s *ComplaintService) ResolveComplaint(ctx context.Context, id domain.Compl
 }
 
 // GetFilePaths returns file and docs paths for a complaint.
-func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.ComplaintID) (filePath, docsPath string, err error) {
+func (s *ComplaintService) GetFilePaths(
+	ctx context.Context,
+	id domain.ComplaintID,
+) (filePath, docsPath string, err error) {
 	filePath, err = s.repo.GetFilePath(ctx, id)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to get file path: %w", err)
@@ -130,12 +148,20 @@ func (s *ComplaintService) GetFilePaths(ctx context.Context, id domain.Complaint
 }
 
 // GetComplaintsBySeverity retrieves complaints by severity level.
-func (s *ComplaintService) GetComplaintsBySeverity(ctx context.Context, severity domain.Severity, limit int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) GetComplaintsBySeverity(
+	ctx context.Context,
+	severity domain.Severity,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return s.repo.FindBySeverity(ctx, severity, limit)
 }
 
 // SearchComplaints searches complaints by text query.
-func (s *ComplaintService) SearchComplaints(ctx context.Context, query string, limit int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) SearchComplaints(
+	ctx context.Context,
+	query string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return s.repo.Search(ctx, query, limit)
 }
 
@@ -145,11 +171,18 @@ func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 }
 
 // ListComplaintsByProject retrieves complaints by project name.
-func (s *ComplaintService) ListComplaintsByProject(ctx context.Context, projectName string, limit int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) ListComplaintsByProject(
+	ctx context.Context,
+	projectName string,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return s.repo.FindByProject(ctx, projectName, limit)
 }
 
 // ListUnresolvedComplaints retrieves unresolved complaints.
-func (s *ComplaintService) ListUnresolvedComplaints(ctx context.Context, limit int) ([]*domain.Complaint, error) {
+func (s *ComplaintService) ListUnresolvedComplaints(
+	ctx context.Context,
+	limit int,
+) ([]*domain.Complaint, error) {
 	return s.repo.FindUnresolved(ctx, limit)
 }

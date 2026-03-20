@@ -23,7 +23,12 @@ type MCPServer struct {
 }
 
 // NewServer creates a new MCP server.
-func NewServer(name, version string, complaintService *service.ComplaintService, logger *log.Logger, tracer tracing.Tracer) *MCPServer {
+func NewServer(
+	name, version string,
+	complaintService *service.ComplaintService,
+	logger *log.Logger,
+	tracer tracing.Tracer,
+) *MCPServer {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    name,
 		Version: version,
@@ -284,7 +289,11 @@ type GetCacheStatsOutput struct {
 }
 
 // handleFileComplaint handles the file_complaint tool.
-func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRequest, input FileComplaintInput) (*mcp.CallToolResult, FileComplaintOutput, error) {
+func (m *MCPServer) handleFileComplaint(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	input FileComplaintInput,
+) (*mcp.CallToolResult, FileComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleFileComplaint")
 	defer span.End()
 
@@ -319,7 +328,13 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 	// Get file paths for the complaint
 	filePath, docsPath, err := m.service.GetFilePaths(ctx, complaint.ID)
 	if err != nil {
-		logger.Warn("Failed to get file paths for complaint", "error", err, "complaint_id", complaint.ID.String())
+		logger.Warn(
+			"Failed to get file paths for complaint",
+			"error",
+			err,
+			"complaint_id",
+			complaint.ID.String(),
+		)
 		// Continue without file paths - not a fatal error
 	}
 
@@ -333,7 +348,11 @@ func (m *MCPServer) handleFileComplaint(ctx context.Context, req *mcp.CallToolRe
 }
 
 // handleListComplaints handles the list_complaints tool.
-func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolRequest, input ListComplaintsInput) (*mcp.CallToolResult, ListComplaintsOutput, error) {
+func (m *MCPServer) handleListComplaints(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	input ListComplaintsInput,
+) (*mcp.CallToolResult, ListComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleListComplaints")
 	defer span.End()
 
@@ -393,7 +412,11 @@ func (m *MCPServer) handleListComplaints(ctx context.Context, req *mcp.CallToolR
 }
 
 // handleResolveComplaint handles the resolve_complaint tool.
-func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToolRequest, input ResolveComplaintInput) (*mcp.CallToolResult, ResolveComplaintOutput, error) {
+func (m *MCPServer) handleResolveComplaint(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	input ResolveComplaintInput,
+) (*mcp.CallToolResult, ResolveComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleResolveComplaint")
 	defer span.End()
 
@@ -408,11 +431,25 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 
 	complaint, err := m.service.ResolveComplaint(ctx, complaintID, input.ResolvedBy)
 	if err != nil {
-		logger.Error("Failed to resolve complaint", "error", err, "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
+		logger.Error(
+			"Failed to resolve complaint",
+			"error",
+			err,
+			"complaint_id",
+			input.ComplaintID,
+			"resolved_by",
+			input.ResolvedBy,
+		)
 		return nil, ResolveComplaintOutput{}, err
 	}
 
-	logger.Info("Complaint resolved successfully", "complaint_id", input.ComplaintID, "resolved_by", input.ResolvedBy)
+	logger.Info(
+		"Complaint resolved successfully",
+		"complaint_id",
+		input.ComplaintID,
+		"resolved_by",
+		input.ResolvedBy,
+	)
 
 	output := ResolveComplaintOutput{
 		Success:   true,
@@ -424,7 +461,11 @@ func (m *MCPServer) handleResolveComplaint(ctx context.Context, req *mcp.CallToo
 }
 
 // handleSearchComplaints handles the search_complaints tool.
-func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToolRequest, input SearchComplaintsInput) (*mcp.CallToolResult, SearchComplaintsOutput, error) {
+func (m *MCPServer) handleSearchComplaints(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	input SearchComplaintsInput,
+) (*mcp.CallToolResult, SearchComplaintsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleSearchComplaints")
 	defer span.End()
 
@@ -459,7 +500,11 @@ func (m *MCPServer) handleSearchComplaints(ctx context.Context, req *mcp.CallToo
 }
 
 // handleGetCacheStats handles the get_cache_stats tool.
-func (m *MCPServer) handleGetCacheStats(ctx context.Context, req *mcp.CallToolRequest, input GetCacheStatsInput) (*mcp.CallToolResult, GetCacheStatsOutput, error) {
+func (m *MCPServer) handleGetCacheStats(
+	ctx context.Context,
+	req *mcp.CallToolRequest,
+	input GetCacheStatsInput,
+) (*mcp.CallToolResult, GetCacheStatsOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleGetCacheStats")
 	defer span.End()
 

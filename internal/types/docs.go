@@ -102,7 +102,10 @@ func ValidateDocsDir(docsDir string) error {
 
 	// Check absolute paths (should be relative to project root)
 	if filepath.IsAbs(docsDir) {
-		return fmt.Errorf("docs directory should be relative to project root, not absolute: %s", docsDir)
+		return fmt.Errorf(
+			"docs directory should be relative to project root, not absolute: %s",
+			docsDir,
+		)
 	}
 
 	return nil

@@ -62,7 +62,10 @@ func NewEvictionPolicy(policy string) (CacheEvictionPolicy, error) {
 	case EvictionLRU, EvictionFIFO, EvictionNone:
 		return p, nil
 	default:
-		return EvictionLRU, fmt.Errorf("invalid eviction policy: %s (must be lru, fifo, or none)", policy)
+		return EvictionLRU, fmt.Errorf(
+			"invalid eviction policy: %s (must be lru, fifo, or none)",
+			policy,
+		)
 	}
 }
 

@@ -146,7 +146,7 @@ linters:
       rules:
         main:
           deny:
-            - desc: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
+            - desc: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
               pkg: github.com/dgrijalva/jwt-go
           list-mode: lax
         tests:
@@ -345,51 +345,51 @@ linters:
       blocked:
         modules:
           - github.com/dgrijalva/jwt-go:
-              reason: 'CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities'
+              reason: "CRITICAL SECURITY: CVE-2020-26160 - deprecated jwt-go library with known vulnerabilities"
               recommendations:
                 - github.com/golang-jwt/jwt/v5
           - github.com/square/go-jose/v3:
-              reason: 'CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes'
+              reason: "CRITICAL SECURITY: Multiple CVEs in go-jose v3 and below - only v4+ has security fixes"
               recommendations:
                 - github.com/go-jose/go-jose/v4
           - crypto/md5:
-              reason: 'CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks'
+              reason: "CRITICAL SECURITY: MD5 is broken for cryptographic purposes due to collision attacks"
               recommendations:
                 - crypto/sha256
           - crypto/sha1:
-              reason: 'CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks'
+              reason: "CRITICAL SECURITY: SHA-1 is cryptographically broken with practical collision attacks"
               recommendations:
                 - crypto/sha256
           - math/rand:
-              reason: 'CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation'
+              reason: "CRITICAL SECURITY: Use crypto/rand for all cryptographic random number generation"
               recommendations:
                 - crypto/rand
           - github.com/featurebasedb/featurebase:
-              reason: 'CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks'
+              reason: "CRITICAL: Repository archived February 2024 - unmaintained analytical database with data integrity risks"
               recommendations:
                 - github.com/ClickHouse/clickhouse-go
           - github.com/mitchellh/go-homedir:
-              reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead'
+              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use os.UserHomeDir() instead"
               recommendations:
                 - os
           - github.com/mitchellh/mapstructure:
-              reason: 'CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives'
+              reason: "CRITICAL: Repository archived July 2024 - unmaintained security risk. Use standard library JSON or modern alternatives"
               recommendations:
                 - encoding/json
           - github.com/russross/blackfriday:
-              reason: 'CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk'
+              reason: "CRITICAL: Last release Nov 2020 (5+ years old), 187 open issues, unmaintained. Major security and compatibility risk"
               recommendations:
                 - github.com/gomarkdown/markdown
           - github.com/blang/vfs:
-              reason: 'CRITICAL: Inactive since 2018 - unmaintained library with security risks'
+              reason: "CRITICAL: Inactive since 2018 - unmaintained library with security risks"
               recommendations:
                 - io/fs
           - github.com/siddontang/ledisdb:
-              reason: 'CRITICAL: Project abandoned for 3+ years - no updates or security patches'
+              reason: "CRITICAL: Project abandoned for 3+ years - no updates or security patches"
               recommendations:
                 - github.com/go-redis/redis/v8
           - github.com/gorgonia/gorgonia:
-              reason: 'CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration'
+              reason: "CRITICAL: Abandoned project - last update Aug 2024, 114 open issues, no GPU acceleration"
               recommendations:
                 - github.com/klauspost/cpuid/v2
           - github.com/patrickmn/go-cache:

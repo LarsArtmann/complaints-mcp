@@ -138,26 +138,42 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 	Context("List complaints by severity", func() {
 		It("should filter complaints by severity level", func(ctx SpecContext) {
 			// Get high severity complaints
-			highComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityHigh, 10)
+			highComplaints, err := complaintService.GetComplaintsBySeverity(
+				ctx,
+				domain.SeverityHigh,
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(highComplaints).To(HaveLen(1))
 			Expect(highComplaints[0].Severity).To(Equal(domain.SeverityHigh))
 			Expect(highComplaints[0].TaskDescription).To(Equal("Authentication issue"))
 
 			// Get medium severity complaints
-			mediumComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityMedium, 10)
+			mediumComplaints, err := complaintService.GetComplaintsBySeverity(
+				ctx,
+				domain.SeverityMedium,
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(mediumComplaints).To(HaveLen(1))
 			Expect(mediumComplaints[0].Severity).To(Equal(domain.SeverityMedium))
 
 			// Get low severity complaints
-			lowComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityLow, 10)
+			lowComplaints, err := complaintService.GetComplaintsBySeverity(
+				ctx,
+				domain.SeverityLow,
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(lowComplaints).To(HaveLen(1))
 			Expect(lowComplaints[0].Severity).To(Equal(domain.SeverityLow))
 
 			// Get critical severity complaints
-			criticalComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityCritical, 10)
+			criticalComplaints, err := complaintService.GetComplaintsBySeverity(
+				ctx,
+				domain.SeverityCritical,
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(criticalComplaints).To(HaveLen(1))
 			Expect(criticalComplaints[0].Severity).To(Equal(domain.SeverityCritical))
@@ -180,7 +196,11 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			}
 
 			// Test with limit
-			limitedComplaints, err := complaintService.GetComplaintsBySeverity(ctx, domain.SeverityLow, 3)
+			limitedComplaints, err := complaintService.GetComplaintsBySeverity(
+				ctx,
+				domain.SeverityLow,
+				3,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(limitedComplaints).To(HaveLen(3))
 
@@ -209,14 +229,22 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(apiComplaints[0].ProjectName.String()).To(Equal("api-project"))
 
 			// Get complaints for database-project
-			dbComplaints, err := complaintService.ListComplaintsByProject(ctx, "database-project", 10)
+			dbComplaints, err := complaintService.ListComplaintsByProject(
+				ctx,
+				"database-project",
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbComplaints).To(HaveLen(1))
 			Expect(dbComplaints[0].ProjectName.String()).To(Equal("database-project"))
 		})
 
 		It("should return empty for non-existent project", func(ctx SpecContext) {
-			complaints, err := complaintService.ListComplaintsByProject(ctx, "non-existent-project", 10)
+			complaints, err := complaintService.ListComplaintsByProject(
+				ctx,
+				"non-existent-project",
+				10,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaints).To(BeEmpty())
 		})
@@ -238,7 +266,11 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			}
 
 			// Test with limit
-			limitedComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 2)
+			limitedComplaints, err := complaintService.ListComplaintsByProject(
+				ctx,
+				"auth-project",
+				2,
+			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(limitedComplaints).To(HaveLen(2))
 
@@ -293,7 +325,9 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			authResults, err := complaintService.SearchComplaints(ctx, "authentication", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(authResults).To(HaveLen(1))
-			Expect(strings.ToLower(authResults[0].TaskDescription)).To(ContainSubstring("authentication"))
+			Expect(
+				strings.ToLower(authResults[0].TaskDescription),
+			).To(ContainSubstring("authentication"))
 
 			// Search for "API"
 			apiResults, err := complaintService.SearchComplaints(ctx, "API", 10)

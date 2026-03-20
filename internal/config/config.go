@@ -113,7 +113,13 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 		if errors.As(err, &configFileNotFoundError) {
 			logger.Info("Config file not found, using defaults")
 		} else {
-			logger.Warn("Failed to read config file", "error", err, "config_file", v.ConfigFileUsed())
+			logger.Warn(
+				"Failed to read config file",
+				"error",
+				err,
+				"config_file",
+				v.ConfigFileUsed(),
+			)
 		}
 	}
 

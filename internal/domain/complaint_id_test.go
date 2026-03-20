@@ -33,7 +33,11 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
-		assert.Equal(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), complaintID)
+		assert.Equal(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			complaintID,
+		)
 		assert.False(t, complaintID.IsZero())
 	})
 
@@ -55,7 +59,11 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 		assert.NotEmpty(t, complaintID.String())
 
 		// Verify UUID v4 format
-		assert.Regexp(t, `^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`, complaintID.String())
+		assert.Regexp(
+			t,
+			`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`,
+			complaintID.String(),
+		)
 	})
 
 	t.Run("parse validates input", func(t *testing.T) {
@@ -65,11 +73,26 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 			wantErr    bool
 			expectedID ComplaintID
 		}{
-			{"valid UUID", "550e8400-e29b-41d4-a716-446655440000", false, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")},
-			{"valid lowercase", "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6", false, id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6")},
+			{
+				"valid UUID",
+				"550e8400-e29b-41d4-a716-446655440000",
+				false,
+				id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			},
+			{
+				"valid lowercase",
+				"9cb3bb9e-b6dc-4e02-9767-e396a42b63a6",
+				false,
+				id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"),
+			},
 			{"empty string", "", true, id.NewID[ComplaintBrand]("")},
 			{"invalid format", "not-a-uuid", true, id.NewID[ComplaintBrand]("")},
-			{"wrong version", "550e8400-e29b-11d4-a716-446655440000", true, id.NewID[ComplaintBrand]("")},
+			{
+				"wrong version",
+				"550e8400-e29b-11d4-a716-446655440000",
+				true,
+				id.NewID[ComplaintBrand](""),
+			},
 		}
 
 		for _, tt := range tests {
