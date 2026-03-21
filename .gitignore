@@ -37,3 +37,7 @@ Thumbs.db
 .claude/settings.local.json
 
 /server
+# Dependencies
+node_modules/
+# Sensitive files
+*.db

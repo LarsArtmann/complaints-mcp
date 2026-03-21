@@ -1,118 +1,125 @@
 version: "2"
 run:
   timeout: 5m
+  go: ""
+  build-tags: []
+  allow-parallel-runners: false
+  allow-serial-runners: false
   tests: true
+output:
+  formats: {}
 linters:
   enable:
-    - arangolint
-    - recvcheck
-    - noinlineerr
-    - sqlclosecheck
-    - usetesting
-    - errcheck
-    - bodyclose
-    - promlinter
-    - asasalint
-    - prealloc
-    - gocognit
-    - grouper
-    - noctx
-    - wsl_v5
-    - inamedparam
-    - fatcontext
-    - godoclint
-    - iotamixing
-    - durationcheck
-    - spancheck
-    - godox
-    - varnamelen
-    - unparam
-    - predeclared
-    - cyclop
-    - copyloopvar
-    - nosprintfhostport
-    - makezero
-    - goheader
-    - errorlint
-    - unconvert
-    - nilnesserr
     - sloglint
-    - usestdlibvars
-    - gochecksumtype
-    - gomodguard
-    - forbidigo
-    - gocritic
-    - decorder
     - zerologlint
-    - canonicalheader
-    - gosmopolitan
-    - rowserrcheck
-    - depguard
-    - dupl
-    - nilnil
-    - funlen
-    - dupword
-    - importas
-    - gomoddirectives
-    - govet
-    - nilerr
-    - perfsprint
-    - err113
-    - unused
-    - godot
-    - ineffassign
-    - whitespace
-    - mnd
-    - nakedret
-    - goprintffuncname
-    - asciicheck
-    - interfacebloat
-    - maintidx
-    - thelper
     - contextcheck
-    - revive
-    - exhaustruct
     - paralleltest
     - gocheckcompilerdirectives
     - nlreturn
+    - noinlineerr
+    - thelper
     - gochecknoinits
     - exhaustive
     - forcetypeassert
     - ireturn
+    - dogsled
+    - protogetter
+    - unparam
+    - godot
+    - interfacebloat
+    - testpackage
+    - loggercheck
+    - mirror
+    - sqlclosecheck
+    - reassign
+    - asasalint
+    - grouper
+    - varnamelen
+    - forbidigo
+    - rowserrcheck
+    - dupword
+    - wrapcheck
+    - exptostd
+    - noctx
+    - godox
+    - canonicalheader
+    - whitespace
+    - unqueryvet
+    - modernize
+    - errname
+    - gochecknoglobals
+    - godoclint
+    - err113
+    - nonamedreturns
+    - nestif
+    - arangolint
+    - promlinter
+    - unconvert
+    - nakedret
+    - bidichk
+    - testifylint
+    - gomoddirectives
+    - nilerr
+    - fatcontext
+    - decorder
+    - depguard
+    - nilnil
+    - ineffassign
+    - asciicheck
+    - inamedparam
+    - iotamixing
+    - durationcheck
+    - gocritic
+    - govet
+    - perfsprint
+    - goprintffuncname
+    - maintidx
+    - usetesting
+    - errcheck
+    - gocognit
+    - goheader
+    - errorlint
+    - gochecksumtype
+    - unused
+    - exhaustruct
+    - revive
     - funcorder
     - gocyclo
-    - dogsled
     - misspell
-    - unqueryvet
-    - staticcheck
-    - wrapcheck
     - nolintlint
     - tagliatelle
     - intrange
-    - iface
-    - testpackage
-    - exptostd
-    - loggercheck
-    - nonamedreturns
-    - modernize
-    - errname
-    - mirror
     - testableexamples
-    - reassign
-    - nestif
-    - tagalign
-    - tparallel
-    - embeddedstructfieldcheck
+    - prealloc
+    - spancheck
+    - gomodguard
+    - importas
+    - mnd
+    - staticcheck
+    - iface
     - containedctx
+    - bodyclose
+    - predeclared
+    - cyclop
+    - copyloopvar
+    - nosprintfhostport
+    - gosmopolitan
+    - embeddedstructfieldcheck
     - wastedassign
+    - makezero
+    - funlen
+    - tagalign
     - gosec
-    - gochecknoglobals
     - goconst
-    - bidichk
     - ginkgolinter
-    - lll
-    - protogetter
-    - testifylint
+    - errchkjson
+    - musttag
+    - recvcheck
+    - usestdlibvars
+    - dupl
+    - tparallel
+    - wsl_v5
+    - nilnesserr
   settings:
     asasalint:
       exclude:
@@ -802,3 +809,4 @@ linters:
 formatters:
   enable:
     - golines
+issues: {}
