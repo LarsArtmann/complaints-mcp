@@ -1,8 +1,8 @@
 # complaints-mcp
 
-🚨 **A comprehensive MCP (Model Context Protocol) server for AI agent complaint management and feedback systems**
+**An MCP (Model Context Protocol) server that enables AI coding agents to file structured complaint reports about missing or confusing information encountered during development tasks.**
 
-> **Version**: 2.0.0 | **Status**: Production-Ready | **Architecture**: Clean Architecture with Type Safety
+> **Status**: Active Development | **Architecture**: Clean Architecture with Type Safety
 
 ---
 
@@ -29,11 +29,11 @@
 - **🏛️ Clean Architecture**: Layered design with clear separation of concerns
 - **🔒 Type Safety**: Strongly-typed domain models with validation
 - **🧵 Thread Safety**: Concurrent-safe operations with proper synchronization
-- **📋 BDD Testing**: Comprehensive behavioral test suite (40/52 tests passing)
+- **📋 BDD Testing**: Behavioral test suite (47/52 tests passing)
 - **🔍 Observability**: Structured tracing and comprehensive logging
 - **⚡ High Performance**: LRU caching with O(1) lookups
 
-### 🆕 **Latest Enhancement (v2.0)**
+### 🆕 **Latest Enhancements**
 
 - **📁 File Path Transparency**: Complete visibility into data storage locations
 - **🛠️ Enhanced MCP Integration**: File paths included in tool responses
@@ -405,7 +405,7 @@ Add to your Claude desktop configuration:
 }
 ```
 
-### **Enhanced Response with File Paths (v2.0+)**
+### **Enhanced Response with File Paths**
 
 ```json
 {
@@ -680,7 +680,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Roadmap & Future Development
 
-### **Upcoming Features (v2.1)**
+### **Planned Features**
 
 - [ ] **Plugin Architecture** - Extensible tool system
 - [ ] **Advanced Search** - Filtering, sorting, faceted search
@@ -688,7 +688,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] **Import/Export** - Bulk data management
 - [ ] **API Server** - RESTful HTTP interface option
 
-### **Long-term Vision (v3.0)**
+### **Long-term Vision**
 
 - [ ] **Multi-tenant Support** - Organization-level isolation
 - [ ] **Event Sourcing** - Complete audit trail and replay
