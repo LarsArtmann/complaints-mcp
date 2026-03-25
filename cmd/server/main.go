@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"

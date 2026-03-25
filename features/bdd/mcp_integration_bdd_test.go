@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/domain"

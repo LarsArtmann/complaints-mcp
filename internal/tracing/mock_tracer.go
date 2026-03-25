@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/charmbracelet/log"
+	"charm.land/log/v2"
 )
 
 // Tracer defines the interface for distributed tracing.

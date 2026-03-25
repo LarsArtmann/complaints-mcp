@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
+	"charm.land/log/v2"
 	"github.com/adrg/xdg"
-	"github.com/charmbracelet/log"
 	"github.com/larsartmann/complaints-mcp/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
