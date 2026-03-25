@@ -152,6 +152,11 @@ func (r *FileRepository) FindAll(
 		complaints = append(complaints, complaint)
 	}
 
+	// Sort by creation time (oldest first) for consistent ordering
+	sort.Slice(complaints, func(i, j int) bool {
+		return complaints[i].Timestamp.Before(complaints[j].Timestamp)
+	})
+
 	return complaints, nil
 }
 
