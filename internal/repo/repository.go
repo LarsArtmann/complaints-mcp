@@ -224,6 +224,8 @@ func (r *FileRepository) Search(
 	for _, complaint := range all {
 		if strings.Contains(strings.ToLower(complaint.TaskDescription), query) ||
 			strings.Contains(strings.ToLower(complaint.ContextInfo), query) ||
+			strings.Contains(strings.ToLower(complaint.MissingInfo), query) ||
+			strings.Contains(strings.ToLower(complaint.ConfusedBy), query) ||
 			strings.Contains(strings.ToLower(complaint.AgentID.String()), query) {
 			results = append(results, complaint)
 		}

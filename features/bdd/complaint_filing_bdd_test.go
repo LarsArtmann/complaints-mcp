@@ -68,9 +68,9 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 
 		It("should store complaint with minimum required data", func(ctx SpecContext) {
 			complaint, err := complaintService.CreateComplaint(ctx,
-				"A", // minimal valid name
-				"",  // optional session name
-				"T", // minimal valid description
+				"A",        // minimal valid name
+				"s",        // minimal valid session name
+				"T",        // minimal valid description
 				"",  // optional context info
 				"",  // optional missing info
 				"",  // optional confused by

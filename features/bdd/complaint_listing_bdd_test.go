@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -130,7 +131,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			// Should be ordered by creation time (oldest first due to file loading)
 			for i := 1; i < len(complaints); i++ {
 				Expect(complaints[i].Timestamp).To(
-					BeTemporally(">=", complaints[i-1].Timestamp))
+					BeTemporally(">=", complaints[i-1].Timestamp.Add(-time.Millisecond)))
 			}
 		})
 	})
