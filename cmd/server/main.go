@@ -8,11 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	log "charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
+	delivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
 )
 
@@ -70,25 +71,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logLevel, _ := cmd.Flags().GetString("log-level")
 	devMode, _ := cmd.Flags().GetBool("dev")
 
-	var logger *v2.Logger
+	var logger *log.Logger
 
 	if devMode {
-		level, _ := v2.ParseLevel(logLevel)
-		logger = v2.NewWithOptions(os.Stderr, v2.Options{
+		level, _ := log.ParseLevel(logLevel)
+		logger = log.NewWithOptions(os.Stderr, log.Options{
 			Level:           level,
 			ReportTimestamp: true,
 			ReportCaller:    true,
 		})
 	} else {
-		level, _ := v2.ParseLevel(logLevel)
-		logger = v2.NewWithOptions(os.Stderr, v2.Options{
+		level, _ := log.ParseLevel(logLevel)
+		logger = log.NewWithOptions(os.Stderr, log.Options{
 			Level:           level,
 			ReportTimestamp: true,
 			ReportCaller:    false,
 		})
 	}
 
-	ctx = v2.WithContext(ctx, logger)
+	ctx = log.WithContext(ctx, logger)
 
 	logger.Info("Starting complaints-mcp server",
 		"version", version,
@@ -108,7 +109,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
-	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
+	mcpServer := delivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled
 	if cfg.Storage.CacheEnabled {

@@ -61,7 +61,7 @@ func (m *MCPServer) Start(ctx context.Context) error {
 	// Start server with stdio transport
 	logger.Info("Starting MCP server over stdio")
 
-	err := m.server.Run(ctx, &mcp.StdioTransport{})
+	err = m.server.Run(ctx, &mcp.StdioTransport{})
 	if err != nil {
 		return fmt.Errorf("server failed: %w", err)
 	}
