@@ -39,7 +39,7 @@ func NewRealTracer(serviceName string) *RealTracer {
 	tp := trace.NewTracerProvider(
 		trace.WithBatcher(exp),
 		trace.WithResource(resource.NewWithAttributes(
-			"",
+			semconv.SchemaURL,
 			v1.26.0.ServiceName(serviceName),
 		)),
 	)
@@ -56,8 +56,8 @@ func NewRealTracer(serviceName string) *RealTracer {
 // Start creates a new span.
 func (t *RealTracer) Start(ctx context.Context, name string) (context.Context, Span) {
 	ctx, span := t.tracer.Start(ctx, name)
-	
-return ctx, &RealSpan{span: span}
+
+	return ctx, &RealSpan{span: span}
 }
 
 // Close shuts down tracer.
@@ -67,8 +67,7 @@ func (t *RealTracer) Close() error {
 		return tp.Shutdown(context.Background())
 	}
 
-	
-return nil
+	return nil
 }
 
 // RealSpan adapter methods.
