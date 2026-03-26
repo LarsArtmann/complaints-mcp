@@ -53,14 +53,16 @@ func (m *MCPServer) Start(ctx context.Context) error {
 	logger := m.logger.With("component", "mcp-server")
 
 	// Register tools
-	if err := m.registerTools(); err != nil {
+	err := m.registerTools()
+	if err != nil {
 		return fmt.Errorf("failed to register tools: %w", err)
 	}
 
 	// Start server with stdio transport
 	logger.Info("Starting MCP server over stdio")
 
-	if err := m.server.Run(ctx, &mcp.StdioTransport{}); err != nil {
+	err := m.server.Run(ctx, &mcp.StdioTransport{})
+	if err != nil {
 		return fmt.Errorf("server failed: %w", err)
 	}
 
@@ -239,7 +241,7 @@ type FileComplaintInput struct {
 	ConfusedBy      string `json:"confused_by"`
 	FutureWishes    string `json:"future_wishes"`
 	Severity        string `json:"severity"`
-	ProjectName     string `json:"project_name"`
+	ProjectID       string `json:"project_id"`
 }
 
 type ListComplaintsInput struct {
@@ -316,10 +318,11 @@ func (m *MCPServer) handleFileComplaint(
 		input.ConfusedBy,
 		input.FutureWishes,
 		domainSeverity,
-		input.ProjectName,
+		input.ProjectID,
 	)
 	if err != nil {
 		logger.Error("Failed to create complaint", "error", err)
+
 		return nil, FileComplaintOutput{}, err
 	}
 
@@ -366,16 +369,20 @@ func (m *MCPServer) handleListComplaints(
 	}
 
 	var severityFilter domain.Severity
+
 	if input.Severity != "" {
 		var err error
+
 		severityFilter, err = domain.ParseSeverity(input.Severity)
 		if err != nil {
 			return nil, ListComplaintsOutput{}, fmt.Errorf("invalid severity filter: %w", err)
 		}
 	}
 
-	var complaints []*domain.Complaint
-	var err error
+	var (
+		complaints []*domain.Complaint
+		err        error
+	)
 
 	if severityFilter != "" {
 		complaints, err = m.service.GetComplaintsBySeverity(ctx, severityFilter, limit)
@@ -385,16 +392,19 @@ func (m *MCPServer) handleListComplaints(
 
 	if err != nil {
 		logger.Error("Failed to list complaints", "error", err)
+
 		return nil, ListComplaintsOutput{}, err
 	}
 
 	// Convert to response format
 	var results []ComplaintDTO
+
 	for _, complaint := range complaints {
 		// Apply resolved filter if set
 		if input.Resolved && !complaint.IsResolved() {
 			continue
 		}
+
 		if !input.Resolved && complaint.IsResolved() {
 			continue
 		}
@@ -426,6 +436,7 @@ func (m *MCPServer) handleResolveComplaint(
 	complaintID, err := domain.ParseComplaintID(input.ComplaintID)
 	if err != nil {
 		logger.Error("Invalid complaint ID", "error", err, "complaint_id", input.ComplaintID)
+
 		return nil, ResolveComplaintOutput{}, fmt.Errorf("invalid complaint ID: %w", err)
 	}
 
@@ -440,6 +451,7 @@ func (m *MCPServer) handleResolveComplaint(
 			"resolved_by",
 			input.ResolvedBy,
 		)
+
 		return nil, ResolveComplaintOutput{}, err
 	}
 
@@ -480,6 +492,7 @@ func (m *MCPServer) handleSearchComplaints(
 	complaints, err := m.service.SearchComplaints(ctx, input.Query, limit)
 	if err != nil {
 		logger.Error("Failed to search complaints", "error", err)
+
 		return nil, SearchComplaintsOutput{}, err
 	}
 
@@ -515,6 +528,7 @@ func (m *MCPServer) handleGetCacheStats(
 
 	// Determine if cache is enabled (non-zero max size indicates cached repository)
 	cacheEnabled := stats.MaxCacheSize > 0
+
 	message := "Cache statistics retrieved successfully"
 	if !cacheEnabled {
 		message = "Cache disabled (using FileRepository)"

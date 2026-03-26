@@ -27,14 +27,17 @@ func NewComplaintID() (ComplaintID, error) {
 	if err != nil {
 		return id.NewID[ComplaintBrand](""), fmt.Errorf("failed to generate ComplaintID: %w", err)
 	}
+
 	return id.NewID[ComplaintBrand](uuidValue.String()), nil
 }
 
 // ParseComplaintID validates and creates a ComplaintID from string.
 func ParseComplaintID(s string) (ComplaintID, error) {
-	if err := validateComplaintID(s); err != nil {
+	err := validateComplaintID(s)
+	if err != nil {
 		return id.NewID[ComplaintBrand](""), fmt.Errorf("invalid ComplaintID: %w", err)
 	}
+
 	return id.NewID[ComplaintBrand](s), nil
 }
 
@@ -44,6 +47,7 @@ func MustParseComplaintID(s string) ComplaintID {
 	if err != nil {
 		panic(fmt.Sprintf("invalid ComplaintID: %v", err))
 	}
+
 	return complaintID
 }
 
@@ -52,9 +56,11 @@ func validateComplaintID(s string) error {
 	if s == "" {
 		return errors.New("cannot be empty")
 	}
+
 	if !complaintIDPattern.MatchString(s) {
 		return errors.New("must be valid UUID v4 format")
 	}
+
 	return nil
 }
 
@@ -91,7 +97,7 @@ type Complaint struct {
 	ID              ComplaintID     `json:"id"`
 	AgentID         AgentID         `json:"agent_id"`
 	SessionID       SessionID       `json:"session_id"`
-	ProjectName     ProjectID       `json:"project_id"`
+	ProjectID       ProjectID       `json:"project_id"`
 	TaskDescription string          `json:"task_description"`
 	ContextInfo     string          `json:"context_info"`
 	MissingInfo     string          `json:"missing_info"`
@@ -110,7 +116,9 @@ func (c *Complaint) Validate() error {
 	if c.ID.IsZero() {
 		return errors.New("complaint ID cannot be empty")
 	}
-	if err := validateComplaintID(c.ID.Get()); err != nil {
+
+	err := validateComplaintID(c.ID.Get())
+	if err != nil {
 		return fmt.Errorf("invalid ComplaintID: %w", err)
 	}
 
@@ -124,19 +132,22 @@ func (c *Complaint) Validate() error {
 
 	// Validate optional branded types (only validate format if not empty)
 	if !c.AgentID.IsZero() {
-		if err := validateAgentID(c.AgentID.Get()); err != nil {
+		err := validateAgentID(c.AgentID.Get())
+		if err != nil {
 			return fmt.Errorf("invalid AgentID: %w", err)
 		}
 	}
 
 	if !c.SessionID.IsZero() {
-		if err := validateSessionID(c.SessionID.Get()); err != nil {
+		err := validateSessionID(c.SessionID.Get())
+		if err != nil {
 			return fmt.Errorf("invalid SessionID: %w", err)
 		}
 	}
 
-	if !c.ProjectName.IsZero() {
-		if err := validateProjectID(c.ProjectName.Get()); err != nil {
+	if !c.ProjectID.IsZero() {
+		err := validateProjectID(c.ProjectID.Get())
+		if err != nil {
 			return fmt.Errorf("invalid ProjectID: %w", err)
 		}
 	}
@@ -163,8 +174,10 @@ func (c *Complaint) Resolve(resolvedBy string) error {
 	if c.ResolutionState.IsResolved() {
 		if c.ResolvedBy != resolvedBy {
 			c.ResolvedBy = resolvedBy
+
 			return nil
 		}
+
 		return nil // Already resolved with same resolver
 	}
 

@@ -188,6 +188,7 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				var unmarshaledStats repo.CacheStats
+
 				err = json.Unmarshal(jsonData, &unmarshaledStats)
 				Expect(err).NotTo(HaveOccurred())
 

@@ -25,11 +25,13 @@ func TestLoadConfigSuccess(t *testing.T) {
 	v.Set("log.level", "info")
 
 	cfg := &Config{}
-	if err := v.Unmarshal(cfg); err != nil {
+	err := v.Unmarshal(cfg)
+	if err != nil {
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	if err := validateConfig(cfg); err != nil {
+	err := validateConfig(cfg)
+	if err != nil {
 		t.Fatalf("Config validation failed: %v", err)
 	}
 
@@ -158,11 +160,13 @@ func TestConfigIntegration(t *testing.T) {
 	v.Set("log.level", "debug")
 
 	cfg := &Config{}
-	if err := v.Unmarshal(cfg); err != nil {
+	err := v.Unmarshal(cfg)
+	if err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
 
-	if err := validateConfig(cfg); err != nil {
+	err := validateConfig(cfg)
+	if err != nil {
 		t.Fatalf("Validation failed: %v", err)
 	}
 
@@ -196,7 +200,8 @@ func BenchmarkConfigValidation(b *testing.B) {
 	}
 
 	for b.Loop() {
-		if err := validateConfig(cfg); err != nil {
+		err := validateConfig(cfg)
+		if err != nil {
 			b.Fatalf("Validation failed: %v", err)
 		}
 	}

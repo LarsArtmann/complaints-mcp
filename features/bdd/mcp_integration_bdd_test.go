@@ -9,7 +9,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
@@ -22,8 +22,8 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer        *mcpdelivery.MCPServer
-		logger           *log.Logger
+		mcpServer        *mcp.MCPServer
+		logger           *v2.Logger
 		tracer           tracing.Tracer
 		testConfig       *config.Config
 		cmd              *cobra.Command
@@ -32,7 +32,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
-		logger = log.New(os.Stdout)
+		logger = v2.New(os.Stdout)
 		tracer = tracing.NewMockTracer("test")
 
 		// Initialize repository and service
@@ -40,7 +40,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Initialize MCP server
-		mcpServer = mcpdelivery.NewServer("test-server", "1.0.0", complaintService, logger, tracer)
+		mcpServer = mcp.NewServer("test-server", "1.0.0", complaintService, logger, tracer)
 
 		// Create test configuration
 		testConfig = &config.Config{
@@ -144,13 +144,17 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			// Step 7: List unresolved complaints (should be empty)
 			unresolved, err := complaintService.ListUnresolvedComplaints(ctx, 10)
 			Expect(err).NotTo(HaveOccurred())
+
 			found := false
+
 			for _, c := range unresolved {
 				if c.ID.String() == complaint.ID.String() {
 					found = true
+
 					break
 				}
 			}
+
 			Expect(found).To(BeFalse())
 		})
 	})
@@ -218,6 +222,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		It("should handle multiple complaints efficiently", func(ctx SpecContext) {
 			// Create multiple complaints
 			const numComplaints = 10
+
 			complaintIDs := []domain.ComplaintID{}
 
 			for i := range numComplaints {
@@ -232,6 +237,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 					domain.SeverityLow,
 					"perf-test")
 				Expect(err).NotTo(HaveOccurred())
+
 				complaintIDs = append(complaintIDs, complaint.ID)
 			}
 

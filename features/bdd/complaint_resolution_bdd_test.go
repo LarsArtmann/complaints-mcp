@@ -36,6 +36,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 		// Create a test complaint for resolution testing
 		var err error
+
 		testComplaint, err = complaintService.CreateComplaint(context.Background(),
 			"AI Assistant",
 			"resolution-test-session",
@@ -90,7 +91,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			Expect(resolvedComplaint.ConfusedBy).To(Equal(testComplaint.ConfusedBy))
 			Expect(resolvedComplaint.FutureWishes).To(Equal(testComplaint.FutureWishes))
 			Expect(resolvedComplaint.Severity).To(Equal(testComplaint.Severity))
-			Expect(resolvedComplaint.ProjectName).To(Equal(testComplaint.ProjectName))
+			Expect(resolvedComplaint.ProjectID).To(Equal(testComplaint.ProjectID))
 			Expect(
 				resolvedComplaint.Timestamp.Format(time.RFC3339Nano),
 			).To(Equal(testComplaint.Timestamp.Format(time.RFC3339Nano)))
@@ -101,6 +102,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// Get the original complaint
 			originalComplaint, err := complaintService.GetComplaint(ctx, testComplaint.ID)
 			Expect(err).NotTo(HaveOccurred())
+
 			_ = originalComplaint // Use variable to avoid unused warning
 
 			// Wait a bit to ensure different timestamp
@@ -172,6 +174,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			for range 3 {
 				go func() {
 					defer func() { done <- true }()
+
 					_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 					errors <- err
 				}()
@@ -185,6 +188,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// Check that all operations completed (allowing for idempotency)
 			successCount := 0
 			errorCount := 0
+
 			for range 3 {
 				err := <-errors
 				if err == nil {
@@ -317,7 +321,6 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// This tests error handling at the service level
 			// In a real scenario, this might test file permission errors, disk full, etc.
 			// For now, we verify normal operation since we can't easily simulate file system errors
-
 			_, err := complaintService.ResolveComplaint(ctx, testComplaint.ID, "test-agent")
 			Expect(err).NotTo(HaveOccurred())
 

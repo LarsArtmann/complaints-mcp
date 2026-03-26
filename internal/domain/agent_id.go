@@ -21,9 +21,11 @@ var agentIDPattern = regexp.MustCompile(`^.{1,100}$`)
 // NewAgentID creates a new valid AgentID.
 func NewAgentID(name string) (AgentID, error) {
 	trimmed := strings.TrimSpace(name)
-	if err := validateAgentID(trimmed); err != nil {
+	err := validateAgentID(trimmed)
+	if err != nil {
 		return id.NewID[AgentBrand](""), fmt.Errorf("invalid AgentID: %w", err)
 	}
+
 	return id.NewID[AgentBrand](trimmed), nil
 }
 
@@ -34,9 +36,12 @@ func ParseAgentID(s string) (AgentID, error) {
 	if trimmed == "" {
 		return id.NewID[AgentBrand](""), nil // Empty is valid for optional agent
 	}
-	if err := validateAgentID(trimmed); err != nil {
+
+	err := validateAgentID(trimmed)
+	if err != nil {
 		return id.NewID[AgentBrand](""), fmt.Errorf("invalid AgentID: %w", err)
 	}
+
 	return id.NewID[AgentBrand](trimmed), nil
 }
 
@@ -46,6 +51,7 @@ func MustParseAgentID(s string) AgentID {
 	if err != nil {
 		panic(fmt.Sprintf("invalid AgentID: %s", err))
 	}
+
 	return agentID
 }
 
@@ -54,11 +60,14 @@ func validateAgentID(s string) error {
 	if s == "" {
 		return errors.New("cannot be empty")
 	}
+
 	if len(s) > 100 {
 		return errors.New("cannot exceed 100 characters")
 	}
+
 	if !agentIDPattern.MatchString(s) {
 		return errors.New("contains invalid characters")
 	}
+
 	return nil
 }

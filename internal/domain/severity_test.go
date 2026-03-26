@@ -56,11 +56,13 @@ func TestParseSeverity(t *testing.T) {
 				if err == nil {
 					t.Errorf("ParseSeverity(%q) expected error, got nil", tt.input)
 				}
+
 				return
 			}
 
 			if err != nil {
 				t.Errorf("ParseSeverity(%q) unexpected error: %v", tt.input, err)
+
 				return
 			}
 
@@ -78,6 +80,7 @@ func TestMustParseSeverity(t *testing.T) {
 			t.Errorf("MustParseSeverity(valid) panicked unexpectedly: %v", r)
 		}
 	}()
+
 	result := MustParseSeverity("high")
 	if result != SeverityHigh {
 		t.Errorf("MustParseSeverity(high) = %v, want %v", result, SeverityHigh)
@@ -89,5 +92,6 @@ func TestMustParseSeverity(t *testing.T) {
 			t.Error("MustParseSeverity(invalid) should have panicked")
 		}
 	}()
+
 	MustParseSeverity("invalid")
 }

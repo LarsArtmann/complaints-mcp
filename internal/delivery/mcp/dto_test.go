@@ -27,7 +27,7 @@ func TestToDTO(t *testing.T) {
 		FutureWishes:    "Future wishes",
 		Severity:        domain.SeverityHigh,
 		Timestamp:       now,
-		ProjectName:     domain.MustParseProjectID("test-project"),
+		ProjectID:       domain.MustParseProjectID("test-project"),
 		ResolvedAt:      &resolvedAt,
 		ResolvedBy:      "test-resolver",
 		ResolutionState: domain.ResolutionStateResolved, // Set resolution state for consistency
@@ -37,23 +37,23 @@ func TestToDTO(t *testing.T) {
 	dto := ToDTO(complaint)
 
 	// Verify all fields are properly converted
-	assert.Equal(t, id.String(), dto.ID, "ID should match")
-	assert.Equal(t, "Test Agent", dto.AgentName, "AgentName should match")
-	assert.Equal(t, "test-session", dto.SessionName, "SessionName should match")
-	assert.Equal(t, "Test task description", dto.TaskDescription, "TaskDescription should match")
-	assert.Equal(t, "Context information", dto.ContextInfo, "ContextInfo should match")
-	assert.Equal(t, "Missing information", dto.MissingInfo, "MissingInfo should match")
-	assert.Equal(t, "Confusing aspects", dto.ConfusedBy, "ConfusedBy should match")
-	assert.Equal(t, "Future wishes", dto.FutureWishes, "FutureWishes should match")
-	assert.Equal(t, "high", dto.Severity, "Severity should be converted to string")
-	assert.Equal(t, now, dto.Timestamp, "Timestamp should match")
-	assert.Equal(t, "test-project", dto.ProjectName, "ProjectName should match")
-	assert.True(t, dto.Resolved, "Resolved should be true")
+	assert.Equalf(t, id.String(), dto.ID, "ID should match")
+	assert.Equalf(t, "Test Agent", dto.AgentName, "AgentName should match")
+	assert.Equalf(t, "test-session", dto.SessionName, "SessionName should match")
+	assert.Equalf(t, "Test task description", dto.TaskDescription, "TaskDescription should match")
+	assert.Equalf(t, "Context information", dto.ContextInfo, "ContextInfo should match")
+	assert.Equalf(t, "Missing information", dto.MissingInfo, "MissingInfo should match")
+	assert.Equalf(t, "Confusing aspects", dto.ConfusedBy, "ConfusedBy should match")
+	assert.Equalf(t, "Future wishes", dto.FutureWishes, "FutureWishes should match")
+	assert.Equalf(t, "high", dto.Severity, "Severity should be converted to string")
+	assert.Equalf(t, now, dto.Timestamp, "Timestamp should match")
+	assert.Equalf(t, "test-project", dto.ProjectID, "ProjectID should match")
+	assert.Truef(t, dto.Resolved, "Resolved should be true")
 
 	// Verify timestamp pointer is properly converted
-	require.NotNil(t, dto.ResolvedAt, "ResolvedAt should not be nil")
-	assert.Equal(t, resolvedAt, *dto.ResolvedAt, "ResolvedAt should match")
-	assert.Equal(t, "test-resolver", dto.ResolvedBy, "ResolvedBy should match")
+	require.NotNilf(t, dto.ResolvedAt, "ResolvedAt should not be nil")
+	assert.Equalf(t, resolvedAt, *dto.ResolvedAt, "ResolvedAt should match")
+	assert.Equalf(t, "test-resolver", dto.ResolvedBy, "ResolvedBy should match")
 }
 
 // TestComplaintDTO_JSONSerialization tests that DTO serializes to valid JSON.
@@ -103,7 +103,7 @@ func TestComplaintDTO_OptionalFields(t *testing.T) {
 	assert.Empty(t, dto.MissingInfo)
 	assert.Empty(t, dto.ConfusedBy)
 	assert.Empty(t, dto.FutureWishes)
-	assert.Empty(t, dto.ProjectName)
+	assert.Empty(t, dto.ProjectID)
 	assert.False(t, dto.Resolved)
 	assert.Nil(t, dto.ResolvedAt)
 	assert.Empty(t, dto.ResolvedBy)

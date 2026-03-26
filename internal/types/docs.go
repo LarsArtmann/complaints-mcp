@@ -120,7 +120,8 @@ type DocsConfig struct {
 
 // Validate validates the docs configuration.
 func (dc DocsConfig) Validate() error {
-	if err := ValidateDocsDir(dc.Dir); err != nil {
+	err := ValidateDocsDir(dc.Dir)
+	if err != nil {
 		return fmt.Errorf("invalid docs directory: %w", err)
 	}
 

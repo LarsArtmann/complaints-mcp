@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -14,6 +15,7 @@ import (
 type ComplaintService struct {
 	repo   repo.Repository
 	tracer tracing.Tracer
+	logger *log.Logger
 }
 
 // NewComplaintService creates a new complaint service.
@@ -21,6 +23,7 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 	return &ComplaintService{
 		repo:   repository,
 		tracer: tracer,
+		logger: log.WithPrefix("complaint-service"),
 	}
 }
 
@@ -33,13 +36,15 @@ func (s *ComplaintService) CreateComplaint(
 ) (*domain.Complaint, error) {
 	// Validate required fields
 	if agentName == "" {
-		return nil, fmt.Errorf("agent name is required")
+		return nil, errors.New("agent name is required")
 	}
+
 	if sessionName == "" {
-		return nil, fmt.Errorf("session name is required")
+		return nil, errors.New("session name is required")
 	}
+
 	if projectName == "" {
-		return nil, fmt.Errorf("project name is required")
+		return nil, errors.New("project name is required")
 	}
 
 	// Generate phantom type ID
@@ -69,7 +74,7 @@ func (s *ComplaintService) CreateComplaint(
 		ID:              id,
 		AgentID:         agentID,
 		SessionID:       sessionID,
-		ProjectName:     projectID,
+		ProjectID:       projectID,
 		TaskDescription: taskDescription,
 		ContextInfo:     contextInfo,
 		MissingInfo:     missingInfo,

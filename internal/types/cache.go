@@ -18,9 +18,11 @@ func NewCacheSize(size uint32) (CacheSize, error) {
 	if size < uint32(MinCacheSize) {
 		return MinCacheSize, fmt.Errorf("cache size must be >= %d", MinCacheSize)
 	}
+
 	if size > uint32(MaxCacheSize) {
 		return MaxCacheSize, fmt.Errorf("cache size must be <= %d", MaxCacheSize)
 	}
+
 	return CacheSize(size), nil
 }
 
@@ -30,6 +32,7 @@ func MustNewCacheSize(size uint32) CacheSize {
 	if err != nil {
 		panic(err) // Used for compile-time constants only
 	}
+
 	return cs
 }
 
@@ -57,6 +60,7 @@ func NewEvictionPolicy(policy string) (CacheEvictionPolicy, error) {
 	if policy == "" {
 		return EvictionLRU, nil // Default to LRU
 	}
+
 	p := CacheEvictionPolicy(policy)
 	switch p {
 	case EvictionLRU, EvictionFIFO, EvictionNone:

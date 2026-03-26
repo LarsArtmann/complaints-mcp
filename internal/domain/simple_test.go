@@ -16,10 +16,11 @@ func TestCriticalJSONBugFix(t *testing.T) {
 		oldBuggyJSON := `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`
 
 		var newID ComplaintID
+
 		err := json.Unmarshal([]byte(oldBuggyJSON), &newID)
 
 		// ✅ GOOD: Should reject the old buggy nested format
-		assert.Error(t, err, "Should reject old nested format")
+		assert.Errorf(t, err, "Should reject old nested format")
 	})
 
 	t.Run("✅ NEW FIX - flat JSON structure", func(t *testing.T) {
@@ -34,7 +35,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 		assert.JSONEq(t, `"550e8400-e29b-41d4-a716-446655440000"`, jsonStr)
 
 		// ✅ CRITICAL FIX: Should not contain nested "Value" objects
-		assert.NotContains(t, jsonStr, `"Value"`, "Should not have nested Value objects")
+		assert.NotContainsf(t, jsonStr, `"Value"`, "Should not have nested Value objects")
 	})
 
 	t.Run("✅ NEW FIX - complete complaint with flat IDs", func(t *testing.T) {
@@ -42,7 +43,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
 			AgentID:         MustParseAgentID("AI-Assistant"),
 			SessionID:       MustParseSessionID("dev-session"),
-			ProjectName:     MustParseProjectID("my-project"),
+			ProjectID:       MustParseProjectID("my-project"),
 			TaskDescription: "Test complaint description",
 			Severity:        SeverityMedium,
 			Timestamp:       testTimestamp,
@@ -62,7 +63,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 		assert.Contains(t, jsonStr, `"project_id":"my-project"`)
 
 		// ✅ CRITICAL FIX: Should not contain any nested "Value" objects
-		assert.NotContains(t, jsonStr, `"Value"`, "Should not have nested Value objects")
+		assert.NotContainsf(t, jsonStr, `"Value"`, "Should not have nested Value objects")
 	})
 
 	t.Run("✅ NEW FIX - roundtrip with flat IDs", func(t *testing.T) {
@@ -70,7 +71,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
 			AgentID:         MustParseAgentID("AI-Assistant"),
 			SessionID:       MustParseSessionID("dev-session"),
-			ProjectName:     MustParseProjectID("my-project"),
+			ProjectID:       MustParseProjectID("my-project"),
 			TaskDescription: "Test complaint description",
 			Severity:        SeverityMedium,
 			Timestamp:       testTimestamp,
@@ -83,6 +84,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 
 		// Deserialize back
 		var restoredComplaint Complaint
+
 		err = json.Unmarshal(data, &restoredComplaint)
 		require.NoError(t, err)
 
@@ -90,13 +92,13 @@ func TestCriticalJSONBugFix(t *testing.T) {
 		assert.Equal(t, originalComplaint.ID, restoredComplaint.ID)
 		assert.Equal(t, originalComplaint.AgentID, restoredComplaint.AgentID)
 		assert.Equal(t, originalComplaint.SessionID, restoredComplaint.SessionID)
-		assert.Equal(t, originalComplaint.ProjectName, restoredComplaint.ProjectName)
+		assert.Equal(t, originalComplaint.ProjectID, restoredComplaint.ProjectID)
 
 		// ✅ All should still be valid (not zero)
 		assert.False(t, restoredComplaint.ID.IsZero())
 		assert.False(t, restoredComplaint.AgentID.IsZero())
 		assert.False(t, restoredComplaint.SessionID.IsZero())
-		assert.False(t, restoredComplaint.ProjectName.IsZero())
+		assert.False(t, restoredComplaint.ProjectID.IsZero())
 	})
 }
 

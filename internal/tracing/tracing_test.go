@@ -29,7 +29,7 @@ func TestMockTracer(t *testing.T) {
 	assert.NotNil(t, tracer)
 
 	// Test Start method
-	ctx := context.Background()
+	ctx := t.Context()
 	ctx, span := tracer.Start(ctx, "test-operation")
 
 	assert.NotNil(t, ctx)
@@ -48,7 +48,7 @@ func TestRealTracer(t *testing.T) {
 	assert.NotNil(t, tracer)
 
 	// Test Start method
-	ctx := context.Background()
+	ctx := t.Context()
 	ctx, span := tracer.Start(ctx, "test-operation")
 
 	assert.NotNil(t, ctx)
@@ -66,6 +66,8 @@ func TestRealTracer(t *testing.T) {
 
 func TestTracerInterface(t *testing.T) {
 	// Ensure both mock and real tracers implement the Tracer interface
-	var _ Tracer = NewMockTracer("test-service")
-	var _ Tracer = NewRealTracer("test-service")
+	var (
+		_ Tracer = NewMockTracer("test-service")
+		_ Tracer = NewRealTracer("test-service")
+	)
 }

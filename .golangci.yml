@@ -157,6 +157,9 @@ linters:
               pkg: github.com/dgrijalva/jwt-go
           list-mode: lax
         tests:
+          allow:
+            - github.com/onsi/ginkgo/v2
+            - github.com/onsi/gomega
           deny: []
           list-mode: lax
     dupl:

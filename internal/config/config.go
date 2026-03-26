@@ -35,6 +35,7 @@ func (s ServerConfig) Address() string {
 	if s.Host == "" {
 		return fmt.Sprintf(":%d", s.Port)
 	}
+
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
@@ -103,12 +104,14 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 	setDefaults(v)
 
 	// Bind command-line flags
-	if err := v.BindPFlags(cmd.PersistentFlags()); err != nil {
+	err := v.BindPFlags(cmd.PersistentFlags())
+	if err != nil {
 		return nil, fmt.Errorf("failed to bind flags: %w", err)
 	}
 
 	// Read configuration
-	if err := v.ReadInConfig(); err != nil {
+	err := v.ReadInConfig()
+	if err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
 			logger.Info("Config file not found, using defaults")
@@ -125,17 +128,20 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 
 	// Unmarshal configuration
 	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
+	err := v.Unmarshal(&cfg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
 	// Post-processing
-	if err := postProcessConfig(&cfg); err != nil {
+	err := postProcessConfig(&cfg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to post-process configuration: %w", err)
 	}
 
 	// Validate configuration
-	if err := validateConfig(&cfg); err != nil {
+	err := validateConfig(&cfg)
+	if err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
@@ -180,6 +186,7 @@ func postProcessConfig(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to get home directory: %w", err)
 		}
+
 		cfg.Storage.BaseDir = filepath.Join(home, cfg.Storage.BaseDir[2:])
 	}
 
@@ -188,6 +195,7 @@ func postProcessConfig(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("failed to get home directory: %w", err)
 		}
+
 		cfg.Storage.GlobalDir = filepath.Join(home, cfg.Storage.GlobalDir[2:])
 	}
 
@@ -196,7 +204,9 @@ func postProcessConfig(cfg *Config) error {
 		if dir == "" {
 			continue
 		}
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+
+		err := os.MkdirAll(dir, 0o755)
+		if err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
@@ -236,6 +246,7 @@ func validateConfig(cfg *Config) error {
 	if cfg.Storage.CacheMaxSize <= 0 {
 		return errors.New("storage.cache_max_size must be positive")
 	}
+
 	if cfg.Storage.CacheMaxSize > 100000 {
 		return errors.New("storage.cache_max_size must be <= 100000")
 	}
@@ -247,6 +258,7 @@ func validateConfig(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("invalid cache eviction policy: %w", err)
 	}
+
 	cfg.Storage.EvictionPolicy = evictionPolicy
 
 	// Log level validation

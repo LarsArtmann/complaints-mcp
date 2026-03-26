@@ -32,7 +32,7 @@ func NewMockTracer(name string) *MockTracer {
 
 // Start begins a new trace span.
 func (m *MockTracer) Start(ctx context.Context, operationName string) (context.Context, Span) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Starting trace span", "tracer", m.name, "operation", operationName)
 
 	span := &MockSpan{
@@ -48,8 +48,9 @@ func (m *MockTracer) Start(ctx context.Context, operationName string) (context.C
 
 // Close shuts down the mock tracer (no-op for mock).
 func (m *MockTracer) Close() error {
-	logger := log.Default()
+	logger := v2.Default()
 	logger.Debug("Mock tracer shutdown", "tracer", m.name)
+
 	return nil
 }
 
@@ -62,7 +63,7 @@ type MockSpan struct {
 
 // End completes the trace span.
 func (s *MockSpan) End() {
-	logger := log.Default()
+	logger := v2.Default()
 	duration := time.Since(s.startTime)
 	logger.Debug("Trace span ended",
 		"tracer", s.tracer.name,
@@ -72,7 +73,7 @@ func (s *MockSpan) End() {
 
 // AddEvent adds an event to the current span.
 func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Trace event",
 		"tracer", s.tracer.name,
 		"operation", s.operationName,
@@ -82,7 +83,7 @@ func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[st
 
 // SetAttribute sets an attribute on the current span.
 func (s *MockSpan) SetAttribute(ctx context.Context, key string, value any) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Trace attribute set",
 		"tracer", s.tracer.name,
 		"operation", s.operationName,
@@ -95,6 +96,7 @@ func GetCurrentSpan(ctx context.Context) Span {
 	if span, ok := ctx.Value("current_span").(Span); ok {
 		return span
 	}
+
 	return nil
 }
 
@@ -102,16 +104,17 @@ func GetCurrentSpan(ctx context.Context) Span {
 type NoOpTracer struct{}
 
 // NewNoOpTracer creates a new no-op tracer.
-func NewNoOpTracer() Tracer {
+func NewNoOpTracer() *NoOpTracer {
 	return &NoOpTracer{}
 }
 
 // Start begins a new trace span (no-op implementation).
 func (n *NoOpTracer) Start(ctx context.Context, operationName string) (context.Context, Span) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Starting trace span", "tracer", "noop", "operation", operationName)
 
 	span := &NoOpSpan{}
+
 	return context.WithValue(ctx, "current_span", span), span
 }
 
@@ -125,18 +128,18 @@ type NoOpSpan struct{}
 
 // End completes the trace span (no-op implementation).
 func (n *NoOpSpan) End() {
-	logger := log.Default()
+	logger := v2.Default()
 	logger.Debug("Trace span ended", "tracer", "noop")
 }
 
 // AddEvent adds an event to the current span (no-op implementation).
 func (n *NoOpSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Trace event", "tracer", "noop", "event", event, "attributes", attributes)
 }
 
 // SetAttribute sets an attribute on the current span (no-op implementation).
 func (n *NoOpSpan) SetAttribute(ctx context.Context, key string, value any) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 	logger.Debug("Trace attribute set", "tracer", "noop", "key", key, "value", value)
 }

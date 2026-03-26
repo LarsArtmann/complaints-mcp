@@ -30,6 +30,7 @@ func DefaultTracerConfig() TracerConfig {
 	}
 
 	sampleRate := 1.0
+
 	if envSample := os.Getenv("TRACE_SAMPLE_RATE"); envSample != "" {
 		if parsed, err := strconv.ParseFloat(envSample, 64); err == nil {
 			sampleRate = parsed
@@ -60,5 +61,6 @@ func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
+
 	return defaultValue
 }

@@ -18,6 +18,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 
 		// Should be flat string, not nested object
 		var flatResult string
+
 		err = json.Unmarshal(data, &flatResult)
 		require.NoError(t, err)
 		assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", flatResult)
@@ -30,6 +31,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
 
 		var complaintID ComplaintID
+
 		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		require.NoError(t, err)
 
@@ -45,6 +47,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 		jsonData := `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`
 
 		var complaintID ComplaintID
+
 		err := json.Unmarshal([]byte(jsonData), &complaintID)
 		assert.Error(t, err)
 	})
@@ -70,8 +73,8 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 		tests := []struct {
 			name       string
 			input      string
-			wantErr    bool
 			expectedID ComplaintID
+			wantErr    bool
 		}{
 			{
 				"valid UUID",

@@ -36,5 +36,6 @@ func MustParseSeverity(s string) Severity {
 	if err != nil {
 		panic(err.Error())
 	}
+
 	return severity
 }

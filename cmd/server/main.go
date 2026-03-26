@@ -10,7 +10,7 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -46,7 +46,8 @@ func init() {
 }
 
 func main() {
-	if err := rootCmd.Execute(); err != nil {
+	err := rootCmd.Execute()
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error executing command: %v\n", err)
 		os.Exit(1)
 	}
@@ -62,6 +63,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 		fmt.Printf("complaints-mcp version %s\n", version)
 		fmt.Printf("commit: %s\n", commit)
 		fmt.Printf("built: %s\n", date)
+
 		return nil
 	}
 
@@ -69,24 +71,25 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logLevel, _ := cmd.Flags().GetString("log-level")
 	devMode, _ := cmd.Flags().GetBool("dev")
 
-	var logger *log.Logger
+	var logger *v2.Logger
+
 	if devMode {
-		level, _ := log.ParseLevel(logLevel)
-		logger = log.NewWithOptions(os.Stderr, log.Options{
+		level, _ := v2.ParseLevel(logLevel)
+		logger = v2.NewWithOptions(os.Stderr, v2.Options{
 			Level:           level,
 			ReportTimestamp: true,
 			ReportCaller:    true,
 		})
 	} else {
-		level, _ := log.ParseLevel(logLevel)
-		logger = log.NewWithOptions(os.Stderr, log.Options{
+		level, _ := v2.ParseLevel(logLevel)
+		logger = v2.NewWithOptions(os.Stderr, v2.Options{
 			Level:           level,
 			ReportTimestamp: true,
 			ReportCaller:    false,
 		})
 	}
 
-	ctx = log.WithContext(ctx, logger)
+	ctx = v2.WithContext(ctx, logger)
 
 	logger.Info("Starting complaints-mcp server",
 		"version", version,
@@ -106,15 +109,17 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
-	mcpServer := mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
+	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled
 	if cfg.Storage.CacheEnabled {
 		logger.Info("Warming complaint cache with timeout")
+
 		cacheCtx, cacheCancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cacheCancel()
 
-		if err := complaintRepo.WarmCache(cacheCtx); err != nil {
+		err := complaintRepo.WarmCache(cacheCtx)
+		if err != nil {
 			logger.Warn("Failed to warm complaint cache", "error", err)
 			// Continue anyway - cache will populate lazily
 		} else {
@@ -128,10 +133,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	// Start server in goroutine
 	serverErrChan := make(chan error, 1)
+
 	go func() {
 		// Set config for MCP server
 		mcpServer.SetConfig(cfg)
-		if err := mcpServer.Start(ctx); err != nil {
+
+		err := mcpServer.Start(ctx)
+		if err != nil {
 			serverErrChan <- fmt.Errorf("server error: %w", err)
 		}
 	}()

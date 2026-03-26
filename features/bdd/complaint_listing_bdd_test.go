@@ -48,6 +48,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			domain.SeverityHigh,
 			"auth-project")
 		Expect(err).NotTo(HaveOccurred())
+
 		testComplaints = append(testComplaints, complaint1)
 
 		complaint2, err := complaintService.CreateComplaint(context.Background(),
@@ -61,6 +62,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			domain.SeverityMedium,
 			"api-project")
 		Expect(err).NotTo(HaveOccurred())
+
 		testComplaints = append(testComplaints, complaint2)
 
 		complaint3, err := complaintService.CreateComplaint(context.Background(),
@@ -74,6 +76,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			domain.SeverityLow,
 			"database-project")
 		Expect(err).NotTo(HaveOccurred())
+
 		testComplaints = append(testComplaints, complaint3)
 
 		complaint4, err := complaintService.CreateComplaint(context.Background(),
@@ -87,6 +90,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			domain.SeverityCritical,
 			"auth-project") // Same project as complaint1
 		Expect(err).NotTo(HaveOccurred())
+
 		testComplaints = append(testComplaints, complaint4)
 	})
 
@@ -112,6 +116,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			for _, c := range complaints {
 				ids1[c.ID.String()] = true
 			}
+
 			for _, c := range complaints2 {
 				Expect(ids1[c.ID.String()]).To(BeFalse())
 			}
@@ -220,14 +225,14 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(authComplaints).To(HaveLen(2))
 
 			for _, complaint := range authComplaints {
-				Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
+				Expect(complaint.ProjectID.String()).To(Equal("auth-project"))
 			}
 
 			// Get complaints for api-project
 			apiComplaints, err := complaintService.ListComplaintsByProject(ctx, "api-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(apiComplaints).To(HaveLen(1))
-			Expect(apiComplaints[0].ProjectName.String()).To(Equal("api-project"))
+			Expect(apiComplaints[0].ProjectID.String()).To(Equal("api-project"))
 
 			// Get complaints for database-project
 			dbComplaints, err := complaintService.ListComplaintsByProject(
@@ -237,7 +242,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbComplaints).To(HaveLen(1))
-			Expect(dbComplaints[0].ProjectName.String()).To(Equal("database-project"))
+			Expect(dbComplaints[0].ProjectID.String()).To(Equal("database-project"))
 		})
 
 		It("should return empty for non-existent project", func(ctx SpecContext) {
@@ -276,7 +281,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(limitedComplaints).To(HaveLen(2))
 
 			for _, complaint := range limitedComplaints {
-				Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
+				Expect(complaint.ProjectID.String()).To(Equal("auth-project"))
 			}
 		})
 	})

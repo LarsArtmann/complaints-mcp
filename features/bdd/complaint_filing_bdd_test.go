@@ -61,16 +61,16 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(complaint.ConfusedBy).To(Equal("Documentation missing for error responses"))
 			Expect(complaint.FutureWishes).To(Equal("Add comprehensive error handling examples"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityHigh))
-			Expect(complaint.ProjectName.String()).To(Equal("auth-project"))
+			Expect(complaint.ProjectID.String()).To(Equal("auth-project"))
 			Expect(complaint.IsResolved()).To(BeFalse())
 			Expect(complaint.Timestamp).NotTo(BeZero())
 		})
 
 		It("should store complaint with minimum required data", func(ctx SpecContext) {
 			complaint, err := complaintService.CreateComplaint(ctx,
-				"A",        // minimal valid name
-				"s",        // minimal valid session name
-				"T",        // minimal valid description
+				"A", // minimal valid name
+				"s", // minimal valid session name
+				"T", // minimal valid description
 				"",  // optional context info
 				"",  // optional missing info
 				"",  // optional confused by
@@ -83,7 +83,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 			Expect(complaint.AgentID.String()).To(Equal("A"))
 			Expect(complaint.TaskDescription).To(Equal("T"))
 			Expect(complaint.Severity).To(Equal(domain.SeverityLow))
-			Expect(complaint.ProjectName.String()).To(Equal("test"))
+			Expect(complaint.ProjectID.String()).To(Equal("test"))
 		})
 	})
 

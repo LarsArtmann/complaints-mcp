@@ -21,9 +21,11 @@ var projectIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-_\s\.]{1,100}$`)
 // NewProjectID creates a new valid ProjectID.
 func NewProjectID(name string) (ProjectID, error) {
 	trimmed := strings.TrimSpace(name)
-	if err := validateProjectID(trimmed); err != nil {
+	err := validateProjectID(trimmed)
+	if err != nil {
 		return id.NewID[ProjectBrand](""), fmt.Errorf("invalid ProjectID: %w", err)
 	}
+
 	return id.NewID[ProjectBrand](trimmed), nil
 }
 
@@ -34,9 +36,12 @@ func ParseProjectID(s string) (ProjectID, error) {
 	if trimmed == "" {
 		return id.NewID[ProjectBrand](""), nil // Empty is valid for optional project
 	}
-	if err := validateProjectID(trimmed); err != nil {
+
+	err := validateProjectID(trimmed)
+	if err != nil {
 		return id.NewID[ProjectBrand](""), fmt.Errorf("invalid ProjectID: %w", err)
 	}
+
 	return id.NewID[ProjectBrand](trimmed), nil
 }
 
@@ -46,6 +51,7 @@ func MustParseProjectID(s string) ProjectID {
 	if err != nil {
 		panic(fmt.Sprintf("invalid ProjectID: %s", err))
 	}
+
 	return projectID
 }
 
@@ -54,11 +60,14 @@ func validateProjectID(s string) error {
 	if s == "" {
 		return errors.New("cannot be empty")
 	}
+
 	if len(s) > 100 {
 		return errors.New("cannot exceed 100 characters")
 	}
+
 	if !projectIDPattern.MatchString(s) {
 		return errors.New("contains invalid characters")
 	}
+
 	return nil
 }

@@ -38,10 +38,10 @@ const (
 
 // AppError represents a structured application error.
 type AppError struct {
-	Code       ErrorCode `json:"code"`
-	Message    string    `json:"message"`
 	Details    any       `json:"details,omitempty"`
 	Cause      error     `json:"-"`
+	Code       ErrorCode `json:"code"`
+	Message    string    `json:"message"`
 	HTTPStatus int       `json:"-"`
 }
 
@@ -50,6 +50,7 @@ func (e *AppError) Error() string {
 	if e.Details != nil {
 		return fmt.Sprintf("%s: %s (details: %v)", e.Code, e.Message, e.Details)
 	}
+
 	return fmt.Sprintf("%s: %s", e.Code, e.Message)
 }
 
@@ -61,6 +62,7 @@ func (e *AppError) Unwrap() error {
 // NewAppError creates a new application error.
 func NewAppError(code ErrorCode, message string) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
+
 	return &AppError{
 		Code:       code,
 		Message:    message,
@@ -71,6 +73,7 @@ func NewAppError(code ErrorCode, message string) *AppError {
 // NewAppErrorWithCause creates a new application error with underlying cause.
 func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
+
 	return &AppError{
 		Code:       code,
 		Message:    message,
@@ -82,6 +85,7 @@ func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError
 // NewAppErrorWithDetails creates a new application error with details.
 func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
+
 	return &AppError{
 		Code:       code,
 		Message:    message,
@@ -93,6 +97,7 @@ func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppErr
 // Wrap wraps an existing error with application context.
 func Wrap(err error, code ErrorCode, message string) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
+
 	return &AppError{
 		Code:       code,
 		Message:    message,
@@ -104,6 +109,7 @@ func Wrap(err error, code ErrorCode, message string) *AppError {
 // WrapDetails wraps an existing error with application context and details.
 func WrapDetails(err error, code ErrorCode, message string, details any) *AppError {
 	httpStatus := errorCodeToHTTPStatus(code)
+
 	return &AppError{
 		Code:       code,
 		Message:    message,
@@ -119,6 +125,7 @@ func IsAppError(err error) (*AppError, bool) {
 	if errors.As(err, &appErr) {
 		return appErr, true
 	}
+
 	return nil, false
 }
 
@@ -127,6 +134,7 @@ func GetHTTPStatus(err error) int {
 	if appErr, ok := IsAppError(err); ok {
 		return appErr.HTTPStatus
 	}
+
 	return http.StatusInternalServerError
 }
 
@@ -186,6 +194,7 @@ func NewRepositoryError(message string, cause error) *AppError {
 // NewFileIOError creates a file I/O error.
 func NewFileIOError(operation, path string, cause error) *AppError {
 	message := fmt.Sprintf("failed to %s file: %s", operation, path)
+
 	return NewAppErrorWithCause(ErrCodeFileIO, message, cause)
 }
 
@@ -207,5 +216,6 @@ func NewTimeoutError(operation string) *AppError {
 // NewExternalError creates an external service error.
 func NewExternalError(service string, cause error) *AppError {
 	message := fmt.Sprintf("external service %s error", service)
+
 	return NewAppErrorWithCause(ErrCodeExternal, message, cause)
 }

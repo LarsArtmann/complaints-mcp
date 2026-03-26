@@ -76,6 +76,7 @@ func (r *FileRepository) Save(ctx context.Context, complaint *domain.Complaint) 
 
 	// Use phantom type ID for file naming
 	fileName := complaint.ID.String() + ".json"
+
 	return r.writeFile(fileName, data)
 }
 
@@ -85,11 +86,12 @@ func (r *FileRepository) FindByID(
 	id domain.ComplaintID,
 ) (*domain.Complaint, error) {
 	if id.IsZero() {
-		return nil, fmt.Errorf("invalid ComplaintID: cannot be empty")
+		return nil, errors.New("invalid ComplaintID: cannot be empty")
 	}
 
 	// Load from file
 	fileName := id.String() + ".json"
+
 	data, err := r.readFile(fileName)
 	if err != nil {
 		return nil, err
@@ -117,15 +119,18 @@ func (r *FileRepository) FindAll(
 	sort.Slice(files, func(i, j int) bool {
 		infoI, _ := files[i].Info()
 		infoJ, _ := files[j].Info()
+
 		return infoI.ModTime().After(infoJ.ModTime())
 	})
 
 	var complaints []*domain.Complaint
+
 	count := 0
 
 	for i := range files {
 		if count < offset {
 			count++
+
 			continue
 		}
 
@@ -140,10 +145,12 @@ func (r *FileRepository) FindAll(
 
 		// Extract ID from filename
 		idStr := fileName[:len(fileName)-5]
+
 		id, err := domain.ParseComplaintID(idStr)
 		if err != nil {
 			continue
 		}
+
 		complaint, err := r.FindByID(ctx, id)
 		if err != nil {
 			continue
@@ -170,15 +177,19 @@ func (r *FileRepository) FindBySeverity(
 	if err != nil {
 		return nil, err
 	}
+
 	var filtered []*domain.Complaint
+
 	for _, complaint := range all {
 		if complaint.Severity == severity {
 			filtered = append(filtered, complaint)
 		}
+
 		if len(filtered) >= limit {
 			break
 		}
 	}
+
 	return filtered, nil
 }
 
@@ -191,15 +202,19 @@ func (r *FileRepository) FindUnresolved(
 	if err != nil {
 		return nil, err
 	}
+
 	var unresolved []*domain.Complaint
+
 	for _, complaint := range all {
 		if !complaint.ResolutionState.IsResolved() {
 			unresolved = append(unresolved, complaint)
 		}
+
 		if len(unresolved) >= limit {
 			break
 		}
 	}
+
 	return unresolved, nil
 }
 
@@ -211,6 +226,7 @@ func (r *FileRepository) Update(ctx context.Context, complaint *domain.Complaint
 // Delete deletes a complaint by ID.
 func (r *FileRepository) Delete(ctx context.Context, id domain.ComplaintID) error {
 	fileName := id.String() + ".json"
+
 	return os.Remove(filepath.Join(r.complaintsDir, fileName))
 }
 
@@ -224,8 +240,11 @@ func (r *FileRepository) Search(
 	if err != nil {
 		return nil, err
 	}
+
 	query = strings.ToLower(query)
+
 	var results []*domain.Complaint
+
 	for _, complaint := range all {
 		if strings.Contains(strings.ToLower(complaint.TaskDescription), query) ||
 			strings.Contains(strings.ToLower(complaint.ContextInfo), query) ||
@@ -234,10 +253,12 @@ func (r *FileRepository) Search(
 			strings.Contains(strings.ToLower(complaint.AgentID.String()), query) {
 			results = append(results, complaint)
 		}
+
 		if len(results) >= limit {
 			break
 		}
 	}
+
 	return results, nil
 }
 
@@ -263,6 +284,7 @@ func (r *FileRepository) GetCacheStats() CacheStats {
 // GetFilePath returns file path for a complaint.
 func (r *FileRepository) GetFilePath(ctx context.Context, id domain.ComplaintID) (string, error) {
 	fileName := id.String() + ".json"
+
 	return filepath.Join(r.complaintsDir, fileName), nil
 }
 
@@ -272,7 +294,9 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	if err != nil {
 		return "", err
 	}
+
 	timestamp := complaint.Timestamp.Format("2006-01-02_15-04")
+
 	fileName := fmt.Sprintf(
 		"%s-%s-%s.md",
 		timestamp,
@@ -282,6 +306,7 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	if len(fileName) > 100 {
 		fileName = fileName[:100]
 	}
+
 	return filepath.Join(r.docsDir, fileName), nil
 }
 
@@ -295,15 +320,19 @@ func (r *FileRepository) FindBySession(
 	if err != nil {
 		return nil, err
 	}
+
 	var filtered []*domain.Complaint
+
 	for _, complaint := range all {
 		if complaint.SessionID.String() == sessionID {
 			filtered = append(filtered, complaint)
 		}
+
 		if len(filtered) >= limit {
 			break
 		}
 	}
+
 	return filtered, nil
 }
 
@@ -317,15 +346,19 @@ func (r *FileRepository) FindByProject(
 	if err != nil {
 		return nil, err
 	}
+
 	var filtered []*domain.Complaint
+
 	for _, complaint := range all {
-		if complaint.ProjectName.String() == projectID {
+		if complaint.ProjectID.String() == projectID {
 			filtered = append(filtered, complaint)
 		}
+
 		if len(filtered) >= limit {
 			break
 		}
 	}
+
 	return filtered, nil
 }
 
@@ -339,15 +372,19 @@ func (r *FileRepository) FindByAgent(
 	if err != nil {
 		return nil, err
 	}
+
 	var filtered []*domain.Complaint
+
 	for _, complaint := range all {
 		if complaint.AgentID.String() == agentID {
 			filtered = append(filtered, complaint)
 		}
+
 		if len(filtered) >= limit {
 			break
 		}
 	}
+
 	return filtered, nil
 }
 
@@ -370,28 +407,35 @@ func (r *FileRepository) listComplaintFiles() ([]os.DirEntry, error) {
 		if os.IsNotExist(err) {
 			return []os.DirEntry{}, nil
 		}
+
 		return nil, err
 	}
+
 	var files []os.DirEntry
+
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			files = append(files, entry)
 		}
 	}
+
 	return files, nil
 }
 
 // writeFile writes data to a file.
 func (r *FileRepository) writeFile(fileName string, data []byte) error {
-	if err := os.MkdirAll(r.complaintsDir, 0o755); err != nil {
+	err := os.MkdirAll(r.complaintsDir, 0o755)
+	if err != nil {
 		return err
 	}
+
 	filePath := filepath.Join(r.complaintsDir, fileName)
+
 	return os.WriteFile(filePath, data, 0o644)
 }
 
 // NewRepositoryFromConfig creates a repository based on configuration.
-func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) Repository {
+func NewRepositoryFromConfig(cfg *config.Config, tracer tracing.Tracer) *FileRepository {
 	// For now, always return a FileRepository
 	// In the future, this could check cfg.Storage.CacheEnabled to return a cached repository
 	return NewFileRepository(cfg.Storage.BaseDir, tracer)
@@ -407,7 +451,7 @@ type SimpleCachedRepository struct {
 }
 
 // NewSimpleCachedRepository creates a simple cached repository wrapper.
-func NewSimpleCachedRepository(base Repository, maxSize int) Repository {
+func NewSimpleCachedRepository(base Repository, maxSize int) *SimpleCachedRepository {
 	return &SimpleCachedRepository{
 		base:    base,
 		cache:   make(map[domain.ComplaintID]*domain.Complaint),
@@ -424,13 +468,15 @@ func (r *SimpleCachedRepository) Save(ctx context.Context, complaint *domain.Com
 	defer r.mu.Unlock()
 
 	// Save to base repository
-	if err := r.base.Save(ctx, complaint); err != nil {
+	err := r.base.Save(ctx, complaint)
+	if err != nil {
 		return err
 	}
 
 	// Add to cache
 	r.cache[complaint.ID] = complaint
 	r.updateCacheSize()
+
 	return nil
 }
 
@@ -448,6 +494,7 @@ func (r *SimpleCachedRepository) FindByID(
 		r.stats.Hits++
 		r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
 		r.mu.Unlock()
+
 		return cached, nil
 	}
 
@@ -489,8 +536,10 @@ func (r *SimpleCachedRepository) updateCacheSize() {
 		var oldestID domain.ComplaintID
 		for id := range r.cache {
 			oldestID = id
+
 			break
 		}
+
 		delete(r.cache, oldestID)
 		r.stats.Evictions++
 		currentSize = int64(len(r.cache))
@@ -561,13 +610,15 @@ func (r *SimpleCachedRepository) Delete(ctx context.Context, id domain.Complaint
 	defer r.mu.Unlock()
 
 	// Delete from base repository
-	if err := r.base.Delete(ctx, id); err != nil {
+	err := r.base.Delete(ctx, id)
+	if err != nil {
 		return err
 	}
 
 	// Remove from cache
 	delete(r.cache, id)
 	r.updateCacheSize()
+
 	return nil
 }
 
@@ -576,7 +627,8 @@ func (r *SimpleCachedRepository) Update(ctx context.Context, complaint *domain.C
 	defer r.mu.Unlock()
 
 	// Update base repository
-	if err := r.base.Update(ctx, complaint); err != nil {
+	err := r.base.Update(ctx, complaint)
+	if err != nil {
 		return err
 	}
 
@@ -584,6 +636,7 @@ func (r *SimpleCachedRepository) Update(ctx context.Context, complaint *domain.C
 	if _, exists := r.cache[complaint.ID]; exists {
 		r.cache[complaint.ID] = complaint
 	}
+
 	return nil
 }
 
@@ -617,12 +670,15 @@ func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
 // readFile reads data from a file.
 func (r *FileRepository) readFile(fileName string) ([]byte, error) {
 	filePath := filepath.Join(r.complaintsDir, fileName)
+
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("complaint not found: %s", fileName)
 		}
+
 		return nil, err
 	}
+
 	return data, nil
 }

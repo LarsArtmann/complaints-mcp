@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -36,11 +36,11 @@ func NewRealTracer(serviceName string) *RealTracer {
 	}
 
 	// Create tracer provider
-	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithBatcher(exp),
-		sdktrace.WithResource(resource.NewWithAttributes(
+	tp := trace.NewTracerProvider(
+		trace.WithBatcher(exp),
+		trace.WithResource(resource.NewWithAttributes(
 			"",
-			semconv.ServiceName(serviceName),
+			v1.26.0.ServiceName(serviceName),
 		)),
 	)
 
@@ -56,16 +56,19 @@ func NewRealTracer(serviceName string) *RealTracer {
 // Start creates a new span.
 func (t *RealTracer) Start(ctx context.Context, name string) (context.Context, Span) {
 	ctx, span := t.tracer.Start(ctx, name)
-	return ctx, &RealSpan{span: span}
+	
+return ctx, &RealSpan{span: span}
 }
 
 // Close shuts down tracer.
 func (t *RealTracer) Close() error {
 	// Shutdown tracer provider
-	if tp, ok := otel.GetTracerProvider().(*sdktrace.TracerProvider); ok {
+	if tp, ok := otel.GetTracerProvider().(*trace.TracerProvider); ok {
 		return tp.Shutdown(context.Background())
 	}
-	return nil
+
+	
+return nil
 }
 
 // RealSpan adapter methods.
@@ -79,6 +82,7 @@ func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[s
 	for k, v := range attributes {
 		attrs = append(attrs, attribute.String(k, fmt.Sprintf("%v", v)))
 	}
+
 	rs.span.AddEvent(event, trace.WithAttributes(attrs...))
 }
 

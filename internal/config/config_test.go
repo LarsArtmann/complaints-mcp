@@ -13,7 +13,7 @@ import (
 func TestConfig_Load(t *testing.T) {
 	// Test that Load function can create a valid config
 	// Note: This tests structure without requiring actual files
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Create a simple command with basic flags
 	cmd := &cobra.Command{}
@@ -118,8 +118,8 @@ func TestConfig_ServerAddress(t *testing.T) {
 	tests := []struct {
 		name     string
 		host     string
-		port     int
 		expected string
+		port     int
 	}{
 		{
 			name:     "full address with host",
