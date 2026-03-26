@@ -138,7 +138,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				"invalid", // invalid severity
-				"test-project")
+				"test-project", "")
 
 			// The service should handle this gracefully
 			Expect(err).To(HaveOccurred())
@@ -157,7 +157,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				"unsupported", // invalid severity
-				"test-project")
+				"test-project", "")
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("invalid severity"))

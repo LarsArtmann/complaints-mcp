@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"charm.land/log/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -20,8 +22,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer        *mcp.MCPServer
-		logger           *v2.Logger
+		mcpServer        *delivery.MCPServer
 		tracer           tracing.Tracer
 		testConfig       *config.Config
 		cmd              *cobra.Command
@@ -30,7 +31,6 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
-		logger = v2.New(os.Stdout)
 		tracer = tracing.NewMockTracer("test")
 
 		// Initialize repository and service
@@ -38,7 +38,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Initialize MCP server
-		mcpServer = mcp.NewServer("test-server", "1.0.0", complaintService, logger, tracer)
+		mcpServer = delivery.NewServer("test-server", "1.0.0", complaintService, log.WithPrefix("test"), tracer)
 
 		// Create test configuration
 		testConfig = &config.Config{
@@ -67,7 +67,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		// Create mock command for testing
 		cmd = &cobra.Command{}
 		cmd.PersistentFlags().String("config", "", "config file path")
-		cmd.PersistentFlags().String("log-level", "info", "log level", "")
+		cmd.PersistentFlags().String("log-level", "info", "log level")
 		cmd.PersistentFlags().Bool("dev", false, "development mode")
 	})
 

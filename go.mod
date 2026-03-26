@@ -1,10 +1,11 @@
 module github.com/larsartmann/complaints-mcp
 
-go 1.26
+go 1.26.1
 
 require (
 	charm.land/log/v2 v2.0.0
 	github.com/adrg/xdg v0.5.3
+	github.com/go-git/go-git/v5 v5.17.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/larsartmann/go-composable-business-types v0.0.0-00010101000000-000000000000
@@ -43,7 +44,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.8.0 // indirect
-	github.com/go-git/go-git/v5 v5.17.0 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

@@ -271,7 +271,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 					"",
 					"",
 					severity,
-					"severity-test")
+					"severity-test", "")
 				Expect(err).NotTo(HaveOccurred())
 
 				// Resolve it
