@@ -3,8 +3,6 @@ package tracing
 import (
 	"context"
 	"time"
-
-	"charm.land/log/v2"
 )
 
 // Tracer defines the interface for distributed tracing.

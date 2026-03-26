@@ -8,12 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
 )
 
