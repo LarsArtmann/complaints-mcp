@@ -21,6 +21,7 @@ var sessionIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-_\s]{1,100}$`)
 // NewSessionID creates a new valid SessionID.
 func NewSessionID(name string) (SessionID, error) {
 	trimmed := strings.TrimSpace(name)
+
 	err := validateSessionID(trimmed)
 	if err != nil {
 		return id.NewID[SessionBrand](""), fmt.Errorf("invalid SessionID: %w", err)

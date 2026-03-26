@@ -660,7 +660,7 @@ func (r *SimpleCachedRepository) GetDocsPath(
 }
 
 // NewCachedRepository creates a cached repository with minimal cache implementation.
-func NewCachedRepository(baseDir string, tracer tracing.Tracer) Repository {
+func NewCachedRepository(baseDir string, tracer tracing.Tracer) *SimpleCachedRepository {
 	// Create file repository as base
 	baseRepo := NewFileRepository(baseDir, tracer)
 

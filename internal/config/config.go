@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/larsartmann/complaints-mcp/internal/types"
 	"github.com/spf13/cobra"
@@ -71,7 +70,7 @@ type LogConfig struct {
 
 // Load loads configuration from various sources.
 func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 
 	// Initialize viper
 	v := viper.New()
@@ -128,6 +127,7 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 
 	// Unmarshal configuration
 	var cfg Config
+
 	err = v.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)

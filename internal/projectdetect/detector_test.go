@@ -1,7 +1,6 @@
 package projectdetect
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,7 +18,7 @@ func TestGitDetector_Detect_NotGitRepo(t *testing.T) {
 	// Create a temporary directory without git
 	tmpDir := t.TempDir()
 
-	_, err := detector.Detect(context.Background(), tmpDir)
+	_, err := detector.Detect(t.Context(), tmpDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to open git repository")
 }
@@ -60,7 +59,7 @@ func TestGitDetector_Detect_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test detection from repo root
-	info, err := detector.Detect(context.Background(), tmpDir)
+	info, err := detector.Detect(t.Context(), tmpDir)
 	require.NoError(t, err)
 
 	assert.Equal(t, "testrepo", info.Name)
@@ -109,7 +108,7 @@ func TestGitDetector_Detect_FromSubdirectory(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test detection from subdirectory
-	info, err := detector.Detect(context.Background(), subDir)
+	info, err := detector.Detect(t.Context(), subDir)
 	require.NoError(t, err)
 
 	assert.Equal(t, "myproject", info.Name)
@@ -192,7 +191,7 @@ func TestIsGitRepository(t *testing.T) {
 
 func TestGitDetector_EmptyWorkingDir(t *testing.T) {
 	detector := NewGitDetector()
-	_, err := detector.Detect(context.Background(), "")
+	_, err := detector.Detect(t.Context(), "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "working directory cannot be empty")
 }

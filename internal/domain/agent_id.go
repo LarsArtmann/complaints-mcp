@@ -21,6 +21,7 @@ var agentIDPattern = regexp.MustCompile(`^.{1,100}$`)
 // NewAgentID creates a new valid AgentID.
 func NewAgentID(name string) (AgentID, error) {
 	trimmed := strings.TrimSpace(name)
+
 	err := validateAgentID(trimmed)
 	if err != nil {
 		return id.NewID[AgentBrand](""), fmt.Errorf("invalid AgentID: %w", err)

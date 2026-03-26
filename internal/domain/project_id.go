@@ -21,6 +21,7 @@ var projectIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-_\s\.]{1,100}$`)
 // NewProjectID creates a new valid ProjectID.
 func NewProjectID(name string) (ProjectID, error) {
 	trimmed := strings.TrimSpace(name)
+
 	err := validateProjectID(trimmed)
 	if err != nil {
 		return id.NewID[ProjectBrand](""), fmt.Errorf("invalid ProjectID: %w", err)

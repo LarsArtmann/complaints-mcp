@@ -25,6 +25,7 @@ func TestLoadConfigSuccess(t *testing.T) {
 	v.Set("log.level", "info")
 
 	cfg := &Config{}
+
 	err := v.Unmarshal(cfg)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal config: %v", err)
@@ -160,6 +161,7 @@ func TestConfigIntegration(t *testing.T) {
 	v.Set("log.level", "debug")
 
 	cfg := &Config{}
+
 	err := v.Unmarshal(cfg)
 	if err != nil {
 		t.Fatalf("Failed to unmarshal: %v", err)

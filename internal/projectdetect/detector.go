@@ -3,6 +3,7 @@ package projectdetect
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -21,9 +22,6 @@ type ProjectInfo struct {
 }
 
 // Detector provides project detection functionality.
-type Detector interface {
-	Detect(ctx context.Context, workingDir string) (*ProjectInfo, error)
-}
 
 // GitDetector detects project information from git repositories.
 type GitDetector struct{}
@@ -36,7 +34,7 @@ func NewGitDetector() *GitDetector {
 // Detect finds project information from a git repository at or above workingDir.
 func (d *GitDetector) Detect(ctx context.Context, workingDir string) (*ProjectInfo, error) {
 	if workingDir == "" {
-		return nil, fmt.Errorf("working directory cannot be empty")
+		return nil, errors.New("working directory cannot be empty")
 	}
 
 	// Open the repository - go-git handles walking up to find .git
@@ -106,7 +104,7 @@ func (d *GitDetector) getRemoteURL(repo *git.Repository) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no remote URLs found")
+	return "", errors.New("no remote URLs found")
 }
 
 // extractProjectName extracts a readable project name from a remote URL.
@@ -121,6 +119,7 @@ func extractProjectName(remoteURL string) string {
 		if len(parts) == 2 {
 			path := parts[1]
 			path = strings.TrimSuffix(path, ".git")
+
 			return filepath.Base(path)
 		}
 	}
@@ -128,17 +127,20 @@ func extractProjectName(remoteURL string) string {
 	// Handle HTTPS URLs like https://github.com/user/repo.git
 	if u, err := url.Parse(remoteURL); err == nil {
 		path := strings.TrimSuffix(u.Path, ".git")
+
 		return filepath.Base(path)
 	}
 
 	// Fallback: just return the last path component
 	path := strings.TrimSuffix(remoteURL, ".git")
+
 	return filepath.Base(path)
 }
 
 // DetectProject is a convenience function for direct project detection.
 func DetectProject(ctx context.Context, workingDir string) (*ProjectInfo, error) {
 	detector := NewGitDetector()
+
 	return detector.Detect(ctx, workingDir)
 }
 
@@ -147,10 +149,11 @@ func IsGitRepository(path string) bool {
 	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
+
 	return err == nil
 }
 
-// Plumbing types for type safety
+// Plumbing types for type safety.
 type (
 	// ReferenceName is an alias for plumbing.ReferenceName for type safety.
 	ReferenceName = plumbing.ReferenceName

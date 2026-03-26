@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"charm.land/log/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
-	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
@@ -22,7 +20,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer        *delivery.MCPServer
+		mcpServer        *mcp.MCPServer
 		tracer           tracing.Tracer
 		testConfig       *config.Config
 		cmd              *cobra.Command
@@ -38,7 +36,13 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Initialize MCP server
-		mcpServer = delivery.NewServer("test-server", "1.0.0", complaintService, log.WithPrefix("test"), tracer)
+		mcpServer = mcp.NewServer(
+			"test-server",
+			"1.0.0",
+			complaintService,
+			v2.WithPrefix("test"),
+			tracer,
+		)
 
 		// Create test configuration
 		testConfig = &config.Config{
