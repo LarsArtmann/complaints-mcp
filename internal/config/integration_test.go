@@ -30,7 +30,7 @@ func TestLoadConfigSuccess(t *testing.T) {
 		t.Fatalf("Failed to unmarshal config: %v", err)
 	}
 
-	err := validateConfig(cfg)
+	err = validateConfig(cfg)
 	if err != nil {
 		t.Fatalf("Config validation failed: %v", err)
 	}
@@ -165,7 +165,7 @@ func TestConfigIntegration(t *testing.T) {
 		t.Fatalf("Failed to unmarshal: %v", err)
 	}
 
-	err := validateConfig(cfg)
+	err = validateConfig(cfg)
 	if err != nil {
 		t.Fatalf("Validation failed: %v", err)
 	}

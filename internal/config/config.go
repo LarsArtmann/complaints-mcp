@@ -110,7 +110,7 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 	}
 
 	// Read configuration
-	err := v.ReadInConfig()
+	err = v.ReadInConfig()
 	if err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
@@ -128,19 +128,19 @@ func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
 
 	// Unmarshal configuration
 	var cfg Config
-	err := v.Unmarshal(&cfg)
+	err = v.Unmarshal(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
 	// Post-processing
-	err := postProcessConfig(&cfg)
+	err = postProcessConfig(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to post-process configuration: %w", err)
 	}
 
 	// Validate configuration
-	err := validateConfig(&cfg)
+	err = validateConfig(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}

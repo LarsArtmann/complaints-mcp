@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv/v1.26.0"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -36,11 +36,11 @@ func NewRealTracer(serviceName string) *RealTracer {
 	}
 
 	// Create tracer provider
-	tp := trace.NewTracerProvider(
-		trace.WithBatcher(exp),
-		trace.WithResource(resource.NewWithAttributes(
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			v1.26.0.ServiceName(serviceName),
+			semconv.ServiceNameKey.String(serviceName),
 		)),
 	)
 
@@ -63,7 +63,7 @@ func (t *RealTracer) Start(ctx context.Context, name string) (context.Context, S
 // Close shuts down tracer.
 func (t *RealTracer) Close() error {
 	// Shutdown tracer provider
-	if tp, ok := otel.GetTracerProvider().(*trace.TracerProvider); ok {
+	if tp, ok := otel.GetTracerProvider().(*sdktrace.TracerProvider); ok {
 		return tp.Shutdown(context.Background())
 	}
 
