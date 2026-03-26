@@ -73,8 +73,8 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 		tests := []struct {
 			name       string
 			input      string
-			expectedID ComplaintID
 			wantErr    bool
+			expectedID ComplaintID
 		}{
 			{
 				"valid UUID",

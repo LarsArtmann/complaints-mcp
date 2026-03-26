@@ -45,13 +45,13 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				complaint1, err := complaintService.CreateComplaint(ctx,
 					"Agent 1", "session-1", "Test cache functionality",
 					"Context info", "Missing info", "Confused by", "Future wishes",
-					domain.SeverityLow, "test-project")
+					domain.SeverityLow, "test-project", "")
 				Expect(err).NotTo(HaveOccurred())
 
 				complaint2, err := complaintService.CreateComplaint(ctx,
 					"Agent 2", "session-2", "Test cache hit tracking",
 					"More context", "More missing", "More confusion", "More wishes",
-					domain.SeverityMedium, "test-project")
+					domain.SeverityMedium, "test-project", "")
 				Expect(err).NotTo(HaveOccurred())
 
 				// Act - Get cache stats after creation
@@ -147,7 +147,7 @@ var _ = Describe("Cache Statistics BDD Tests", func() {
 				// Arrange - Create complaint first (cached during creation)
 				complaint, err := complaintService.CreateComplaint(ctx,
 					"Test Agent", "session", "Test tracking",
-					"", "", "", "", domain.SeverityLow, "test-project")
+					"", "", "", "", domain.SeverityLow, "test-project", "")
 				Expect(err).NotTo(HaveOccurred())
 
 				// Act - Access complaint multiple times to generate hits

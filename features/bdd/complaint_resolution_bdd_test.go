@@ -46,7 +46,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			"Inconsistent response formats",
 			"Add comprehensive error handling",
 			domain.SeverityMedium,
-			"resolution-test-project")
+			"resolution-test-project", "")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(testComplaint.IsResolved()).To(BeFalse())
 	})
@@ -203,10 +203,10 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 			// At least one operation should succeed, and none should be critical failures
 			Expect(
 				successCount,
-			).To(BeNumerically(">=", 1), "At least one concurrent resolution should succeed")
+			).To(BeNumerically(">=", 1), "At least one concurrent resolution should succeed", "")
 			Expect(
 				errorCount,
-			).To(BeNumerically("<=", 3), "Some concurrent operations might fail but not all")
+			).To(BeNumerically("<=", 3), "Some concurrent operations might fail but not all", "")
 
 			// Verify complaint is resolved
 			resolvedComplaint, err := complaintService.GetComplaint(ctx, testComplaint.ID)
@@ -298,7 +298,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 				maxContent,
 				maxContent,
 				domain.SeverityHigh,
-				"max-content-test")
+				"max-content-test", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Resolve it

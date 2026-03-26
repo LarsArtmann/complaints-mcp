@@ -46,7 +46,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			"Documentation unclear",
 			"Add examples",
 			domain.SeverityHigh,
-			"auth-project")
+			"auth-project", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		testComplaints = append(testComplaints, complaint1)
@@ -60,7 +60,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			"Inconsistent patterns",
 			"Standardize approach",
 			domain.SeverityMedium,
-			"api-project")
+			"api-project", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		testComplaints = append(testComplaints, complaint2)
@@ -74,7 +74,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			"Data relationships unclear",
 			"Add ERD diagrams",
 			domain.SeverityLow,
-			"database-project")
+			"database-project", "")
 		Expect(err).NotTo(HaveOccurred())
 
 		testComplaints = append(testComplaints, complaint3)
@@ -88,7 +88,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			"Test coverage unknown",
 			"Add testing guidelines",
 			domain.SeverityCritical,
-			"auth-project") // Same project as complaint1
+			"auth-project", "") // Same project as complaint1
 		Expect(err).NotTo(HaveOccurred())
 
 		testComplaints = append(testComplaints, complaint4)
@@ -197,7 +197,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 					"",
 					"",
 					domain.SeverityLow,
-					"limit-test")
+					"limit-test", "")
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -267,7 +267,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 					"",
 					"",
 					domain.SeverityLow,
-					"auth-project")
+					"auth-project", "")
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -401,7 +401,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 					"",
 					"",
 					domain.SeverityLow,
-					"search-test")
+					"search-test", "")
 				Expect(err).NotTo(HaveOccurred())
 			}
 

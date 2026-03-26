@@ -46,7 +46,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"Documentation missing for error responses",
 				"Add comprehensive error handling examples",
 				domain.SeverityHigh,
-				"auth-project")
+				"auth-project", "")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
@@ -76,7 +76,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",  // optional confused by
 				"",  // optional future wishes
 				domain.SeverityLow,
-				"test") // valid project name
+				"test", "") // valid project name
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
@@ -98,7 +98,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityMedium,
-				"test-project")
+				"test-project", "")
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Or(
@@ -117,7 +117,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityMedium,
-				"test-project")
+				"test-project", "")
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Or(
@@ -177,7 +177,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityLow,
-				"content-test")
+				"content-test", "")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
@@ -197,7 +197,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityMedium,
-				"content-test")
+				"content-test", "")
 
 			// This should either be handled gracefully or return an appropriate error
 			// For now, we'll assume it should succeed (service layer should handle)
@@ -217,7 +217,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityMedium,
-				"special-char-test")
+				"special-char-test", "")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
@@ -242,7 +242,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityLow,
-				"persistence-test")
+				"persistence-test", "")
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
@@ -267,7 +267,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityLow,
-				"test")
+				"test", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			complaint2, err := complaintService.CreateComplaint(ctx,
@@ -279,7 +279,7 @@ var _ = Describe("Complaint Filing BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityMedium,
-				"test")
+				"test", "")
 			Expect(err).NotTo(HaveOccurred())
 
 			// Both should have different IDs

@@ -66,7 +66,8 @@ type FileComplaintRequest struct {
 	ConfusedBy      string `json:"confused_by"      validate:"max=2000"`
 	FutureWishes    string `json:"future_wishes"    validate:"max=2000"`
 	Severity        string `json:"severity"         validate:"required,oneof=low medium high critical"`
-	ProjectID       string `json:"project_id"       validate:"required,min=1,max=100"`
+	ProjectID       string `json:"project_id"       validate:"omitempty,min=1,max=100"`
+	WorkingDir      string `json:"working_dir"      validate:"omitempty,max=500"`
 }
 
 // ListComplaintsRequest represents the input for listing complaints.

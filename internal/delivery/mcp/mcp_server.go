@@ -242,6 +242,7 @@ type FileComplaintInput struct {
 	FutureWishes    string `json:"future_wishes"`
 	Severity        string `json:"severity"`
 	ProjectID       string `json:"project_id"`
+	WorkingDir      string `json:"working_dir"`
 }
 
 type ListComplaintsInput struct {
@@ -319,6 +320,7 @@ func (m *MCPServer) handleFileComplaint(
 		input.FutureWishes,
 		domainSeverity,
 		input.ProjectID,
+		input.WorkingDir,
 	)
 	if err != nil {
 		logger.Error("Failed to create complaint", "error", err)

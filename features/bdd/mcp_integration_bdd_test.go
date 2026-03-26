@@ -67,7 +67,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		// Create mock command for testing
 		cmd = &cobra.Command{}
 		cmd.PersistentFlags().String("config", "", "config file path")
-		cmd.PersistentFlags().String("log-level", "info", "log level")
+		cmd.PersistentFlags().String("log-level", "info", "log level", "")
 		cmd.PersistentFlags().Bool("dev", false, "development mode")
 	})
 
@@ -104,7 +104,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 				"Clear documentation",
 				"Better examples",
 				domain.SeverityMedium,
-				"e2e-test-project")
+				"e2e-test-project", "")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(complaint).NotTo(BeNil())
 			Expect(complaint.IsResolved()).To(BeFalse())
@@ -211,7 +211,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 				"",
 				"",
 				domain.SeverityLow,
-				"test-project")
+				"test-project", "")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -233,7 +233,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 					"",
 					"",
 					domain.SeverityLow,
-					"perf-test")
+					"perf-test", "")
 				Expect(err).NotTo(HaveOccurred())
 
 				complaintIDs = append(complaintIDs, complaint.ID)

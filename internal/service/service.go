@@ -8,32 +8,46 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
+	"github.com/larsartmann/complaints-mcp/internal/projectdetect"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
 // ComplaintService handles complaint business logic.
 type ComplaintService struct {
-	repo   repo.Repository
-	tracer tracing.Tracer
-	logger *log.Logger
+	repo            repo.Repository
+	tracer          tracing.Tracer
+	logger          *log.Logger
+	projectDetector projectdetect.Detector
 }
 
 // NewComplaintService creates a new complaint service.
 func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *ComplaintService {
 	return &ComplaintService{
-		repo:   repository,
-		tracer: tracer,
-		logger: log.WithPrefix("complaint-service"),
+		repo:            repository,
+		tracer:          tracer,
+		logger:          log.WithPrefix("complaint-service"),
+		projectDetector: projectdetect.NewGitDetector(),
+	}
+}
+
+// NewComplaintServiceWithDetector creates a new complaint service with a custom detector.
+func NewComplaintServiceWithDetector(repository repo.Repository, tracer tracing.Tracer, detector projectdetect.Detector) *ComplaintService {
+	return &ComplaintService{
+		repo:            repository,
+		tracer:          tracer,
+		logger:          log.WithPrefix("complaint-service"),
+		projectDetector: detector,
 	}
 }
 
 // CreateComplaint creates a new complaint.
+// If projectName is empty, it will be auto-detected from the git repository at workingDir.
 func (s *ComplaintService) CreateComplaint(
 	ctx context.Context,
 	agentName, sessionName, taskDescription, contextInfo, missingInfo, confusedBy, futureWishes string,
 	severity domain.Severity,
-	projectName string,
+	projectName, workingDir string,
 ) (*domain.Complaint, error) {
 	// Validate required fields
 	if agentName == "" {
@@ -44,8 +58,20 @@ func (s *ComplaintService) CreateComplaint(
 		return nil, errors.New("session name is required")
 	}
 
+	// Auto-detect project if not provided
+	if projectName == "" && workingDir != "" {
+		info, err := s.projectDetector.Detect(ctx, workingDir)
+		if err != nil {
+			s.logger.Warn("Failed to auto-detect project", "error", err, "workingDir", workingDir)
+			// Continue with empty project name - it will fail validation below if truly required
+		} else {
+			projectName = info.Name
+			s.logger.Info("Auto-detected project", "project", projectName, "remote", info.RemoteURL)
+		}
+	}
+
 	if projectName == "" {
-		return nil, errors.New("project name is required")
+		return nil, errors.New("project name is required (could not auto-detect from git)")
 	}
 
 	// Generate phantom type ID
