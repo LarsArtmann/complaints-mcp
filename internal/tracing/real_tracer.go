@@ -38,10 +38,12 @@ func NewRealTracer(serviceName string) *RealTracer {
 	// Create tracer provider
 	tp := trace.NewTracerProvider(
 		trace.WithBatcher(exp),
-		trace.WithResource(resource.NewWithAttributes(
-			v1.26.0.SchemaURL,
-			v1.26.0.ServiceNameKey.String(serviceName),
-		)),
+		trace.WithResource(
+			resource.NewWithAttributes(
+				attribute.String("schema_url", v1.26.0.SchemaURL),
+				attribute.String(v1.26.0.ServiceNameKey, serviceName),
+			),
+		),
 	)
 
 	// Register as global tracer provider
