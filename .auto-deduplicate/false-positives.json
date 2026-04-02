@@ -1,0 +1,11 @@
+[
+  {
+    "fingerprint": "10b41fe57325e15d153912be5d90759c881768b18e05d198125231f14425c58a",
+    "files": [
+      "/Users/larsartmann/projects/complaints-mcp/internal/types/pagination_test.go"
+    ],
+    "reason": "These are distinct test cases in a test table, not duplicate code. Each has different semantic intent:\n- \"last page\" tests pagination at the end (page 3 of 3, no next page)\n- \"exact page boundary\" tests first page behavior (page 1 of 2, no previous page)\n\nThe similar structure is expected test table pattern with intentionally different values for different scenarios.\nINFO Running in non-interactive mode\nINFO Overriding large model for non-interactive run provider=minimax model=MiniMax-M2.7-highspeed\nINFO Using provider default small model provider=minimax model=MiniMax-M2.7\nINFO Created session for non-interactive run session_id=8c2f7f40-ee81-49cf-93e5-41dab396baac\nERRO Failed to enqueue PostHog event event=\"app exited\" props=\"[app duration pretty 11s app duration in seconds 11]\" error=\"the client was already closed\"\nERRO Failed to flush PostHog events error=\"the client was already closed\"",
+    "marked_at": "2026-04-02T23:36:43.907199+02:00",
+    "marked_by": "auto-deduplicate"
+  }
+]

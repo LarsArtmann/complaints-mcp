@@ -49,12 +49,12 @@ func (r *FileRepository) findByPredicate(
 
 func (r *FileRepository) findByID(
 	ctx context.Context,
-	getID func(*domain.Complaint) string,
+	field domain.ComplaintIDField,
 	id string,
 	limit int,
 ) ([]*domain.Complaint, error) {
 	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return getID(c) == id
+		return c.GetID(field) == id
 	}, limit)
 }
 
@@ -354,9 +354,7 @@ func (r *FileRepository) FindBySession(
 	sessionID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, func(c *domain.Complaint) string {
-		return c.GetID(domain.ComplaintFieldSessionID)
-	}, sessionID, limit)
+	return r.findByID(ctx, domain.ComplaintFieldSessionID, sessionID, limit)
 }
 
 // FindByProject finds complaints by project.
@@ -365,9 +363,7 @@ func (r *FileRepository) FindByProject(
 	projectID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, func(c *domain.Complaint) string {
-		return c.GetID(domain.ComplaintFieldProjectID)
-	}, projectID, limit)
+	return r.findByID(ctx, domain.ComplaintFieldProjectID, projectID, limit)
 }
 
 // FindByAgent finds complaints by agent.
@@ -376,9 +372,7 @@ func (r *FileRepository) FindByAgent(
 	agentID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, func(c *domain.Complaint) string {
-		return c.GetID(domain.ComplaintFieldAgentID)
-	}, agentID, limit)
+	return r.findByID(ctx, domain.ComplaintFieldAgentID, agentID, limit)
 }
 
 // CacheStats represents cache statistics.
