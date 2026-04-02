@@ -73,25 +73,27 @@ func newAppError(code ErrorCode, message string) *AppError {
 	}
 }
 
-// NewAppErrorWithCause creates a new application error with underlying cause.
-func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError {
+// newAppErrorWith creates a new AppError with optional Cause and Details.
+func newAppErrorWith(code ErrorCode, message string, cause error, details any) *AppError {
 	err := newAppError(code, message)
 	err.Cause = cause
-	return err
-}
-
-// NewAppErrorWithDetails creates a new application error with details.
-func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppError {
-	err := newAppError(code, message)
 	err.Details = details
 	return err
 }
 
+// NewAppErrorWithCause creates a new application error with underlying cause.
+func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError {
+	return newAppErrorWith(code, message, cause, nil)
+}
+
+// NewAppErrorWithDetails creates a new application error with details.
+func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppError {
+	return newAppErrorWith(code, message, nil, details)
+}
+
 // Wrap wraps an existing error with application context.
 func Wrap(cause error, code ErrorCode, message string) *AppError {
-	appErr := newAppError(code, message)
-	appErr.Cause = cause
-	return appErr
+	return newAppErrorWith(code, message, cause, nil)
 }
 
 // WrapDetails wraps an existing error with application context and details.

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/larsartmann/go-composable-business-types/id"
@@ -19,12 +18,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 	})
 
 	t.Run("reject nested JSON format", func(t *testing.T) {
-		jsonData := `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`
-
-		var complaintID ComplaintID
-
-		err := json.Unmarshal([]byte(jsonData), &complaintID)
-		assert.Error(t, err)
+		AssertRejectNestedJSONFormat[ComplaintBrand](t, `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`)
 	})
 }
 

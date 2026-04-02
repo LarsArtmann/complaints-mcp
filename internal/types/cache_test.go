@@ -16,51 +16,60 @@ func assertConstructorResult[T any](t *testing.T, expectError bool, expected, re
 	}
 }
 
+func runConstructorTests[T any](t *testing.T, tests []struct {
+	name        string
+	constructor func() (T, error)
+	expected    T
+	expectError bool
+}) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := tt.constructor()
+			assertConstructorResult(t, tt.expectError, tt.expected, result, err)
+		})
+	}
+}
+
 func TestNewCacheSize(t *testing.T) {
 	tests := []struct {
 		name        string
-		size        uint32
+		constructor func() (CacheSize, error)
 		expected    CacheSize
 		expectError bool
 	}{
 		{
 			name:        "valid minimum size",
-			size:        1,
+			constructor: func() (CacheSize, error) { return NewCacheSize(1) },
 			expected:    1,
 			expectError: false,
 		},
 		{
 			name:        "valid medium size",
-			size:        1000,
+			constructor: func() (CacheSize, error) { return NewCacheSize(1000) },
 			expected:    1000,
 			expectError: false,
 		},
 		{
 			name:        "valid maximum size",
-			size:        100000,
+			constructor: func() (CacheSize, error) { return NewCacheSize(100000) },
 			expected:    100000,
 			expectError: false,
 		},
 		{
 			name:        "too small",
-			size:        0,
+			constructor: func() (CacheSize, error) { return NewCacheSize(0) },
 			expected:    MinCacheSize,
 			expectError: true,
 		},
 		{
 			name:        "too large",
-			size:        100001,
+			constructor: func() (CacheSize, error) { return NewCacheSize(100001) },
 			expected:    MaxCacheSize,
 			expectError: true,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := NewCacheSize(tt.size)
-			assertConstructorResult(t, tt.expectError, tt.expected, result, err)
-		})
-	}
+	runConstructorTests(t, tests)
 }
 
 func TestMustNewCacheSize(t *testing.T) {
@@ -84,48 +93,43 @@ func TestCacheSizeMethods(t *testing.T) {
 func TestNewEvictionPolicy(t *testing.T) {
 	tests := []struct {
 		name        string
-		policy      string
+		constructor func() (CacheEvictionPolicy, error)
 		expected    CacheEvictionPolicy
 		expectError bool
 	}{
 		{
 			name:        "valid LRU",
-			policy:      "lru",
+			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("lru") },
 			expected:    EvictionLRU,
 			expectError: false,
 		},
 		{
 			name:        "valid FIFO",
-			policy:      "fifo",
+			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("fifo") },
 			expected:    EvictionFIFO,
 			expectError: false,
 		},
 		{
 			name:        "valid none",
-			policy:      "none",
+			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("none") },
 			expected:    EvictionNone,
 			expectError: false,
 		},
 		{
 			name:        "empty defaults to LRU",
-			policy:      "",
+			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("") },
 			expected:    EvictionLRU,
 			expectError: false,
 		},
 		{
 			name:        "invalid policy",
-			policy:      "invalid",
+			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("invalid") },
 			expected:    EvictionLRU,
 			expectError: true,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result, err := NewEvictionPolicy(tt.policy)
-			assertConstructorResult(t, tt.expectError, tt.expected, result, err)
-		})
-	}
+	runConstructorTests(t, tests)
 }
 
 func TestCacheEvictionPolicyMethods(t *testing.T) {

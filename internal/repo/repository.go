@@ -47,6 +47,17 @@ func (r *FileRepository) findByPredicate(
 	return filtered, nil
 }
 
+func (r *FileRepository) findByID(
+	ctx context.Context,
+	getID func(*domain.Complaint) string,
+	id string,
+	limit int,
+) ([]*domain.Complaint, error) {
+	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
+		return getID(c) == id
+	}, limit)
+}
+
 // Repository interface for complaint storage.
 type Repository interface {
 	Save(ctx context.Context, complaint *domain.Complaint) error
@@ -343,9 +354,9 @@ func (r *FileRepository) FindBySession(
 	sessionID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return c.SessionID.String() == sessionID
-	}, limit)
+	return r.findByID(ctx, func(c *domain.Complaint) string {
+		return c.GetID(domain.ComplaintFieldSessionID)
+	}, sessionID, limit)
 }
 
 // FindByProject finds complaints by project.
@@ -354,9 +365,9 @@ func (r *FileRepository) FindByProject(
 	projectID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return c.ProjectID.String() == projectID
-	}, limit)
+	return r.findByID(ctx, func(c *domain.Complaint) string {
+		return c.GetID(domain.ComplaintFieldProjectID)
+	}, projectID, limit)
 }
 
 // FindByAgent finds complaints by agent.
@@ -365,9 +376,9 @@ func (r *FileRepository) FindByAgent(
 	agentID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
-		return c.AgentID.String() == agentID
-	}, limit)
+	return r.findByID(ctx, func(c *domain.Complaint) string {
+		return c.GetID(domain.ComplaintFieldAgentID)
+	}, agentID, limit)
 }
 
 // CacheStats represents cache statistics.
@@ -556,7 +567,7 @@ func (r *SimpleCachedRepository) FindByProject(
 	projectID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.base.FindByProject(ctx, projectID, limit)
+	return r.findByID(ctx, projectID, limit, r.base.FindByProject)
 }
 
 func (r *SimpleCachedRepository) FindUnresolved(
@@ -575,12 +586,22 @@ func (r *SimpleCachedRepository) FindBySeverity(
 	return r.base.FindBySeverity(ctx, severity, limit)
 }
 
+// findByID is a helper that delegates to a finder function with (ctx, id, limit) signature.
+func (r *SimpleCachedRepository) findByID(
+	ctx context.Context,
+	id string,
+	limit int,
+	finder func(context.Context, string, int) ([]*domain.Complaint, error),
+) ([]*domain.Complaint, error) {
+	return finder(ctx, id, limit)
+}
+
 func (r *SimpleCachedRepository) FindBySession(
 	ctx context.Context,
 	sessionID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.base.FindBySession(ctx, sessionID, limit)
+	return r.findByID(ctx, sessionID, limit, r.base.FindBySession)
 }
 
 func (r *SimpleCachedRepository) FindByAgent(
@@ -588,7 +609,7 @@ func (r *SimpleCachedRepository) FindByAgent(
 	agentID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.base.FindByAgent(ctx, agentID, limit)
+	return r.findByID(ctx, agentID, limit, r.base.FindByAgent)
 }
 
 func (r *SimpleCachedRepository) Delete(ctx context.Context, id domain.ComplaintID) error {

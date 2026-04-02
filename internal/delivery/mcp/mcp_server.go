@@ -377,7 +377,7 @@ func (m *MCPServer) handleListComplaints(
 	)
 
 	if severityFilter != "" {
-		complaints, err = m.service.GetComplaintsBySeverity(ctx, severityFilter, limit)
+		complaints, err = m.service.Repository().FindBySeverity(ctx, severityFilter, limit)
 	} else {
 		complaints, err = m.service.ListComplaints(ctx, limit, 0)
 	}

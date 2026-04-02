@@ -153,7 +153,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 			Expect(resolved.IsResolved()).To(BeTrue())
 
 			// Step 7: List unresolved complaints (should be empty)
-			unresolved, err := complaintService.ListUnresolvedComplaints(ctx, 10)
+			unresolved, err := repository.FindUnresolved(ctx, 10)
 			Expect(err).NotTo(HaveOccurred())
 
 			found := false

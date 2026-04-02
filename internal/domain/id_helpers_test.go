@@ -33,3 +33,11 @@ func AssertUnmarshalFromFlatJSON[Brand any](tb testing.TB, brandedID id.ID[Brand
 	assert.Equal(tb, brandedID, result)
 	assert.Equal(tb, false, result.IsZero())
 }
+
+func AssertRejectNestedJSONFormat[Brand any](tb testing.TB, jsonData string) {
+	tb.Helper()
+
+	var result id.ID[Brand, string]
+	err := json.Unmarshal([]byte(jsonData), &result)
+	assert.Error(tb, err)
+}

@@ -182,42 +182,12 @@ func (s *ComplaintService) GetFilePaths(
 	return filePath, docsPath, nil
 }
 
-// GetComplaintsBySeverity retrieves complaints by severity level.
-func (s *ComplaintService) GetComplaintsBySeverity(
-	ctx context.Context,
-	severity domain.Severity,
-	limit int,
-) ([]*domain.Complaint, error) {
-	return s.repo.FindBySeverity(ctx, severity, limit)
-}
-
-// SearchComplaints searches complaints by text query.
-func (s *ComplaintService) SearchComplaints(
-	ctx context.Context,
-	query string,
-	limit int,
-) ([]*domain.Complaint, error) {
-	return s.repo.Search(ctx, query, limit)
+// Repository returns the underlying repository.
+func (s *ComplaintService) Repository() repo.Repository {
+	return s.repo
 }
 
 // GetCacheStats returns cache statistics.
 func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 	return s.repo.GetCacheStats()
-}
-
-// ListComplaintsByProject retrieves complaints by project name.
-func (s *ComplaintService) ListComplaintsByProject(
-	ctx context.Context,
-	projectName string,
-	limit int,
-) ([]*domain.Complaint, error) {
-	return s.repo.FindByProject(ctx, projectName, limit)
-}
-
-// ListUnresolvedComplaints retrieves unresolved complaints.
-func (s *ComplaintService) ListUnresolvedComplaints(
-	ctx context.Context,
-	limit int,
-) ([]*domain.Complaint, error) {
-	return s.repo.FindUnresolved(ctx, limit)
 }

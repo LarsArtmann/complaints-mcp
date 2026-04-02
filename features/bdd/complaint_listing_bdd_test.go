@@ -36,6 +36,19 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		Expect(results).To(BeEmpty())
 	}
 
+	expectUnresolvedWithCount := func(ctx context.Context, fn func(context.Context, int) ([]*domain.Complaint, error), limit, expectedCount int) {
+		complaints, err := fn(ctx, limit)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(complaints).To(HaveLen(expectedCount))
+		expectAllUnresolved(complaints)
+	}
+
+	expectEmptySearchResults := func(ctx context.Context, limit int) {
+		expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
+			return complaintService.SearchComplaints(ctx, "nonexistentterm", limit)
+		})
+	}
+
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
@@ -172,7 +185,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 	Context("List complaints by severity", func() {
 		It("should filter complaints by severity level", func(ctx SpecContext) {
 			// Get high severity complaints
-			highComplaints, err := complaintService.GetComplaintsBySeverity(
+			highComplaints, err := repository.FindBySeverity(
 				ctx,
 				domain.SeverityHigh,
 				10,
@@ -183,7 +196,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(highComplaints[0].TaskDescription).To(Equal("Authentication issue"))
 
 			// Get medium severity complaints
-			mediumComplaints, err := complaintService.GetComplaintsBySeverity(
+			mediumComplaints, err := repository.FindBySeverity(
 				ctx,
 				domain.SeverityMedium,
 				10,
@@ -193,7 +206,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(mediumComplaints[0].Severity).To(Equal(domain.SeverityMedium))
 
 			// Get low severity complaints
-			lowComplaints, err := complaintService.GetComplaintsBySeverity(
+			lowComplaints, err := repository.FindBySeverity(
 				ctx,
 				domain.SeverityLow,
 				10,
@@ -203,7 +216,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(lowComplaints[0].Severity).To(Equal(domain.SeverityLow))
 
 			// Get critical severity complaints
-			criticalComplaints, err := complaintService.GetComplaintsBySeverity(
+			criticalComplaints, err := repository.FindBySeverity(
 				ctx,
 				domain.SeverityCritical,
 				10,
@@ -218,7 +231,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			createTestComplaints(ctx, 5, "Test Agent", "limit-test", "Low severity test", "", "limit-test")
 
 			// Test with limit
-			limitedComplaints, err := complaintService.GetComplaintsBySeverity(
+			limitedComplaints, err := repository.FindBySeverity(
 				ctx,
 				domain.SeverityLow,
 				3,
@@ -236,7 +249,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 	Context("List complaints by project", func() {
 		It("should filter complaints by project name", func(ctx SpecContext) {
 			// Get complaints for auth-project
-			authComplaints, err := complaintService.ListComplaintsByProject(ctx, "auth-project", 10)
+			authComplaints, err := repository.FindByProject(ctx, "auth-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(authComplaints).To(HaveLen(2))
 
@@ -245,13 +258,13 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			}
 
 			// Get complaints for api-project
-			apiComplaints, err := complaintService.ListComplaintsByProject(ctx, "api-project", 10)
+			apiComplaints, err := repository.FindByProject(ctx, "api-project", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(apiComplaints).To(HaveLen(1))
 			Expect(apiComplaints[0].ProjectID.String()).To(Equal("api-project"))
 
 			// Get complaints for database-project
-			dbComplaints, err := complaintService.ListComplaintsByProject(
+			dbComplaints, err := repository.FindByProject(
 				ctx,
 				"database-project",
 				10,
@@ -263,7 +276,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should return empty for non-existent project", func(ctx SpecContext) {
 			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
-				return complaintService.ListComplaintsByProject(ctx, "non-existent-project", 10)
+				return repository.FindByProject(ctx, "non-existent-project", 10)
 			})
 		})
 
@@ -272,7 +285,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			createTestComplaints(ctx, 3, "Test Agent", "project-limit-test", "Auth project test", "", "auth-project")
 
 			// Test with limit
-			limitedComplaints, err := complaintService.ListComplaintsByProject(
+			limitedComplaints, err := repository.FindByProject(
 				ctx,
 				"auth-project",
 				2,
@@ -288,11 +301,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 	Context("List unresolved complaints", func() {
 		It("should return only unresolved complaints", func(ctx SpecContext) {
-			unresolvedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 10)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(unresolvedComplaints).To(HaveLen(4)) // All test complaints are unresolved
-
-			expectAllUnresolved(unresolvedComplaints)
+			expectUnresolvedWithCount(ctx, complaintService.ListUnresolvedComplaints, 10, 4)
 		})
 
 		It("should exclude resolved complaints", func(ctx SpecContext) {
@@ -301,7 +310,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// List unresolved complaints
-			unresolvedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 10)
+			unresolvedComplaints, err := repository.FindUnresolved(ctx, 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(unresolvedComplaints).To(HaveLen(3)) // One was resolved
 
@@ -313,18 +322,14 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should respect limit parameter for unresolved filtering", func(ctx SpecContext) {
-			limitedComplaints, err := complaintService.ListUnresolvedComplaints(ctx, 2)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(limitedComplaints).To(HaveLen(2))
-
-			expectAllUnresolved(limitedComplaints)
+			expectUnresolvedWithCount(ctx, repository.FindUnresolved, 2, 2)
 		})
 	})
 
 	Context("Search complaints", func() {
 		It("should search complaint content", func(ctx SpecContext) {
 			// Search for "authentication"
-			authResults, err := complaintService.SearchComplaints(ctx, "authentication", 10)
+			authResults, err := repository.Search(ctx, "authentication", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(authResults).To(HaveLen(1))
 			Expect(
@@ -332,13 +337,13 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			).To(ContainSubstring("authentication"))
 
 			// Search for "API"
-			apiResults, err := complaintService.SearchComplaints(ctx, "API", 10)
+			apiResults, err := repository.Search(ctx, "API", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(apiResults).To(HaveLen(1))
 			Expect(apiResults[0].TaskDescription).To(ContainSubstring("API"))
 
 			// Search for "database"
-			dbResults, err := complaintService.SearchComplaints(ctx, "database", 10)
+			dbResults, err := repository.Search(ctx, "database", 10)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(dbResults).To(HaveLen(1))
 			Expect(strings.ToLower(dbResults[0].TaskDescription)).To(ContainSubstring("database"))
@@ -380,9 +385,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should return empty for non-matching search", func(ctx SpecContext) {
-			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
-				return complaintService.SearchComplaints(ctx, "nonexistentterm", 10)
-			})
+			expectEmptySearchResults(ctx, 10)
 		})
 
 		It("should respect limit parameter for search", func(ctx SpecContext) {
