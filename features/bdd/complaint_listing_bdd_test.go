@@ -49,6 +49,12 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 	}
 
+	expectEmptyPaginatedResults := func(ctx context.Context, limit, offset int) {
+		expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
+			return complaintService.ListComplaints(ctx, limit, offset)
+		})
+	}
+
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
@@ -164,9 +170,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should return empty list when offset exceeds total", func(ctx SpecContext) {
-			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
-				return complaintService.ListComplaints(ctx, 10, 100)
-			})
+			expectEmptyPaginatedResults(ctx, 10, 100)
 		})
 
 		It("should return complaints in creation order", func(ctx SpecContext) {

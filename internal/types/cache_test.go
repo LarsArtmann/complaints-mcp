@@ -21,7 +21,8 @@ func runConstructorTests[T any](t *testing.T, tests []struct {
 	constructor func() (T, error)
 	expected    T
 	expectError bool
-}) {
+},
+) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := tt.constructor()

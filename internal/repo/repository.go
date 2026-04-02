@@ -348,13 +348,23 @@ func (r *FileRepository) GetDocsPath(ctx context.Context, id domain.ComplaintID)
 	return filepath.Join(r.docsDir, fileName), nil
 }
 
+// findByField delegates to findByID with the specified field.
+func (r *FileRepository) findByField(
+	ctx context.Context,
+	field domain.ComplaintIDField,
+	id string,
+	limit int,
+) ([]*domain.Complaint, error) {
+	return r.findByID(ctx, field, id, limit)
+}
+
 // FindBySession finds complaints by session.
 func (r *FileRepository) FindBySession(
 	ctx context.Context,
 	sessionID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, domain.ComplaintFieldSessionID, sessionID, limit)
+	return r.findByField(ctx, domain.ComplaintFieldSessionID, sessionID, limit)
 }
 
 // FindByProject finds complaints by project.
@@ -363,7 +373,7 @@ func (r *FileRepository) FindByProject(
 	projectID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, domain.ComplaintFieldProjectID, projectID, limit)
+	return r.findByField(ctx, domain.ComplaintFieldProjectID, projectID, limit)
 }
 
 // FindByAgent finds complaints by agent.
@@ -372,7 +382,7 @@ func (r *FileRepository) FindByAgent(
 	agentID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	return r.findByID(ctx, domain.ComplaintFieldAgentID, agentID, limit)
+	return r.findByField(ctx, domain.ComplaintFieldAgentID, agentID, limit)
 }
 
 // CacheStats represents cache statistics.

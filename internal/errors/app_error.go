@@ -98,10 +98,7 @@ func Wrap(cause error, code ErrorCode, message string) *AppError {
 
 // WrapDetails wraps an existing error with application context and details.
 func WrapDetails(cause error, code ErrorCode, message string, details any) *AppError {
-	appErr := newAppError(code, message)
-	appErr.Cause = cause
-	appErr.Details = details
-	return appErr
+	return newAppErrorWith(code, message, cause, details)
 }
 
 // IsAppError checks if an error is an AppError.
