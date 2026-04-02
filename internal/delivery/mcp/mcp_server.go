@@ -230,20 +230,7 @@ func (m *MCPServer) registerTools() error {
 	return nil
 }
 
-// Input types for tool handlers.
-type FileComplaintInput struct {
-	AgentName       string `json:"agent_name"`
-	SessionName     string `json:"session_name"`
-	TaskDescription string `json:"task_description"`
-	ContextInfo     string `json:"context_info"`
-	MissingInfo     string `json:"missing_info"`
-	ConfusedBy      string `json:"confused_by"`
-	FutureWishes    string `json:"future_wishes"`
-	Severity        string `json:"severity"`
-	ProjectID       string `json:"project_id"`
-	WorkingDir      string `json:"working_dir"`
-}
-
+// Input types for tool handlers (use FileComplaintRequest from dto.go).
 type ListComplaintsInput struct {
 	Limit    int    `json:"limit"`
 	Severity string `json:"severity"`
@@ -261,6 +248,14 @@ type SearchComplaintsInput struct {
 }
 
 type GetCacheStatsInput struct{}
+
+// defaultLimit returns the input limit or a default of 50 if zero.
+func defaultLimit(inputLimit int) int {
+	if inputLimit == 0 {
+		return 50
+	}
+	return inputLimit
+}
 
 // Output types for tool handlers.
 type FileComplaintOutput struct {
@@ -294,7 +289,7 @@ type GetCacheStatsOutput struct {
 func (m *MCPServer) handleFileComplaint(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	input FileComplaintInput,
+	input FileComplaintRequest,
 ) (*mcp.CallToolResult, FileComplaintOutput, error) {
 	ctx, span := m.tracer.Start(ctx, "handleFileComplaint")
 	defer span.End()
@@ -364,13 +359,9 @@ func (m *MCPServer) handleListComplaints(
 	logger.Info("Handling list complaints request")
 
 	// Set defaults
-	limit := input.Limit
-	if limit == 0 {
-		limit = 50
-	}
+	limit := defaultLimit(input.Limit)
 
 	var severityFilter domain.Severity
-
 	if input.Severity != "" {
 		var err error
 
@@ -485,10 +476,7 @@ func (m *MCPServer) handleSearchComplaints(
 	logger := m.logger.With("component", "mcp-server", "tool", "search_complaints")
 	logger.Info("Handling search complaints request")
 
-	limit := input.Limit
-	if limit == 0 {
-		limit = 50
-	}
+	limit := defaultLimit(input.Limit)
 
 	complaints, err := m.service.SearchComplaints(ctx, input.Query, limit)
 	if err != nil {

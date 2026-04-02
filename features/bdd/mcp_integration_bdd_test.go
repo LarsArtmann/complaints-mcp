@@ -15,6 +15,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func newTestConfig(tempDir, serverName, host string, port uint16, maxSize uint64, retention uint, autoBackup bool, logLevel, logFormat, logOutput string) *config.Config {
+	return &config.Config{
+		Server: config.ServerConfig{
+			Name: serverName,
+			Host: host,
+			Port: port,
+		},
+		Storage: config.StorageConfig{
+			BaseDir:    tempDir,
+			GlobalDir:  tempDir,
+			MaxSize:    maxSize,
+			Retention:  retention,
+			AutoBackup: autoBackup,
+		},
+		Log: config.LogConfig{
+			Level:  logLevel,
+			Format: logFormat,
+			Output: logOutput,
+		},
+	}
+}
+
 var _ = Describe("MCP Integration BDD Tests", func() {
 	var (
 		tempDir          string
@@ -45,25 +67,12 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		)
 
 		// Create test configuration
-		testConfig = &config.Config{
-			Server: config.ServerConfig{
-				Name: "test-server",
-				Host: "localhost",
-				Port: uint16(8080),
-			},
-			Storage: config.StorageConfig{
-				BaseDir:    tempDir,
-				GlobalDir:  tempDir,
-				MaxSize:    uint64(10485760), // 10MB
-				Retention:  uint(30),
-				AutoBackup: true,
-			},
-			Log: config.LogConfig{
-				Level:  "info",
-				Format: "text",
-				Output: "stdout",
-			},
-		}
+		testConfig = newTestConfig(
+			tempDir,
+			"test-server", "localhost", uint16(8080),
+			uint64(10485760), uint(30), true,
+			"info", "text", "stdout",
+		)
 
 		// Set config for MCP server
 		mcpServer.SetConfig(testConfig)
@@ -164,25 +173,12 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 	Context("MCP server configuration", func() {
 		It("should handle configuration changes", func() {
 			// Create new configuration
-			newConfig := &config.Config{
-				Server: config.ServerConfig{
-					Name: "updated-server",
-					Host: "127.0.0.1",
-					Port: uint16(9090),
-				},
-				Storage: config.StorageConfig{
-					BaseDir:    tempDir,
-					GlobalDir:  tempDir,
-					MaxSize:    uint64(20971520), // 20MB
-					Retention:  uint(60),
-					AutoBackup: false,
-				},
-				Log: config.LogConfig{
-					Level:  "debug",
-					Format: "json",
-					Output: "stderr",
-				},
-			}
+			newConfig := newTestConfig(
+				tempDir,
+				"updated-server", "127.0.0.1", uint16(9090),
+				uint64(20971520), uint(60), false,
+				"debug", "json", "stderr",
+			)
 
 			// Update server configuration
 			mcpServer.SetConfig(newConfig)

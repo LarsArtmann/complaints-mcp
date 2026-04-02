@@ -61,62 +61,45 @@ func (e *AppError) Unwrap() error {
 
 // NewAppError creates a new application error.
 func NewAppError(code ErrorCode, message string) *AppError {
-	httpStatus := errorCodeToHTTPStatus(code)
+	return newAppError(code, message)
+}
 
+// newAppError creates a new AppError with common fields initialized.
+func newAppError(code ErrorCode, message string) *AppError {
 	return &AppError{
 		Code:       code,
 		Message:    message,
-		HTTPStatus: httpStatus,
+		HTTPStatus: errorCodeToHTTPStatus(code),
 	}
 }
 
 // NewAppErrorWithCause creates a new application error with underlying cause.
 func NewAppErrorWithCause(code ErrorCode, message string, cause error) *AppError {
-	httpStatus := errorCodeToHTTPStatus(code)
-
-	return &AppError{
-		Code:       code,
-		Message:    message,
-		Cause:      cause,
-		HTTPStatus: httpStatus,
-	}
+	err := newAppError(code, message)
+	err.Cause = cause
+	return err
 }
 
 // NewAppErrorWithDetails creates a new application error with details.
 func NewAppErrorWithDetails(code ErrorCode, message string, details any) *AppError {
-	httpStatus := errorCodeToHTTPStatus(code)
-
-	return &AppError{
-		Code:       code,
-		Message:    message,
-		Details:    details,
-		HTTPStatus: httpStatus,
-	}
+	err := newAppError(code, message)
+	err.Details = details
+	return err
 }
 
 // Wrap wraps an existing error with application context.
-func Wrap(err error, code ErrorCode, message string) *AppError {
-	httpStatus := errorCodeToHTTPStatus(code)
-
-	return &AppError{
-		Code:       code,
-		Message:    message,
-		Cause:      err,
-		HTTPStatus: httpStatus,
-	}
+func Wrap(cause error, code ErrorCode, message string) *AppError {
+	appErr := newAppError(code, message)
+	appErr.Cause = cause
+	return appErr
 }
 
 // WrapDetails wraps an existing error with application context and details.
-func WrapDetails(err error, code ErrorCode, message string, details any) *AppError {
-	httpStatus := errorCodeToHTTPStatus(code)
-
-	return &AppError{
-		Code:       code,
-		Message:    message,
-		Details:    details,
-		Cause:      err,
-		HTTPStatus: httpStatus,
-	}
+func WrapDetails(cause error, code ErrorCode, message string, details any) *AppError {
+	appErr := newAppError(code, message)
+	appErr.Cause = cause
+	appErr.Details = details
+	return appErr
 }
 
 // IsAppError checks if an error is an AppError.

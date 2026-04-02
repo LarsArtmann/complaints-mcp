@@ -52,6 +52,15 @@ func main() {
 	}
 }
 
+func newLogger(logLevel string, reportCaller bool) *v2.Logger {
+	level, _ := v2.ParseLevel(logLevel)
+	return v2.NewWithOptions(os.Stderr, v2.Options{
+		Level:           level,
+		ReportTimestamp: true,
+		ReportCaller:    reportCaller,
+	})
+}
+
 func runServer(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -70,23 +79,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logLevel, _ := cmd.Flags().GetString("log-level")
 	devMode, _ := cmd.Flags().GetBool("dev")
 
-	var logger *v2.Logger
-
-	if devMode {
-		level, _ := v2.ParseLevel(logLevel)
-		logger = v2.NewWithOptions(os.Stderr, v2.Options{
-			Level:           level,
-			ReportTimestamp: true,
-			ReportCaller:    true,
-		})
-	} else {
-		level, _ := v2.ParseLevel(logLevel)
-		logger = v2.NewWithOptions(os.Stderr, v2.Options{
-			Level:           level,
-			ReportTimestamp: true,
-			ReportCaller:    false,
-		})
-	}
+	logger := newLogger(logLevel, devMode)
 
 	ctx = v2.WithContext(ctx, logger)
 

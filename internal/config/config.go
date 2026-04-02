@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/larsartmann/complaints-mcp/internal/types"
 	"github.com/spf13/cobra"
@@ -70,7 +71,7 @@ type LogConfig struct {
 
 // Load loads configuration from various sources.
 func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
-	logger := v2.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	// Initialize viper
 	v := viper.New()
@@ -179,24 +180,25 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("log.output", "stdout")
 }
 
+func expandHomeDir(path *string) error {
+	if path == nil || !strings.HasPrefix(*path, "~/") {
+		return nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+	*path = filepath.Join(home, (*path)[2:])
+	return nil
+}
+
 func postProcessConfig(cfg *Config) error {
 	// Expand home directory in paths
-	if strings.HasPrefix(cfg.Storage.BaseDir, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-
-		cfg.Storage.BaseDir = filepath.Join(home, cfg.Storage.BaseDir[2:])
+	if err := expandHomeDir(&cfg.Storage.BaseDir); err != nil {
+		return err
 	}
-
-	if strings.HasPrefix(cfg.Storage.GlobalDir, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-
-		cfg.Storage.GlobalDir = filepath.Join(home, cfg.Storage.GlobalDir[2:])
+	if err := expandHomeDir(&cfg.Storage.GlobalDir); err != nil {
+		return err
 	}
 
 	// Ensure directories exist
@@ -211,6 +213,17 @@ func postProcessConfig(cfg *Config) error {
 		}
 	}
 
+	return nil
+}
+
+// validateEnum validates that value is one of the allowed options.
+func validateEnum(value, fieldName string, allowed []string) error {
+	if value == "" {
+		return nil
+	}
+	if !slices.Contains(allowed, value) {
+		return fmt.Errorf("invalid %s: %s (allowed: %v)", fieldName, value, allowed)
+	}
 	return nil
 }
 
@@ -236,11 +249,8 @@ func validateConfig(cfg *Config) error {
 	// No validation needed for Retention as 0 is allowed for infinite retention
 
 	// Cache configuration validation
-	validEvictionPolicies := []string{"lru", "fifo", "none"}
-	if cfg.Storage.CacheEviction != "" {
-		if !slices.Contains(validEvictionPolicies, cfg.Storage.CacheEviction) {
-			return fmt.Errorf("invalid cache eviction policy: %s", cfg.Storage.CacheEviction)
-		}
+	if err := validateEnum(cfg.Storage.CacheEviction, "cache eviction policy", []string{"lru", "fifo", "none"}); err != nil {
+		return err
 	}
 
 	if cfg.Storage.CacheMaxSize <= 0 {
@@ -262,19 +272,13 @@ func validateConfig(cfg *Config) error {
 	cfg.Storage.EvictionPolicy = evictionPolicy
 
 	// Log level validation
-	validLogLevels := []string{"trace", "debug", "info", "warn", "error"}
-	if cfg.Log.Level != "" {
-		if !slices.Contains(validLogLevels, cfg.Log.Level) {
-			return fmt.Errorf("invalid log level: %s", cfg.Log.Level)
-		}
+	if err := validateEnum(cfg.Log.Level, "log level", []string{"trace", "debug", "info", "warn", "error"}); err != nil {
+		return err
 	}
 
 	// Log format validation
-	validLogFormats := []string{"text", "json", "logfmt"}
-	if cfg.Log.Format != "" {
-		if !slices.Contains(validLogFormats, cfg.Log.Format) {
-			return fmt.Errorf("invalid log format: %s", cfg.Log.Format)
-		}
+	if err := validateEnum(cfg.Log.Format, "log format", []string{"text", "json", "logfmt"}); err != nil {
+		return err
 	}
 
 	return nil

@@ -19,7 +19,33 @@ import (
 const (
 	defaultComplaintsDir = "complaints"
 	defaultDocsDir       = "docs/complaints"
+	defaultFindAllLimit  = 1000
 )
+
+func (r *FileRepository) findByPredicate(
+	ctx context.Context,
+	matches func(*domain.Complaint) bool,
+	limit int,
+) ([]*domain.Complaint, error) {
+	all, err := r.FindAll(ctx, defaultFindAllLimit, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Complaint
+
+	for _, complaint := range all {
+		if matches(complaint) {
+			filtered = append(filtered, complaint)
+		}
+
+		if len(filtered) >= limit {
+			break
+		}
+	}
+
+	return filtered, nil
+}
 
 // Repository interface for complaint storage.
 type Repository interface {
@@ -317,24 +343,9 @@ func (r *FileRepository) FindBySession(
 	sessionID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	all, err := r.FindAll(ctx, 1000, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	var filtered []*domain.Complaint
-
-	for _, complaint := range all {
-		if complaint.SessionID.String() == sessionID {
-			filtered = append(filtered, complaint)
-		}
-
-		if len(filtered) >= limit {
-			break
-		}
-	}
-
-	return filtered, nil
+	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
+		return c.SessionID.String() == sessionID
+	}, limit)
 }
 
 // FindByProject finds complaints by project.
@@ -343,24 +354,9 @@ func (r *FileRepository) FindByProject(
 	projectID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	all, err := r.FindAll(ctx, 1000, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	var filtered []*domain.Complaint
-
-	for _, complaint := range all {
-		if complaint.ProjectID.String() == projectID {
-			filtered = append(filtered, complaint)
-		}
-
-		if len(filtered) >= limit {
-			break
-		}
-	}
-
-	return filtered, nil
+	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
+		return c.ProjectID.String() == projectID
+	}, limit)
 }
 
 // FindByAgent finds complaints by agent.
@@ -369,24 +365,9 @@ func (r *FileRepository) FindByAgent(
 	agentID string,
 	limit int,
 ) ([]*domain.Complaint, error) {
-	all, err := r.FindAll(ctx, 1000, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	var filtered []*domain.Complaint
-
-	for _, complaint := range all {
-		if complaint.AgentID.String() == agentID {
-			filtered = append(filtered, complaint)
-		}
-
-		if len(filtered) >= limit {
-			break
-		}
-	}
-
-	return filtered, nil
+	return r.findByPredicate(ctx, func(c *domain.Complaint) bool {
+		return c.AgentID.String() == agentID
+	}, limit)
 }
 
 // CacheStats represents cache statistics.
@@ -493,7 +474,7 @@ func (r *SimpleCachedRepository) FindByID(
 		r.mu.RUnlock()
 		r.mu.Lock()
 		r.stats.Hits++
-		r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
+		r.recalculateHitRate()
 		r.mu.Unlock()
 
 		return cached, nil
@@ -511,11 +492,15 @@ func (r *SimpleCachedRepository) FindByID(
 	r.mu.Lock()
 	r.cache[id] = complaint
 	r.stats.Misses++
-	r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
+	r.recalculateHitRate()
 	r.updateCacheSize()
 	r.mu.Unlock()
 
 	return complaint, nil
+}
+
+func (r *SimpleCachedRepository) recalculateHitRate() {
+	r.stats.HitRate = float64(r.stats.Hits) / float64(r.stats.Hits+r.stats.Misses) * 100
 }
 
 // GetCacheStats implements Repository interface.
@@ -649,14 +634,20 @@ func (r *SimpleCachedRepository) GetFilePath(
 	ctx context.Context,
 	id domain.ComplaintID,
 ) (string, error) {
-	return r.base.GetFilePath(ctx, id)
+	return getCachedPath(ctx, id, r.base.GetFilePath)
 }
 
 func (r *SimpleCachedRepository) GetDocsPath(
 	ctx context.Context,
 	id domain.ComplaintID,
 ) (string, error) {
-	return r.base.GetDocsPath(ctx, id)
+	return getCachedPath(ctx, id, r.base.GetDocsPath)
+}
+
+type pathFunc func(context.Context, domain.ComplaintID) (string, error)
+
+func getCachedPath(ctx context.Context, id domain.ComplaintID, fn pathFunc) (string, error) {
+	return fn(ctx, id)
 }
 
 // NewCachedRepository creates a cached repository with minimal cache implementation.

@@ -6,6 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func assertConstructorResult[T any](t *testing.T, expectError bool, expected, result T, err error) {
+	if expectError {
+		assert.Error(t, err)
+		assert.Equal(t, expected, result)
+	} else {
+		assert.NoError(t, err)
+		assert.Equal(t, expected, result)
+	}
+}
+
 func TestNewCacheSize(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -48,14 +58,7 @@ func TestNewCacheSize(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := NewCacheSize(tt.size)
-
-			if tt.expectError {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expected, result) // Should return fallback value
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
+			assertConstructorResult(t, tt.expectError, tt.expected, result, err)
 		})
 	}
 }
@@ -67,7 +70,7 @@ func TestMustNewCacheSize(t *testing.T) {
 	})
 
 	assert.Panics(t, func() {
-		MustNewCacheSize(0) // Invalid size should panic
+		MustNewCacheSize(0)
 	})
 }
 
@@ -112,7 +115,7 @@ func TestNewEvictionPolicy(t *testing.T) {
 		{
 			name:        "invalid policy",
 			policy:      "invalid",
-			expected:    EvictionLRU, // Fallback
+			expected:    EvictionLRU,
 			expectError: true,
 		},
 	}
@@ -120,14 +123,7 @@ func TestNewEvictionPolicy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := NewEvictionPolicy(tt.policy)
-
-			if tt.expectError {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expected, result) // Should return fallback value
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
+			assertConstructorResult(t, tt.expectError, tt.expected, result, err)
 		})
 	}
 }

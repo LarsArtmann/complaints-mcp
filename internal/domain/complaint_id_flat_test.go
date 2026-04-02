@@ -11,22 +11,7 @@ import (
 
 func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("CRITICAL BUG FIX - flat JSON structure", func(t *testing.T) {
-		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
-
-		data, err := json.Marshal(complaintID)
-		require.NoError(t, err)
-
-		// CRITICAL: Verify flat structure - main bug fix
-		// The JSON should be a flat string, not a nested object
-		var flatResult string
-
-		err = json.Unmarshal(data, &flatResult)
-		require.NoError(t, err)
-
-		assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", flatResult)
-
-		// CRITICAL: Ensure no nested "Value" objects
-		assert.NotContains(t, string(data), `"Value"`)
+		AssertFlatJSONMarshaling(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), "550e8400-e29b-41d4-a716-446655440000")
 	})
 
 	t.Run("marshal produces flat JSON string", func(t *testing.T) {
@@ -43,35 +28,11 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	})
 
 	t.Run("unmarshal from flat JSON string works", func(t *testing.T) {
-		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
-
-		var complaintID ComplaintID
-
-		err := json.Unmarshal([]byte(jsonData), &complaintID)
-		require.NoError(t, err)
-
-		assert.Equal(
-			t,
-			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
-			complaintID,
-		)
-		assert.False(t, complaintID.IsZero())
+		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
 	})
 
 	t.Run("unmarshal from JSON object with flat ID works", func(t *testing.T) {
-		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
-
-		var complaintID ComplaintID
-
-		err := json.Unmarshal([]byte(jsonData), &complaintID)
-		require.NoError(t, err)
-
-		assert.Equal(
-			t,
-			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
-			complaintID,
-		)
-		assert.False(t, complaintID.IsZero())
+		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
 	})
 
 	t.Run("reject nested JSON format - old buggy structure", func(t *testing.T) {

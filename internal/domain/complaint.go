@@ -21,6 +21,11 @@ var complaintIDPattern = regexp.MustCompile(
 	`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`,
 )
 
+var complaintIDValidation = newIDValidation(
+	complaintIDPattern,
+	"ComplaintID",
+)
+
 // NewComplaintID creates a new valid ComplaintID with UUID v4 format.
 func NewComplaintID() (ComplaintID, error) {
 	uuidValue, err := uuid.NewV4()
@@ -43,12 +48,11 @@ func ParseComplaintID(s string) (ComplaintID, error) {
 
 // MustParseComplaintID parses a ComplaintID from string, panicking on error.
 func MustParseComplaintID(s string) ComplaintID {
-	complaintID, err := ParseComplaintID(s)
-	if err != nil {
-		panic(fmt.Sprintf("invalid ComplaintID: %v", err))
+	id := mustParseBrandedID[ComplaintBrand](s, complaintIDValidation)
+	if id.IsZero() {
+		panic("invalid ComplaintID: cannot be empty")
 	}
-
-	return complaintID
+	return id
 }
 
 // validateComplaintID validates ComplaintID format.
@@ -131,25 +135,16 @@ func (c *Complaint) Validate() error {
 	}
 
 	// Validate optional branded types (only validate format if not empty)
-	if !c.AgentID.IsZero() {
-		err := validateAgentID(c.AgentID.Get())
-		if err != nil {
-			return fmt.Errorf("invalid AgentID: %w", err)
-		}
+	if err := ValidateOptionalID(c.AgentID, "AgentID", ValidateAgentID); err != nil {
+		return err
 	}
 
-	if !c.SessionID.IsZero() {
-		err := validateSessionID(c.SessionID.Get())
-		if err != nil {
-			return fmt.Errorf("invalid SessionID: %w", err)
-		}
+	if err := ValidateOptionalID(c.SessionID, "SessionID", ValidateSessionID); err != nil {
+		return err
 	}
 
-	if !c.ProjectID.IsZero() {
-		err := validateProjectID(c.ProjectID.Get())
-		if err != nil {
-			return fmt.Errorf("invalid ProjectID: %w", err)
-		}
+	if err := ValidateOptionalID(c.ProjectID, "ProjectID", ValidateProjectID); err != nil {
+		return err
 	}
 
 	if c.TaskDescription == "" {

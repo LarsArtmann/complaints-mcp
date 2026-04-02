@@ -24,6 +24,18 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		testComplaints   []*domain.Complaint
 	)
 
+	expectAllUnresolved := func(complaints []*domain.Complaint) {
+		for _, complaint := range complaints {
+			Expect(complaint.IsResolved()).To(BeFalse())
+		}
+	}
+
+	expectEmptyResults := func(ctx context.Context, fn func(context.Context) ([]*domain.Complaint, error)) {
+		results, err := fn(ctx)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(results).To(BeEmpty())
+	}
+
 	BeforeEach(func() {
 		// Create a temporary directory for each test
 		tempDir = GinkgoT().TempDir()
@@ -99,6 +111,22 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		os.RemoveAll(tempDir)
 	})
 
+	createTestComplaints := func(ctx context.Context, count int, agentID, sessionID, taskDescription, contextInfo, projectID string) {
+		for range count {
+			_, err := complaintService.CreateComplaint(ctx,
+				agentID,
+				sessionID,
+				taskDescription,
+				contextInfo,
+				"",
+				"",
+				"",
+				domain.SeverityLow,
+				projectID, "")
+			Expect(err).NotTo(HaveOccurred())
+		}
+	}
+
 	Context("List all complaints", func() {
 		It("should return all complaints with pagination", func(ctx SpecContext) {
 			// Get first page of complaints
@@ -123,9 +151,9 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should return empty list when offset exceeds total", func(ctx SpecContext) {
-			complaints, err := complaintService.ListComplaints(ctx, 10, 100)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(complaints).To(BeEmpty())
+			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
+				return complaintService.ListComplaints(ctx, 10, 100)
+			})
 		})
 
 		It("should return complaints in creation order", func(ctx SpecContext) {
@@ -187,19 +215,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter", func(ctx SpecContext) {
 			// Create more complaints of same severity for testing limit
-			for range 5 {
-				_, err := complaintService.CreateComplaint(ctx,
-					"Test Agent",
-					"limit-test",
-					"Low severity test",
-					"",
-					"",
-					"",
-					"",
-					domain.SeverityLow,
-					"limit-test", "")
-				Expect(err).NotTo(HaveOccurred())
-			}
+			createTestComplaints(ctx, 5, "Test Agent", "limit-test", "Low severity test", "", "limit-test")
 
 			// Test with limit
 			limitedComplaints, err := complaintService.GetComplaintsBySeverity(
@@ -246,30 +262,14 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should return empty for non-existent project", func(ctx SpecContext) {
-			complaints, err := complaintService.ListComplaintsByProject(
-				ctx,
-				"non-existent-project",
-				10,
-			)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(complaints).To(BeEmpty())
+			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
+				return complaintService.ListComplaintsByProject(ctx, "non-existent-project", 10)
+			})
 		})
 
 		It("should respect limit parameter for project filtering", func(ctx SpecContext) {
 			// Create more complaints for auth-project
-			for range 3 {
-				_, err := complaintService.CreateComplaint(ctx,
-					"Test Agent",
-					"project-limit-test",
-					"Auth project test",
-					"",
-					"",
-					"",
-					"",
-					domain.SeverityLow,
-					"auth-project", "")
-				Expect(err).NotTo(HaveOccurred())
-			}
+			createTestComplaints(ctx, 3, "Test Agent", "project-limit-test", "Auth project test", "", "auth-project")
 
 			// Test with limit
 			limitedComplaints, err := complaintService.ListComplaintsByProject(
@@ -292,9 +292,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(unresolvedComplaints).To(HaveLen(4)) // All test complaints are unresolved
 
-			for _, complaint := range unresolvedComplaints {
-				Expect(complaint.IsResolved()).To(BeFalse())
-			}
+			expectAllUnresolved(unresolvedComplaints)
 		})
 
 		It("should exclude resolved complaints", func(ctx SpecContext) {
@@ -319,9 +317,7 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(limitedComplaints).To(HaveLen(2))
 
-			for _, complaint := range limitedComplaints {
-				Expect(complaint.IsResolved()).To(BeFalse())
-			}
+			expectAllUnresolved(limitedComplaints)
 		})
 	})
 
@@ -384,26 +380,14 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 		})
 
 		It("should return empty for non-matching search", func(ctx SpecContext) {
-			results, err := complaintService.SearchComplaints(ctx, "nonexistentterm", 10)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(results).To(BeEmpty())
+			expectEmptyResults(ctx, func(ctx context.Context) ([]*domain.Complaint, error) {
+				return complaintService.SearchComplaints(ctx, "nonexistentterm", 10)
+			})
 		})
 
 		It("should respect limit parameter for search", func(ctx SpecContext) {
 			// Create complaints with common term
-			for range 5 {
-				_, err := complaintService.CreateComplaint(ctx,
-					"Search Test Agent",
-					"search-session",
-					"Common search term test",
-					"common term in context",
-					"",
-					"",
-					"",
-					domain.SeverityLow,
-					"search-test", "")
-				Expect(err).NotTo(HaveOccurred())
-			}
+			createTestComplaints(ctx, 5, "Search Test Agent", "search-session", "Common search term test", "common term in context", "search-test")
 
 			// Search with limit
 			limitedResults, err := complaintService.SearchComplaints(ctx, "common", 3)

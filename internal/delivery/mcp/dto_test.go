@@ -9,6 +9,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTestComplaint(id domain.ComplaintID, agentName, taskDescription string, severity domain.Severity) *domain.Complaint {
+	return &domain.Complaint{
+		ID:              id,
+		AgentID:         domain.MustParseAgentID(agentName),
+		TaskDescription: taskDescription,
+		Severity:        severity,
+		Timestamp:       time.Now(),
+	}
+}
+
 // TestToDTO tests the conversion from domain Complaint to DTO.
 func TestToDTO(t *testing.T) {
 	// Create test complaint with all fields
@@ -85,14 +95,7 @@ func TestComplaintDTO_JSONSerialization(t *testing.T) {
 func TestComplaintDTO_OptionalFields(t *testing.T) {
 	// Create minimal complaint
 	id, _ := domain.NewComplaintID()
-	complaint := &domain.Complaint{
-		ID:              id,
-		AgentID:         domain.MustParseAgentID("Test Agent"),
-		TaskDescription: "Test task",
-		Severity:        domain.SeverityLow,
-		Timestamp:       time.Now(),
-		// Leave optional fields empty
-	}
+	complaint := newTestComplaint(id, "Test Agent", "Test task", domain.SeverityLow)
 
 	// Convert to DTO
 	dto := ToDTO(complaint)
@@ -115,13 +118,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 	id2, _ := domain.NewComplaintID()
 
 	now := time.Now()
-	complaint1 := &domain.Complaint{
-		ID:              id1,
-		AgentID:         domain.MustParseAgentID("Agent 1"),
-		TaskDescription: "Task 1",
-		Severity:        domain.SeverityHigh,
-		Timestamp:       time.Now(),
-	}
+	complaint1 := newTestComplaint(id1, "Agent 1", "Task 1", domain.SeverityHigh)
 
 	resolvedAt := now.Add(time.Hour)
 	complaint2 := &domain.Complaint{
@@ -161,13 +158,7 @@ func TestListComplaintsOutput_TypeSafety(t *testing.T) {
 // TestFileComplaintOutput_TypeSafety tests the file complaint output is type-safe.
 func TestFileComplaintOutput_TypeSafety(t *testing.T) {
 	id, _ := domain.NewComplaintID()
-	complaint := &domain.Complaint{
-		ID:              id,
-		AgentID:         domain.MustParseAgentID("Test Agent"),
-		TaskDescription: "Test task",
-		Severity:        domain.SeverityMedium,
-		Timestamp:       time.Now(),
-	}
+	complaint := newTestComplaint(id, "Test Agent", "Test task", domain.SeverityMedium)
 
 	// Create output with type-safe DTO
 	output := FileComplaintOutput{

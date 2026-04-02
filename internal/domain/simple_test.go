@@ -39,16 +39,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 
 	t.Run("✅ NEW FIX - complete complaint with flat IDs", func(t *testing.T) {
-		complaint := &Complaint{
-			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
-			AgentID:         MustParseAgentID("AI-Assistant"),
-			SessionID:       MustParseSessionID("dev-session"),
-			ProjectID:       MustParseProjectID("my-project"),
-			TaskDescription: "Test complaint description",
-			Severity:        SeverityMedium,
-			Timestamp:       testTimestamp,
-			ResolutionState: ResolutionStateOpen,
-		}
+		complaint := newTestComplaint()
 
 		// Serialize to JSON
 		data, err := json.Marshal(complaint)
@@ -67,16 +58,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 
 	t.Run("✅ NEW FIX - roundtrip with flat IDs", func(t *testing.T) {
-		originalComplaint := &Complaint{
-			ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
-			AgentID:         MustParseAgentID("AI-Assistant"),
-			SessionID:       MustParseSessionID("dev-session"),
-			ProjectID:       MustParseProjectID("my-project"),
-			TaskDescription: "Test complaint description",
-			Severity:        SeverityMedium,
-			Timestamp:       testTimestamp,
-			ResolutionState: ResolutionStateOpen,
-		}
+		originalComplaint := newTestComplaint()
 
 		// Serialize to JSON
 		data, err := json.Marshal(originalComplaint)
@@ -102,5 +84,19 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 }
 
-// Test helper.
+// testTimestamp is a fixed timestamp for reproducible tests.
 var testTimestamp = time.Date(2024, 11, 9, 12, 18, 30, 0, time.UTC)
+
+// newTestComplaint creates a standard test complaint with all IDs pre-populated.
+func newTestComplaint() *Complaint {
+	return &Complaint{
+		ID:              MustParseComplaintID("550e8400-e29b-41d4-a716-446655440000"),
+		AgentID:         MustParseAgentID("AI-Assistant"),
+		SessionID:       MustParseSessionID("dev-session"),
+		ProjectID:       MustParseProjectID("my-project"),
+		TaskDescription: "Test complaint description",
+		Severity:        SeverityMedium,
+		Timestamp:       testTimestamp,
+		ResolutionState: ResolutionStateOpen,
+	}
+}

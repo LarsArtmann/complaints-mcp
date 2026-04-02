@@ -6,6 +6,28 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/types"
 )
 
+func assertPageRequestFields(t *testing.T, page, perPage, wantPage, wantPerPage int) {
+	got := types.NewPageRequest(page, perPage)
+	if got.Page != wantPage {
+		t.Errorf("Page = %d, want %d", got.Page, wantPage)
+	}
+
+	if got.PerPage != wantPerPage {
+		t.Errorf("PerPage = %d, want %d", got.PerPage, wantPerPage)
+	}
+}
+
+func assertCursorRequestFields(t *testing.T, cursor string, limit, wantLimit int) {
+	got := types.NewCursorRequest(cursor, limit)
+	if got.Cursor != cursor {
+		t.Errorf("Cursor = %q, want %q", got.Cursor, cursor)
+	}
+
+	if got.Limit != wantLimit {
+		t.Errorf("Limit = %d, want %d", got.Limit, wantLimit)
+	}
+}
+
 func TestNewPageRequest(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -67,14 +89,7 @@ func TestNewPageRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := types.NewPageRequest(tt.page, tt.perPage)
-			if got.Page != tt.wantPage {
-				t.Errorf("Page = %d, want %d", got.Page, tt.wantPage)
-			}
-
-			if got.PerPage != tt.wantPerPage {
-				t.Errorf("PerPage = %d, want %d", got.PerPage, tt.wantPerPage)
-			}
+			assertPageRequestFields(t, tt.page, tt.perPage, tt.wantPage, tt.wantPerPage)
 		})
 	}
 }
@@ -352,14 +367,7 @@ func TestNewCursorRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := types.NewCursorRequest(tt.cursor, tt.limit)
-			if got.Cursor != tt.cursor {
-				t.Errorf("Cursor = %q, want %q", got.Cursor, tt.cursor)
-			}
-
-			if got.Limit != tt.wantLimit {
-				t.Errorf("Limit = %d, want %d", got.Limit, tt.wantLimit)
-			}
+			assertCursorRequestFields(t, tt.cursor, tt.limit, tt.wantLimit)
 		})
 	}
 }

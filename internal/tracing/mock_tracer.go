@@ -3,6 +3,8 @@ package tracing
 import (
 	"context"
 	"time"
+
+	v2 "charm.land/log/v2"
 )
 
 // Tracer defines the interface for distributed tracing.
@@ -71,22 +73,19 @@ func (s *MockSpan) End() {
 
 // AddEvent adds an event to the current span.
 func (s *MockSpan) AddEvent(ctx context.Context, event string, attributes map[string]any) {
-	logger := v2.FromContext(ctx)
-	logger.Debug("Trace event",
-		"tracer", s.tracer.name,
-		"operation", s.operationName,
-		"event", event,
-		"attributes", attributes)
+	s.logDebug(ctx, "Trace event", "event", event, "attributes", attributes)
 }
 
 // SetAttribute sets an attribute on the current span.
 func (s *MockSpan) SetAttribute(ctx context.Context, key string, value any) {
+	s.logDebug(ctx, "Trace attribute set", "key", key, "value", value)
+}
+
+// logDebug logs a debug message with span context.
+func (s *MockSpan) logDebug(ctx context.Context, message string, keyvals ...any) {
 	logger := v2.FromContext(ctx)
-	logger.Debug("Trace attribute set",
-		"tracer", s.tracer.name,
-		"operation", s.operationName,
-		"key", key,
-		"value", value)
+	logger.Debug(message,
+		append([]any{"tracer", s.tracer.name, "operation", s.operationName}, keyvals...)...)
 }
 
 // GetCurrentSpan returns the current span from context.

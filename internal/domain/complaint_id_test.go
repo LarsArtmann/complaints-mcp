@@ -11,36 +11,11 @@ import (
 
 func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 	t.Run("marshal produces flat JSON", func(t *testing.T) {
-		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
-
-		data, err := json.Marshal(complaintID)
-		require.NoError(t, err)
-
-		// Should be flat string, not nested object
-		var flatResult string
-
-		err = json.Unmarshal(data, &flatResult)
-		require.NoError(t, err)
-		assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", flatResult)
-
-		// Verify no nested "Value" objects
-		assert.NotContains(t, string(data), `"Value"`)
+		AssertFlatJSONMarshaling(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), "550e8400-e29b-41d4-a716-446655440000")
 	})
 
 	t.Run("unmarshal from flat JSON", func(t *testing.T) {
-		jsonData := `"550e8400-e29b-41d4-a716-446655440000"`
-
-		var complaintID ComplaintID
-
-		err := json.Unmarshal([]byte(jsonData), &complaintID)
-		require.NoError(t, err)
-
-		assert.Equal(
-			t,
-			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
-			complaintID,
-		)
-		assert.False(t, complaintID.IsZero())
+		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
 	})
 
 	t.Run("reject nested JSON format", func(t *testing.T) {
@@ -73,8 +48,8 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 		tests := []struct {
 			name       string
 			input      string
-			expectedID ComplaintID
 			wantErr    bool
+			expectedID ComplaintID
 		}{
 			{
 				"valid UUID",

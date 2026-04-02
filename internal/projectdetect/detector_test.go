@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,12 +51,7 @@ func TestGitDetector_Detect_Success(t *testing.T) {
 	_, err = w.Add("test.txt")
 	require.NoError(t, err)
 
-	_, err = w.Commit("Initial commit", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "Test User",
-			Email: "test@example.com",
-		},
-	})
+	_, err = commitAsTestUser(w, "Initial commit")
 	require.NoError(t, err)
 
 	// Test detection from repo root
@@ -94,12 +90,7 @@ func TestGitDetector_Detect_FromSubdirectory(t *testing.T) {
 	_, err = w.Add("test.txt")
 	require.NoError(t, err)
 
-	_, err = w.Commit("Initial commit", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "Test User",
-			Email: "test@example.com",
-		},
-	})
+	_, err = commitAsTestUser(w, "Initial commit")
 	require.NoError(t, err)
 
 	// Create a subdirectory
@@ -194,4 +185,13 @@ func TestGitDetector_EmptyWorkingDir(t *testing.T) {
 	_, err := detector.Detect(t.Context(), "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "working directory cannot be empty")
+}
+
+func commitAsTestUser(w *git.Worktree, message string) (plumbing.Hash, error) {
+	return w.Commit(message, &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Test User",
+			Email: "test@example.com",
+		},
+	})
 }
