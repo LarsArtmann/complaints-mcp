@@ -42,8 +42,14 @@ func (c *Complaint) GetID(field ComplaintIDField) string {
 
 var (
 	agentIDValidation   = newIDValidation(regexp.MustCompile(`^.{1,100}$`), "AgentID")
-	projectIDValidation = newIDValidation(regexp.MustCompile(`^[a-zA-Z0-9\-_\s\.]{1,100}$`), "ProjectID")
-	sessionIDValidation = newIDValidation(regexp.MustCompile(`^[a-zA-Z0-9\-_\s]{1,100}$`), "SessionID")
+	projectIDValidation = newIDValidation(
+		regexp.MustCompile(`^[a-zA-Z0-9\-_\s\.]{1,100}$`),
+		"ProjectID",
+	)
+	sessionIDValidation = newIDValidation(
+		regexp.MustCompile(`^[a-zA-Z0-9\-_\s]{1,100}$`),
+		"SessionID",
+	)
 )
 
 func NewAgentID(name string) (AgentID, error) {

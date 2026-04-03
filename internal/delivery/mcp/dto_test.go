@@ -9,7 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestComplaint(id domain.ComplaintID, agentName, taskDescription string, severity domain.Severity) *domain.Complaint {
+func newTestComplaint(
+	id domain.ComplaintID,
+	agentName, taskDescription string,
+	severity domain.Severity,
+) *domain.Complaint {
 	return &domain.Complaint{
 		ID:              id,
 		AgentID:         domain.MustParseAgentID(agentName),

@@ -249,7 +249,11 @@ func validateConfig(cfg *Config) error {
 	// No validation needed for Retention as 0 is allowed for infinite retention
 
 	// Cache configuration validation
-	if err := validateEnum(cfg.Storage.CacheEviction, "cache eviction policy", []string{"lru", "fifo", "none"}); err != nil {
+	if err := validateEnum(
+		cfg.Storage.CacheEviction,
+		"cache eviction policy",
+		[]string{"lru", "fifo", "none"},
+	); err != nil {
 		return err
 	}
 
@@ -272,12 +276,20 @@ func validateConfig(cfg *Config) error {
 	cfg.Storage.EvictionPolicy = evictionPolicy
 
 	// Log level validation
-	if err := validateEnum(cfg.Log.Level, "log level", []string{"trace", "debug", "info", "warn", "error"}); err != nil {
+	if err := validateEnum(
+		cfg.Log.Level,
+		"log level",
+		[]string{"trace", "debug", "info", "warn", "error"},
+	); err != nil {
 		return err
 	}
 
 	// Log format validation
-	if err := validateEnum(cfg.Log.Format, "log format", []string{"text", "json", "logfmt"}); err != nil {
+	if err := validateEnum(
+		cfg.Log.Format,
+		"log format",
+		[]string{"text", "json", "logfmt"},
+	); err != nil {
 		return err
 	}
 

@@ -11,7 +11,11 @@ import (
 
 func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("CRITICAL BUG FIX - flat JSON structure", func(t *testing.T) {
-		AssertFlatJSONMarshaling(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), "550e8400-e29b-41d4-a716-446655440000")
+		AssertFlatJSONMarshaling(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			"550e8400-e29b-41d4-a716-446655440000",
+		)
 	})
 
 	t.Run("marshal produces flat JSON string", func(t *testing.T) {
@@ -28,16 +32,27 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	})
 
 	t.Run("unmarshal from flat JSON string works", func(t *testing.T) {
-		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
+		AssertUnmarshalFromFlatJSON(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			`"550e8400-e29b-41d4-a716-446655440000"`,
+		)
 	})
 
 	t.Run("unmarshal from JSON object with flat ID works", func(t *testing.T) {
-		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
+		AssertUnmarshalFromFlatJSON(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			`"550e8400-e29b-41d4-a716-446655440000"`,
+		)
 	})
 
 	t.Run("reject nested JSON format - old buggy structure", func(t *testing.T) {
 		// This is the old buggy structure we're fixing
-		AssertRejectNestedJSONFormat[ComplaintBrand](t, `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`)
+		AssertRejectNestedJSONFormat[ComplaintBrand](
+			t,
+			`{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`,
+		)
 	})
 
 	t.Run("complete flat JSON structure test", func(t *testing.T) {

@@ -6,13 +6,12 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Complaint Listing BDD Tests", func() {
@@ -232,7 +231,15 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter", func(ctx SpecContext) {
 			// Create more complaints of same severity for testing limit
-			createTestComplaints(ctx, 5, "Test Agent", "limit-test", "Low severity test", "", "limit-test")
+			createTestComplaints(
+				ctx,
+				5,
+				"Test Agent",
+				"limit-test",
+				"Low severity test",
+				"",
+				"limit-test",
+			)
 
 			// Test with limit
 			limitedComplaints, err := repository.FindBySeverity(
@@ -286,7 +293,15 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter for project filtering", func(ctx SpecContext) {
 			// Create more complaints for auth-project
-			createTestComplaints(ctx, 3, "Test Agent", "project-limit-test", "Auth project test", "", "auth-project")
+			createTestComplaints(
+				ctx,
+				3,
+				"Test Agent",
+				"project-limit-test",
+				"Auth project test",
+				"",
+				"auth-project",
+			)
 
 			// Test with limit
 			limitedComplaints, err := repository.FindByProject(
@@ -394,7 +409,15 @@ var _ = Describe("Complaint Listing BDD Tests", func() {
 
 		It("should respect limit parameter for search", func(ctx SpecContext) {
 			// Create complaints with common term
-			createTestComplaints(ctx, 5, "Search Test Agent", "search-session", "Common search term test", "common term in context", "search-test")
+			createTestComplaints(
+				ctx,
+				5,
+				"Search Test Agent",
+				"search-session",
+				"Common search term test",
+				"common term in context",
+				"search-test",
+			)
 
 			// Search with limit
 			limitedResults, err := complaintService.SearchComplaints(ctx, "common", 3)

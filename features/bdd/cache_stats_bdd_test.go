@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"os"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Cache Statistics BDD Tests", func() {

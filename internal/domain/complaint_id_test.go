@@ -10,15 +10,26 @@ import (
 
 func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 	t.Run("marshal produces flat JSON", func(t *testing.T) {
-		AssertFlatJSONMarshaling(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), "550e8400-e29b-41d4-a716-446655440000")
+		AssertFlatJSONMarshaling(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			"550e8400-e29b-41d4-a716-446655440000",
+		)
 	})
 
 	t.Run("unmarshal from flat JSON", func(t *testing.T) {
-		AssertUnmarshalFromFlatJSON(t, id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"), `"550e8400-e29b-41d4-a716-446655440000"`)
+		AssertUnmarshalFromFlatJSON(
+			t,
+			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			`"550e8400-e29b-41d4-a716-446655440000"`,
+		)
 	})
 
 	t.Run("reject nested JSON format", func(t *testing.T) {
-		AssertRejectNestedJSONFormat[ComplaintBrand](t, `{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`)
+		AssertRejectNestedJSONFormat[ComplaintBrand](
+			t,
+			`{"id":{"Value":"550e8400-e29b-41d4-a716-446655440000"}}`,
+		)
 	})
 }
 

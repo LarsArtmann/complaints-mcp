@@ -82,7 +82,11 @@ func ValidateProjectID(s string) error {
 	return projectIDValidation.validate(s)
 }
 
-func ValidateOptionalID[Brand any](id id.ID[Brand, string], typeName string, validateFn func(string) error) error {
+func ValidateOptionalID[Brand any](
+	id id.ID[Brand, string],
+	typeName string,
+	validateFn func(string) error,
+) error {
 	if !id.IsZero() {
 		err := validateFn(id.Get())
 		if err != nil {

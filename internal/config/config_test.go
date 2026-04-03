@@ -3,10 +3,9 @@ package config_test
 import (
 	"testing"
 
+	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
-
-	"github.com/larsartmann/complaints-mcp/internal/config"
 )
 
 func TestConfig_Load(t *testing.T) {

@@ -9,7 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func AssertFlatJSONMarshaling[Brand any](tb testing.TB, brandedID id.ID[Brand, string], expectedValue string) {
+func AssertFlatJSONMarshaling[Brand any](
+	tb testing.TB,
+	brandedID id.ID[Brand, string],
+	expectedValue string,
+) {
 	tb.Helper()
 
 	data, err := json.Marshal(brandedID)
@@ -23,7 +27,11 @@ func AssertFlatJSONMarshaling[Brand any](tb testing.TB, brandedID id.ID[Brand, s
 	assert.NotContains(tb, string(data), `"Value"`)
 }
 
-func AssertUnmarshalFromFlatJSON[Brand any](tb testing.TB, brandedID id.ID[Brand, string], jsonValue string) {
+func AssertUnmarshalFromFlatJSON[Brand any](
+	tb testing.TB,
+	brandedID id.ID[Brand, string],
+	jsonValue string,
+) {
 	tb.Helper()
 
 	data := []byte(jsonValue)
