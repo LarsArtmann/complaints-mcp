@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	charm.land/log/v2 v2.0.0
 	github.com/adrg/xdg v0.5.3
-	github.com/go-git/go-git/v5 v5.17.0
+	github.com/go-git/go-git/v5 v5.17.1
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/larsartmann/go-branded-id v0.0.0-00010101000000-000000000000
 	github.com/modelcontextprotocol/go-sdk v1.4.1
