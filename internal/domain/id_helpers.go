@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/larsartmann/go-composable-business-types/id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 const maxIDLength = 100

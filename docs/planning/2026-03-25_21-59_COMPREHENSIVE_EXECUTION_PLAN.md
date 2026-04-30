@@ -426,7 +426,7 @@ Test that DTOs serialize/deserialize correctly and match domain models
 
 ### Already Have (Reuse):
 
-1. **Phantom Types** - `go-composable-business-types/id` ✓
+1. **Phantom Types** - `go-branded-id` ✓
 2. **Structured Errors** - `internal/errors/app_error.go` ✓ (but not used consistently)
 3. **Repository Pattern** - `internal/repo/repository.go` ✓
 4. **Tracing Abstraction** - `internal/tracing/*.go` ✓
@@ -552,7 +552,7 @@ type Specification[T any] interface {
 
 ### Q1: Should we use `mo` Result/Option types or create our own?
 
-**Context:** We have `go-composable-business-types` for phantom types. Should we:
+**Context:** We have `go-branded-id` for phantom types. Should we:
 
 - A) Add Result/Option to that library
 - B) Use `samber/mo` directly

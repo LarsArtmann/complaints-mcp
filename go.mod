@@ -1,13 +1,13 @@
 module github.com/larsartmann/complaints-mcp
 
-go 1.26.1
+go 1.26.2
 
 require (
 	charm.land/log/v2 v2.0.0
 	github.com/adrg/xdg v0.5.3
 	github.com/go-git/go-git/v5 v5.17.0
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/larsartmann/go-composable-business-types v0.0.0-00010101000000-000000000000
+	github.com/larsartmann/go-branded-id v0.0.0-00010101000000-000000000000
 	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/onsi/ginkgo/v2 v2.27.5
 	github.com/onsi/gomega v1.39.0
@@ -91,4 +91,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/larsartmann/go-composable-business-types => /Users/larsartmann/projects/go-composable-business-types
+replace github.com/larsartmann/go-branded-id => /home/lars/projects/go-branded-id

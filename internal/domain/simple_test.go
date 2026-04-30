@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/go-composable-business-types/id"
+	"github.com/larsartmann/go-branded-id"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

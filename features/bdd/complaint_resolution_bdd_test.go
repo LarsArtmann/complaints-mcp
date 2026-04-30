@@ -10,7 +10,7 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/larsartmann/go-composable-business-types/id"
+	"github.com/larsartmann/go-branded-id"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

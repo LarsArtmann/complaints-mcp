@@ -249,7 +249,7 @@ could not import log/slog (open .../go-build/...-d: no such file or directory)
 
 ### 4. Dependencies
 
-- **go-composable-business-types:** Using local replace directive
+- **go-branded-id:** Using local replace directive (migrated from go-composable-business-types/id)
 - Consider publishing to GitHub for cleaner dependency management
 
 ### 5. Error Handling

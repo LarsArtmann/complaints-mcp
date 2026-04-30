@@ -3,7 +3,7 @@ package domain
 import (
 	"regexp"
 
-	"github.com/larsartmann/go-composable-business-types/id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 type (

@@ -1,8 +1,8 @@
-# Integration Plan: go-composable-business-types/id Library
+# Integration Plan: go-branded-id Library
 
 ## Executive Summary
 
-This document outlines the integration of `github.com/larsartmann/go-composable-business-types/id` into the complaints-mcp project to replace custom phantom type ID implementations with a standardized, feature-rich library approach.
+This document outlines the integration of `github.com/larsartmann/go-branded-id` into the complaints-mcp project to replace custom phantom type ID implementations with a standardized, feature-rich library approach.
 
 ## Current State Analysis
 
@@ -36,12 +36,12 @@ All 4 types implement identical patterns:
 
 ## Target State
 
-### Using go-composable-business-types/id
+### Using go-branded-id
 
 ```go
 package domain
 
-import "github.com/larsartmann/go-composable-business-types/id"
+import "github.com/larsartmann/go-branded-id"
 
 // Brand types (empty structs for type distinctness)
 type ComplaintBrand struct{}
@@ -66,7 +66,7 @@ type IDConstructor func(string) (id.ID[B, string], error)
 | **Type Safety**         | Compile-time prevention of mixing ID types             |
 | **Less Code**           | ~400 lines → ~80 lines (80% reduction)                 |
 | **More Features**       | SQL, Binary, Gob, Text, Compare, Or, IsZero            |
-| **Standardized**        | Consistent with go-composable-business-types ecosystem |
+| **Standardized**        | Consistent with go-branded-id ecosystem                   |
 | **Zero Value Handling** | Proper null serialization in JSON                      |
 | **Tested**              | Library has comprehensive test coverage                |
 
@@ -167,7 +167,7 @@ data, _ := json.Marshal(id)
 
 ```bash
 cd /Users/larsartmann/projects/complaints-mcp
-go get github.com/larsartmann/go-composable-business-types/id
+go get github.com/larsartmann/go-branded-id
 go mod tidy
 ```
 
@@ -233,7 +233,7 @@ just test-bdd
 
 ## Long-term Benefits
 
-1. **Ecosystem Alignment**: Part of go-composable-business-types ecosystem
+1. **Ecosystem Alignment**: Part of go-branded-id ecosystem
 2. **Future Enhancements**: Library updates provide new features automatically
 3. **Code Reduction**: 80% less ID-related code
 4. **Type Safety**: Strong compile-time guarantees
@@ -241,6 +241,6 @@ just test-bdd
 
 ## References
 
-- Library: `/Users/larsartmann/projects/go-composable-business-types/id/`
+- Library: `/home/lars/projects/go-branded-id/`
 - Current IDs: `/Users/larsartmann/projects/complaints-mcp/internal/domain/`
 - Related: AGENTS.md "Strong types over runtime checks"

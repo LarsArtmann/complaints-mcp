@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/larsartmann/go-composable-business-types/id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 // ComplaintBrand is the phantom type brand for ComplaintID.

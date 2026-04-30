@@ -10,6 +10,7 @@ Complaints MCP is a Model Context Protocol (MCP) server for tracking and managin
 - **Architecture:** Clean Architecture (Domain, Service, Repository, Delivery layers)
 - **Dependencies:**
   - charm.land/log/v2 - Structured logging
+  - github.com/larsartmann/go-branded-id - Branded/phantom type IDs
   - github.com/modelcontextprotocol/go-sdk - MCP SDK
   - github.com/go-playground/validator/v10 - Input validation
   - github.com/onsi/ginkgo/v2 - BDD testing
@@ -45,7 +46,7 @@ just lint
 
 ## Key Design Decisions
 
-1. **Phantom Types:** Use branded IDs (ComplaintID, AgentID, etc.) for type safety
+1. **Phantom Types:** Use branded IDs via `go-branded-id` (ComplaintID, AgentID, etc.) for type safety
 2. **Type Safety:** DTOs for all API boundaries
 3. **Validation:** go-playground/validator for struct validation
 4. **Pagination:** Generic PageRequest/PageResponse types
