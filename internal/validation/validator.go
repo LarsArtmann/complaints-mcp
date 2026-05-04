@@ -2,6 +2,8 @@ package validation
 
 import (
 	"sync"
+
+	v10 "github.com/go-playground/validator/v10"
 )
 
 // Validator provides a centralized, thread-safe validation instance.

@@ -8,11 +8,12 @@ import (
 	"syscall"
 	"time"
 
+	log "charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
+	mcpdelivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
 )
 
@@ -52,9 +53,9 @@ func main() {
 	}
 }
 
-func newLogger(logLevel string, reportCaller bool) *v2.Logger {
-	level, _ := v2.ParseLevel(logLevel)
-	return v2.NewWithOptions(os.Stderr, v2.Options{
+func newLogger(logLevel string, reportCaller bool) *log.Logger {
+	level, _ := log.ParseLevel(logLevel)
+	return log.NewWithOptions(os.Stderr, log.Options{
 		Level:           level,
 		ReportTimestamp: true,
 		ReportCaller:    reportCaller,
@@ -81,7 +82,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	logger := newLogger(logLevel, devMode)
 
-	ctx = v2.WithContext(ctx, logger)
+	ctx = log.WithContext(ctx, logger)
 
 	logger.Info("Starting complaints-mcp server",
 		"version", version,
@@ -101,7 +102,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
-	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
+var mcpServer *mcpdelivery.MCPServer
+	mcpServer = mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled
 	if cfg.Storage.CacheEnabled {

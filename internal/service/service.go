@@ -6,18 +6,24 @@ import (
 	"fmt"
 	"time"
 
+	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/projectdetect"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 )
 
+// ProjectDetector defines the interface for project detection.
+type ProjectDetector interface {
+	Detect(ctx context.Context, workingDir string) (*projectdetect.ProjectInfo, error)
+}
+
 // ComplaintService handles complaint business logic.
 type ComplaintService struct {
 	repo            repo.Repository
 	tracer          tracing.Tracer
-	logger          *v2.Logger
-	projectDetector projectdetect.Detector
+	logger          *log.Logger
+	projectDetector ProjectDetector
 }
 
 // NewComplaintService creates a new complaint service.
@@ -25,7 +31,7 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          v2.WithPrefix("complaint-service"),
+		logger:          log.WithPrefix("complaint-service"),
 		projectDetector: projectdetect.NewGitDetector(),
 	}
 }
@@ -34,12 +40,12 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 func NewComplaintServiceWithDetector(
 	repository repo.Repository,
 	tracer tracing.Tracer,
-	detector projectdetect.Detector,
+	detector ProjectDetector,
 ) *ComplaintService {
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          v2.WithPrefix("complaint-service"),
+		logger:          log.WithPrefix("complaint-service"),
 		projectDetector: detector,
 	}
 }
@@ -190,4 +196,21 @@ func (s *ComplaintService) Repository() repo.Repository {
 // GetCacheStats returns cache statistics.
 func (s *ComplaintService) GetCacheStats() repo.CacheStats {
 	return s.repo.GetCacheStats()
+}
+
+// SearchComplaints searches complaints by text query.
+func (s *ComplaintService) SearchComplaints(
+	ctx context.Context,
+	query string,
+	limit int,
+) ([]*domain.Complaint, error) {
+	return s.repo.Search(ctx, query, limit)
+}
+
+// ListUnresolvedComplaints retrieves unresolved complaints.
+func (s *ComplaintService) ListUnresolvedComplaints(
+	ctx context.Context,
+	limit int,
+) ([]*domain.Complaint, error) {
+	return s.repo.FindUnresolved(ctx, limit)
 }

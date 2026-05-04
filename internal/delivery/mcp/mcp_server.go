@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
@@ -16,7 +17,7 @@ import (
 type MCPServer struct {
 	config  *config.Config
 	service *service.ComplaintService
-	logger  *v2.Logger
+	logger  *log.Logger
 	tracer  tracing.Tracer
 	server  *mcp.Server
 }
@@ -25,7 +26,7 @@ type MCPServer struct {
 func NewServer(
 	name, version string,
 	complaintService *service.ComplaintService,
-	logger *v2.Logger,
+	logger *log.Logger,
 	tracer tracing.Tracer,
 ) *MCPServer {
 	server := mcp.NewServer(&mcp.Implementation{

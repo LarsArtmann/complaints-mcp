@@ -40,8 +40,8 @@ func NewRealTracer(serviceName string) *RealTracer {
 		sdktrace.WithBatcher(exp),
 		sdktrace.WithResource(
 			resource.NewWithAttributes(
-				attribute.String("schema_url", semconv.SchemaURL),
-				attribute.String(semconv.ServiceNameKey, serviceName),
+				semconv.SchemaURL,
+				semconv.ServiceName(serviceName),
 			),
 		),
 	)
@@ -84,7 +84,7 @@ func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[s
 		attrs = append(attrs, attribute.String(k, fmt.Sprintf("%v", v)))
 	}
 
-	rs.span.AddEvent(event, sdktrace.WithAttributes(attrs...))
+	rs.span.AddEvent(event, trace.WithAttributes(attrs...))
 }
 
 func (rs *RealSpan) SetAttribute(ctx context.Context, key string, value any) {
