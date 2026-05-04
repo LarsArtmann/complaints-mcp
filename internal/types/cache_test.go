@@ -17,9 +17,9 @@ func assertConstructorResult[T any](t *testing.T, expectError bool, expected, re
 }
 
 func runConstructorTests[T any](t *testing.T, tests []struct {
-	name        string
-	constructor func() (T, error)
 	expected    T
+	constructor func() (T, error)
+	name        string
 	expectError bool
 },
 ) {
@@ -33,8 +33,8 @@ func runConstructorTests[T any](t *testing.T, tests []struct {
 
 func TestNewCacheSize(t *testing.T) {
 	tests := []struct {
-		name        string
 		constructor func() (CacheSize, error)
+		name        string
 		expected    CacheSize
 		expectError bool
 	}{

@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	delivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
@@ -50,10 +48,10 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer       *delivery.MCPServer
-		tracer          tracing.Tracer
-		testConfig      *config.Config
-		cmd             *cobra.Command
+		mcpServer        *mcp.MCPServer
+		tracer           tracing.Tracer
+		testConfig       *config.Config
+		cmd              *cobra.Command
 	)
 
 	BeforeEach(func() {
@@ -66,11 +64,11 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		complaintService = service.NewComplaintService(repository, tracer)
 
 		// Initialize MCP server
-		mcpServer = delivery.NewServer(
+		mcpServer = mcp.NewServer(
 			"test-server",
 			"1.0.0",
 			complaintService,
-			log.WithPrefix("test"),
+			v2.WithPrefix("test"),
 			tracer,
 		)
 

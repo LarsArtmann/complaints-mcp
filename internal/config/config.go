@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 
-	"charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/larsartmann/complaints-mcp/internal/types"
 	"github.com/spf13/cobra"
@@ -71,7 +70,7 @@ type LogConfig struct {
 
 // Load loads configuration from various sources.
 func Load(ctx context.Context, cmd *cobra.Command) (*Config, error) {
-	logger := log.FromContext(ctx)
+	logger := v2.FromContext(ctx)
 
 	// Initialize viper
 	v := viper.New()
@@ -184,20 +183,26 @@ func expandHomeDir(path *string) error {
 	if path == nil || !strings.HasPrefix(*path, "~/") {
 		return nil
 	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
+
 	*path = filepath.Join(home, (*path)[2:])
+
 	return nil
 }
 
 func postProcessConfig(cfg *Config) error {
 	// Expand home directory in paths
-	if err := expandHomeDir(&cfg.Storage.BaseDir); err != nil {
+	err := expandHomeDir(&cfg.Storage.BaseDir)
+	if err != nil {
 		return err
 	}
-	if err := expandHomeDir(&cfg.Storage.GlobalDir); err != nil {
+
+	err := expandHomeDir(&cfg.Storage.GlobalDir)
+	if err != nil {
 		return err
 	}
 
@@ -221,9 +226,11 @@ func validateEnum(value, fieldName string, allowed []string) error {
 	if value == "" {
 		return nil
 	}
+
 	if !slices.Contains(allowed, value) {
 		return fmt.Errorf("invalid %s: %s (allowed: %v)", fieldName, value, allowed)
 	}
+
 	return nil
 }
 

@@ -11,7 +11,7 @@ import (
 
 func AssertFlatJSONMarshaling[Brand any](
 	tb testing.TB,
-	brandedID id.ID[Brand, string],
+	brandedID go-branded-id.ID[Brand, string],
 	expectedValue string,
 ) {
 	tb.Helper()
@@ -20,6 +20,7 @@ func AssertFlatJSONMarshaling[Brand any](
 	require.NoError(tb, err)
 
 	var flatResult string
+
 	err = json.Unmarshal(data, &flatResult)
 	require.NoError(tb, err)
 	assert.Equal(tb, expectedValue, flatResult)
@@ -29,23 +30,26 @@ func AssertFlatJSONMarshaling[Brand any](
 
 func AssertUnmarshalFromFlatJSON[Brand any](
 	tb testing.TB,
-	brandedID id.ID[Brand, string],
+	brandedID go-branded-id.ID[Brand, string],
 	jsonValue string,
 ) {
 	tb.Helper()
 
 	data := []byte(jsonValue)
-	var result id.ID[Brand, string]
+
+	var result go-branded-id.ID[Brand, string]
+
 	err := json.Unmarshal(data, &result)
 	require.NoError(tb, err)
 	assert.Equal(tb, brandedID, result)
-	assert.Equal(tb, false, result.IsZero())
+	assert.False(tb, result.IsZero())
 }
 
 func AssertRejectNestedJSONFormat[Brand any](tb testing.TB, jsonData string) {
 	tb.Helper()
 
-	var result id.ID[Brand, string]
+	var result go-branded-id.ID[Brand, string]
+
 	err := json.Unmarshal([]byte(jsonData), &result)
 	assert.Error(tb, err)
 }

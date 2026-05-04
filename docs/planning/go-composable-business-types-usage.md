@@ -61,14 +61,14 @@ type IDConstructor func(string) (id.ID[B, string], error)
 
 ### Benefits
 
-| Benefit                 | Description                                            |
-| ----------------------- | ------------------------------------------------------ |
-| **Type Safety**         | Compile-time prevention of mixing ID types             |
-| **Less Code**           | ~400 lines → ~80 lines (80% reduction)                 |
-| **More Features**       | SQL, Binary, Gob, Text, Compare, Or, IsZero            |
-| **Standardized**        | Consistent with go-branded-id ecosystem                   |
-| **Zero Value Handling** | Proper null serialization in JSON                      |
-| **Tested**              | Library has comprehensive test coverage                |
+| Benefit                 | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| **Type Safety**         | Compile-time prevention of mixing ID types  |
+| **Less Code**           | ~400 lines → ~80 lines (80% reduction)      |
+| **More Features**       | SQL, Binary, Gob, Text, Compare, Or, IsZero |
+| **Standardized**        | Consistent with go-branded-id ecosystem     |
+| **Zero Value Handling** | Proper null serialization in JSON           |
+| **Tested**              | Library has comprehensive test coverage     |
 
 ## Integration Strategy
 

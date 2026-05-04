@@ -12,7 +12,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 	t.Run("marshal produces flat JSON", func(t *testing.T) {
 		AssertFlatJSONMarshaling(
 			t,
-			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			"550e8400-e29b-41d4-a716-446655440000",
 		)
 	})
@@ -20,7 +20,7 @@ func TestComplaintID_JSONSerialization_FlatStructure(t *testing.T) {
 	t.Run("unmarshal from flat JSON", func(t *testing.T) {
 		AssertUnmarshalFromFlatJSON(
 			t,
-			id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			`"550e8400-e29b-41d4-a716-446655440000"`,
 		)
 	})
@@ -51,30 +51,30 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 
 	t.Run("parse validates input", func(t *testing.T) {
 		tests := []struct {
-			name       string
-			input      string
-			wantErr    bool
-			expectedID ComplaintID
-		}{
+	name       string
+	input      string
+	expectedID ComplaintID
+	wantErr    bool
+}{
 			{
 				"valid UUID",
 				"550e8400-e29b-41d4-a716-446655440000",
 				false,
-				id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+				go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			},
 			{
 				"valid lowercase",
 				"9cb3bb9e-b6dc-4e02-9767-e396a42b63a6",
 				false,
-				id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"),
+				go-branded-id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"),
 			},
-			{"empty string", "", true, id.NewID[ComplaintBrand]("")},
-			{"invalid format", "not-a-uuid", true, id.NewID[ComplaintBrand]("")},
+			{"empty string", "", true, go-branded-id.NewID[ComplaintBrand]("")},
+			{"invalid format", "not-a-uuid", true, go-branded-id.NewID[ComplaintBrand]("")},
 			{
 				"wrong version",
 				"550e8400-e29b-11d4-a716-446655440000",
 				true,
-				id.NewID[ComplaintBrand](""),
+				go-branded-id.NewID[ComplaintBrand](""),
 			},
 		}
 

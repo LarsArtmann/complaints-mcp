@@ -78,6 +78,7 @@ func newAppErrorWith(code ErrorCode, message string, cause error, details any) *
 	err := newAppError(code, message)
 	err.Cause = cause
 	err.Details = details
+
 	return err
 }
 

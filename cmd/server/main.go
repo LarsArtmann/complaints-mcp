@@ -55,6 +55,7 @@ func main() {
 
 func newLogger(logLevel string, reportCaller bool) *log.Logger {
 	level, _ := log.ParseLevel(logLevel)
+
 	return log.NewWithOptions(os.Stderr, log.Options{
 		Level:           level,
 		ReportTimestamp: true,
@@ -102,7 +103,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
-var mcpServer *mcpdelivery.MCPServer
+	var mcpServer *mcpdelivery.MCPServer
+
 	mcpServer = mcpdelivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled

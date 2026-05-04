@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/projectdetect"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
@@ -22,7 +21,7 @@ type ProjectDetector interface {
 type ComplaintService struct {
 	repo            repo.Repository
 	tracer          tracing.Tracer
-	logger          *log.Logger
+	logger          *v2.Logger
 	projectDetector ProjectDetector
 }
 
@@ -31,7 +30,7 @@ func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *Com
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          log.WithPrefix("complaint-service"),
+		logger:          v2.WithPrefix("complaint-service"),
 		projectDetector: projectdetect.NewGitDetector(),
 	}
 }
@@ -45,7 +44,7 @@ func NewComplaintServiceWithDetector(
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          log.WithPrefix("complaint-service"),
+		logger:          v2.WithPrefix("complaint-service"),
 		projectDetector: detector,
 	}
 }

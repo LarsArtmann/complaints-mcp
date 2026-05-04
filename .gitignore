@@ -41,3 +41,9 @@ Thumbs.db
 node_modules/
 # Sensitive files
 *.db
+# Test coverage
+/coverage
+# Copy/paste detection report
+/report/jscpd-report.json
+# Build artifacts
+/complaints-mcp

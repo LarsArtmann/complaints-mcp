@@ -134,7 +134,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 		It("should return specific error for empty complaint ID", func(ctx SpecContext) {
 			// Try to resolve with empty complaint ID
-			emptyID := id.NewID[domain.ComplaintBrand]("")
+			emptyID := go-branded-id.NewID[domain.ComplaintBrand]("")
 			_, err := complaintService.ResolveComplaint(ctx, emptyID, "test-agent")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("failed to find complaint"))

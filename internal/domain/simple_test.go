@@ -24,7 +24,7 @@ func TestCriticalJSONBugFix(t *testing.T) {
 	})
 
 	t.Run("✅ NEW FIX - flat JSON structure", func(t *testing.T) {
-		complaintID := id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
 		// Serialize to JSON
 		data, err := json.Marshal(complaintID)
