@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/cobra"
 )
 
 func newTestConfig(
@@ -51,7 +50,6 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		mcpServer        *mcp.MCPServer
 		tracer           tracing.Tracer
 		testConfig       *config.Config
-		cmd              *cobra.Command
 	)
 
 	BeforeEach(func() {
@@ -63,12 +61,16 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		repository = repo.NewFileRepository(tempDir, tracer)
 		complaintService = service.NewComplaintService(repository, tracer)
 
+		// Initialize logger for MCP server
+		level, _ := v2.ParseLevel("info")
+		logger := v2.NewWithOptions(os.Stderr, v2.Options{Level: level})
+
 		// Initialize MCP server
 		mcpServer = mcp.NewServer(
 			"test-server",
 			"1.0.0",
 			complaintService,
-			v2.WithPrefix("test"),
+			logger,
 			tracer,
 		)
 
@@ -82,12 +84,6 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 
 		// Set config for MCP server
 		mcpServer.SetConfig(testConfig)
-
-		// Create mock command for testing
-		cmd = &cobra.Command{}
-		cmd.PersistentFlags().String("config", "", "config file path")
-		cmd.PersistentFlags().String("log-level", "info", "log level")
-		cmd.PersistentFlags().Bool("dev", false, "development mode")
 	})
 
 	AfterEach(func() {

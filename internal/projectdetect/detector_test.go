@@ -15,10 +15,14 @@ import (
 func TestGitDetector_Detect_NotGitRepo(t *testing.T) {
 	detector := NewGitDetector()
 
-	// Create a temporary directory without git
-	tmpDir := t.TempDir()
+	// Create a temporary directory outside any git repo
+	// Use /var/tmp because /tmp has a .git folder which causes DetectDotGit to find it
+	tmpDir, err := os.MkdirTemp("/var/tmp", "not-git-repo-*")
+	require.NoError(t, err)
 
-	_, err := detector.Detect(t.Context(), tmpDir)
+	defer os.RemoveAll(tmpDir)
+
+	_, err = detector.Detect(t.Context(), tmpDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to open git repository")
 }
@@ -162,7 +166,12 @@ func TestIsGitRepository(t *testing.T) {
 	})
 
 	t.Run("returns false for non-git directory", func(t *testing.T) {
-		tmpDir := t.TempDir()
+		// Use /var/tmp because /tmp has a .git folder which causes DetectDotGit to find it
+		tmpDir, err := os.MkdirTemp("/var/tmp", "not-git-dir-*")
+		require.NoError(t, err)
+
+		defer os.RemoveAll(tmpDir)
+
 		assert.False(t, IsGitRepository(tmpDir))
 	})
 

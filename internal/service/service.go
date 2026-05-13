@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/domain"
@@ -27,10 +28,12 @@ type ComplaintService struct {
 
 // NewComplaintService creates a new complaint service.
 func NewComplaintService(repository repo.Repository, tracer tracing.Tracer) *ComplaintService {
+	level, _ := v2.ParseLevel("info")
+
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          v2.WithPrefix("complaint-service"),
+		logger:          v2.NewWithOptions(os.Stderr, v2.Options{Level: level}),
 		projectDetector: projectdetect.NewGitDetector(),
 	}
 }
@@ -41,10 +44,12 @@ func NewComplaintServiceWithDetector(
 	tracer tracing.Tracer,
 	detector ProjectDetector,
 ) *ComplaintService {
+	level, _ := v2.ParseLevel("info")
+
 	return &ComplaintService{
 		repo:            repository,
 		tracer:          tracer,
-		logger:          v2.WithPrefix("complaint-service"),
+		logger:          v2.NewWithOptions(os.Stderr, v2.Options{Level: level}),
 		projectDetector: detector,
 	}
 }

@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv/v1.26.0"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -40,8 +40,8 @@ func NewRealTracer(serviceName string) *RealTracer {
 		trace.WithBatcher(exp),
 		trace.WithResource(
 			resource.NewWithAttributes(
-				v1.26.0.SchemaURL,
-				v1.26.0.ServiceName(serviceName),
+				semconv.SchemaURL,
+				semconv.ServiceName(serviceName),
 			),
 		),
 	)

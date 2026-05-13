@@ -51,30 +51,40 @@ func TestComplaintID_NewAndParse(t *testing.T) {
 
 	t.Run("parse validates input", func(t *testing.T) {
 		tests := []struct {
-	name       string
-	input      string
-	expectedID ComplaintID
-	wantErr    bool
-}{
+			name        string
+			input       string
+			expectedID  ComplaintID
+			wantErr     bool
+		}{
 			{
-				"valid UUID",
-				"550e8400-e29b-41d4-a716-446655440000",
-				false,
-				go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+				name:        "valid UUID",
+				input:       "550e8400-e29b-41d4-a716-446655440000",
+				expectedID:  go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+				wantErr:     false,
 			},
 			{
-				"valid lowercase",
-				"9cb3bb9e-b6dc-4e02-9767-e396a42b63a6",
-				false,
-				go-branded-id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"),
+				name:        "valid lowercase",
+				input:       "9cb3bb9e-b6dc-4e02-9767-e396a42b63a6",
+				expectedID:  go-branded-id.NewID[ComplaintBrand]("9cb3bb9e-b6dc-4e02-9767-e396a42b63a6"),
+				wantErr:     false,
 			},
-			{"empty string", "", true, go-branded-id.NewID[ComplaintBrand]("")},
-			{"invalid format", "not-a-uuid", true, go-branded-id.NewID[ComplaintBrand]("")},
 			{
-				"wrong version",
-				"550e8400-e29b-11d4-a716-446655440000",
-				true,
-				go-branded-id.NewID[ComplaintBrand](""),
+				name:        "empty string",
+				input:       "",
+				expectedID:  go-branded-id.NewID[ComplaintBrand](""),
+				wantErr:     true,
+			},
+			{
+				name:        "invalid format",
+				input:       "not-a-uuid",
+				expectedID:  go-branded-id.NewID[ComplaintBrand](""),
+				wantErr:     true,
+			},
+			{
+				name:        "wrong version",
+				input:       "550e8400-e29b-11d4-a716-446655440000",
+				expectedID:  go-branded-id.NewID[ComplaintBrand](""),
+				wantErr:     true,
 			},
 		}
 

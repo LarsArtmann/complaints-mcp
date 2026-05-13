@@ -201,8 +201,7 @@ func postProcessConfig(cfg *Config) error {
 		return err
 	}
 
-	err := expandHomeDir(&cfg.Storage.GlobalDir)
-	if err != nil {
+	if err = expandHomeDir(&cfg.Storage.GlobalDir); err != nil {
 		return err
 	}
 
