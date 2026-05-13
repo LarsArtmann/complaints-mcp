@@ -2,11 +2,13 @@ package validation
 
 import (
 	"sync"
+
+	validator "github.com/go-playground/validator/v10"
 )
 
 // Validator provides a centralized, thread-safe validation instance.
 type Validator struct {
-	validate *v10.Validate
+	validate *validator.Validate
 }
 
 var (
@@ -17,7 +19,7 @@ var (
 // GetValidator returns the singleton validator instance.
 func GetValidator() *Validator {
 	once.Do(func() {
-		v := v10.New()
+		v := validator.New()
 		instance = &Validator{validate: v}
 	})
 
@@ -42,7 +44,7 @@ func (v *Validator) ValidateVar(field any, tag string) error {
 // RegisterValidation registers a custom validation function.
 func (v *Validator) RegisterValidation(
 	tag string,
-	fn v10.Func,
+	fn validator.Func,
 	callValidationEvenIfNull ...bool,
 ) error {
 	return v.validate.RegisterValidation(tag, fn, callValidationEvenIfNull...)
@@ -89,7 +91,7 @@ func ParseValidatorErrors(err error) ValidationErrors {
 		return nil
 	}
 
-	validatorErrors, ok := err.(v10.ValidationErrors)
+	validatorErrors, ok := err.(validator.ValidationErrors)
 	if !ok {
 		return ValidationErrors{{
 			Field:   "",
@@ -112,7 +114,7 @@ func ParseValidatorErrors(err error) ValidationErrors {
 }
 
 // formatErrorMessage creates a human-readable error message.
-func formatErrorMessage(e v10.FieldError) string {
+func formatErrorMessage(e validator.FieldError) string {
 	switch e.Tag() {
 	case "required":
 		return "this field is required"
