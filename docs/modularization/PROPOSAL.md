@@ -10,12 +10,14 @@
 Complaints MCP is a small, well-structured Go monolith with a single `go.mod` and 12 packages under `internal/`. The project is young, the dependency graph is already a clean DAG with no circular dependencies, and no god-packages exist. This is the ideal time to modularize — before coupling accumulates.
 
 **Why modularize now:**
+
 - Enforce compile-time boundaries between domain, infrastructure, and delivery layers
 - Enable independent versioning of the core domain (reusable by other projects)
 - Isolate test-only dependencies from production `go.mod`
 - Prepare for future growth (additional delivery mechanisms, storage backends)
 
 **What changes:**
+
 - Split from 1 `go.mod` into 4 sub-modules coordinated by a `go.work` file
 - Extract `domain` + `errors` + `types` into a zero-dependency core module
 - Keep delivery and infrastructure as separate modules
@@ -31,14 +33,14 @@ See [DEPENDENCY_GRAPH.md](./DEPENDENCY_GRAPH.md) for full analysis.
 
 ### Layer Classification
 
-| Layer | Packages | Internal Deps | Role |
-|---|---|---|---|
-| **Domain** | `domain`, `errors`, `types` | None | Business types and rules |
-| **Infrastructure** | `repo`, `config`, `tracing`, `projectdetect`, `validation` | Domain layer | External integrations |
-| **Application** | `service` | Domain + Infrastructure | Business logic orchestration |
-| **Delivery** | `delivery/mcp` | All layers | MCP protocol adapter |
-| **Entry** | `cmd/server` | Config, Repo, Service, Tracing | CLI entry point |
-| **Tests** | `features/bdd` | Config, Domain, Repo, Service, Tracing | BDD specifications |
+| Layer              | Packages                                                   | Internal Deps                          | Role                         |
+| ------------------ | ---------------------------------------------------------- | -------------------------------------- | ---------------------------- |
+| **Domain**         | `domain`, `errors`, `types`                                | None                                   | Business types and rules     |
+| **Infrastructure** | `repo`, `config`, `tracing`, `projectdetect`, `validation` | Domain layer                           | External integrations        |
+| **Application**    | `service`                                                  | Domain + Infrastructure                | Business logic orchestration |
+| **Delivery**       | `delivery/mcp`                                             | All layers                             | MCP protocol adapter         |
+| **Entry**          | `cmd/server`                                               | Config, Repo, Service, Tracing         | CLI entry point              |
+| **Tests**          | `features/bdd`                                             | Config, Domain, Repo, Service, Tracing | BDD specifications           |
 
 ### Coupling Hotspots
 
@@ -48,11 +50,11 @@ See [DEPENDENCY_GRAPH.md](./DEPENDENCY_GRAPH.md) for full analysis.
 
 ### Banned Dependencies Found
 
-| Dependency | Where | Replacement |
-|---|---|---|
-| `spf13/viper` | `config` | `koanf` |
-| `stretchr/testify` | `domain` tests, `types` tests | `gomega` |
-| `go-playground/validator` | `validation` | `govalid` |
+| Dependency                | Where                         | Replacement |
+| ------------------------- | ----------------------------- | ----------- |
+| `spf13/viper`             | `config`                      | `koanf`     |
+| `stretchr/testify`        | `domain` tests, `types` tests | `gomega`    |
+| `go-playground/validator` | `validation`                  | `govalid`   |
 
 ---
 
@@ -123,51 +125,51 @@ complaints-mcp/                   (go.work — workspace root)
 
 #### Module 1: `core`
 
-| Field | Value |
-|---|---|
-| **Path** | `/core` |
-| **Module** | `github.com/larsartmann/complaints-mcp/core` |
-| **Purpose** | Domain types, errors, and shared value objects — zero internal dependencies |
-| **Internal deps (prod)** | None |
-| **Internal deps (test)** | None |
-| **External deps** | `gofrs/uuid`, `go-branded-id` |
-| **Public API** | `Complaint`, all ID types, `Severity`, `ResolutionState`, `AppError`, `ErrorCode`, `CacheSize`, `PageRequest`, `PageResponse[T]`, `DocsFormat` |
+| Field                    | Value                                                                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Path**                 | `/core`                                                                                                                                        |
+| **Module**               | `github.com/larsartmann/complaints-mcp/core`                                                                                                   |
+| **Purpose**              | Domain types, errors, and shared value objects — zero internal dependencies                                                                    |
+| **Internal deps (prod)** | None                                                                                                                                           |
+| **Internal deps (test)** | None                                                                                                                                           |
+| **External deps**        | `gofrs/uuid`, `go-branded-id`                                                                                                                  |
+| **Public API**           | `Complaint`, all ID types, `Severity`, `ResolutionState`, `AppError`, `ErrorCode`, `CacheSize`, `PageRequest`, `PageResponse[T]`, `DocsFormat` |
 
 #### Module 2: `infra`
 
-| Field | Value |
-|---|---|
-| **Path** | `/infra` |
-| **Module** | `github.com/larsartmann/complaints-mcp/infra` |
-| **Purpose** | Infrastructure adapters — storage, config, tracing, git detection, validation |
-| **Internal deps (prod)** | `core` |
-| **Internal deps (test)** | `core` |
-| **External deps** | `charm.land/log/v2`, `go-sdk/mcp`, `spf13/cobra`, `spf13/viper` (→ migrate to `koanf`), `adrg/xdg`, `go-git/v5`, `opentelemetry/*` |
-| **Public API** | `Repository` (interface), `FileRepository`, `Tracer` (interface), `MockTracer`, `Config`, `GitDetector`, `Validator` |
+| Field                    | Value                                                                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Path**                 | `/infra`                                                                                                                           |
+| **Module**               | `github.com/larsartmann/complaints-mcp/infra`                                                                                      |
+| **Purpose**              | Infrastructure adapters — storage, config, tracing, git detection, validation                                                      |
+| **Internal deps (prod)** | `core`                                                                                                                             |
+| **Internal deps (test)** | `core`                                                                                                                             |
+| **External deps**        | `charm.land/log/v2`, `go-sdk/mcp`, `spf13/cobra`, `spf13/viper` (→ migrate to `koanf`), `adrg/xdg`, `go-git/v5`, `opentelemetry/*` |
+| **Public API**           | `Repository` (interface), `FileRepository`, `Tracer` (interface), `MockTracer`, `Config`, `GitDetector`, `Validator`               |
 
 #### Module 3: `server`
 
-| Field | Value |
-|---|---|
-| **Path** | `/server` |
-| **Module** | `github.com/larsartmann/complaints-mcp/server` |
-| **Purpose** | MCP protocol delivery and CLI entry point |
-| **Internal deps (prod)** | `core`, `infra`, `service` |
-| **Internal deps (test)** | `core`, `infra` |
-| **External deps** | `go-sdk/mcp`, `spf13/cobra`, `charm.land/log/v2` |
-| **Public API** | `MCPServer`, `NewServer`, DTO types |
+| Field                    | Value                                            |
+| ------------------------ | ------------------------------------------------ |
+| **Path**                 | `/server`                                        |
+| **Module**               | `github.com/larsartmann/complaints-mcp/server`   |
+| **Purpose**              | MCP protocol delivery and CLI entry point        |
+| **Internal deps (prod)** | `core`, `infra`, `service`                       |
+| **Internal deps (test)** | `core`, `infra`                                  |
+| **External deps**        | `go-sdk/mcp`, `spf13/cobra`, `charm.land/log/v2` |
+| **Public API**           | `MCPServer`, `NewServer`, DTO types              |
 
 #### Module 4: `service`
 
-| Field | Value |
-|---|---|
-| **Path** | `/service` |
-| **Module** | `github.com/larsartmann/complaints-mcp/service` |
-| **Purpose** | Business logic orchestration — the application layer |
+| Field                    | Value                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| **Path**                 | `/service`                                                                      |
+| **Module**               | `github.com/larsartmann/complaints-mcp/service`                                 |
+| **Purpose**              | Business logic orchestration — the application layer                            |
 | **Internal deps (prod)** | `core`, `infra` (only `repo.Repository` interface + `tracing.Tracer` interface) |
-| **Internal deps (test)** | `core`, `infra` |
-| **External deps** | `charm.land/log/v2` |
-| **Public API** | `ComplaintService`, `ProjectDetector` (interface) |
+| **Internal deps (test)** | `core`, `infra`                                                                 |
+| **External deps**        | `charm.land/log/v2`                                                             |
+| **Public API**           | `ComplaintService`, `ProjectDetector` (interface)                               |
 
 ### Dependency DAG (Proposed)
 
@@ -199,12 +201,12 @@ complaints-mcp/                   (go.work — workspace root)
 
 ### Cross-Module Import Table
 
-| From \ To | `core` | `infra` | `service` | `server` |
-|---|---|---|---|---|
-| **`core`** | — | ✗ | ✗ | ✗ |
-| **`infra`** | ✓ | — | ✗ | ✗ |
-| **`service`** | ✓ | ✓ (interfaces only) | — | ✗ |
-| **`server`** | ✓ | ✓ | ✓ | — |
+| From \ To     | `core` | `infra`             | `service` | `server` |
+| ------------- | ------ | ------------------- | --------- | -------- |
+| **`core`**    | —      | ✗                   | ✗         | ✗        |
+| **`infra`**   | ✓      | —                   | ✗         | ✗        |
+| **`service`** | ✓      | ✓ (interfaces only) | —         | ✗        |
+| **`server`**  | ✓      | ✓                   | ✓         | —        |
 
 ### Bidirectional Test Dependencies
 
@@ -217,6 +219,7 @@ None required. BDD tests in `features/bdd` import from all modules (they live ou
 **Chosen: `go.work` at repo root**
 
 Rationale:
+
 - 4 modules is enough to benefit from workspace mode
 - Each module's `go.mod` stays clean — no `replace` directives
 - `go.work` is automatically ignored by consumers when we publish
@@ -248,16 +251,17 @@ use (
 
 ### Production vs Test Dependencies Per Module
 
-| Module | Production Deps | Test-Only Deps |
-|---|---|---|
-| `core` | `gofrs/uuid`, `go-branded-id` | `gomega` (migrated from testify) |
-| `infra` | `core`, `charm.land/log/v2`, `go-git/v5`, `opentelemetry/*`, `spf13/cobra`, `spf13/viper` | `gomega` |
-| `service` | `core`, `infra`, `charm.land/log/v2` | `gomega` |
-| `server` | `core`, `infra`, `service`, `go-sdk/mcp`, `charm.land/log/v2` | `gomega` |
+| Module    | Production Deps                                                                           | Test-Only Deps                   |
+| --------- | ----------------------------------------------------------------------------------------- | -------------------------------- |
+| `core`    | `gofrs/uuid`, `go-branded-id`                                                             | `gomega` (migrated from testify) |
+| `infra`   | `core`, `charm.land/log/v2`, `go-git/v5`, `opentelemetry/*`, `spf13/cobra`, `spf13/viper` | `gomega`                         |
+| `service` | `core`, `infra`, `charm.land/log/v2`                                                      | `gomega`                         |
+| `server`  | `core`, `infra`, `service`, `go-sdk/mcp`, `charm.land/log/v2`                             | `gomega`                         |
 
 ### BDD Test Module
 
 `features/bdd` is NOT a Go module. It will import from the workspace modules:
+
 - `github.com/larsartmann/complaints-mcp/core/...`
 - `github.com/larsartmann/complaints-mcp/infra/...`
 - `github.com/larsartmann/complaints-mcp/service/...`
@@ -275,6 +279,7 @@ It requires `ginkgo/v2` + `gomega` in its own `go.mod` at the repo root level, o
 ### Current State
 
 The codebase already uses interfaces well:
+
 - `repo.Repository` — interface, implemented by `FileRepository` and `SimpleCachedRepository`
 - `tracing.Tracer` — interface, implemented by `MockTracer`, `RealTracer`, `NoOpTracer`
 - `service.ProjectDetector` — interface, implemented by `GitDetector`
@@ -297,6 +302,7 @@ The codebase already uses interfaces well:
 **Chosen: Shared version (monorepo tagging)**
 
 Rationale:
+
 - Single team, single repo, tight coupling between modules
 - No external consumers of individual modules
 - Simpler CI/CD — one tag `v1.2.3` bumps everything
@@ -327,13 +333,13 @@ Ordered steps, each independently executable. See [EXECUTION_PLAN.md](./EXECUTIO
 
 ## 10. Risk Assessment
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| Import path changes break BDD tests | High | Medium | Update all imports in one commit, verify immediately |
-| Banned dependency replacement causes API changes | Medium | Medium | Replace one at a time, test after each |
-| `go.work` issues with IDE/LSP | Low | Low | Use Go 1.26 workspace support, well-tested |
-| Circular dependency appears during split | Low | High | Verify DAG at each step with `go vet ./...` |
-| Test-only deps leak into production go.mod | Medium | Medium | Run `go mod tidy` per module after each step |
+| Risk                                             | Likelihood | Impact | Mitigation                                           |
+| ------------------------------------------------ | ---------- | ------ | ---------------------------------------------------- |
+| Import path changes break BDD tests              | High       | Medium | Update all imports in one commit, verify immediately |
+| Banned dependency replacement causes API changes | Medium     | Medium | Replace one at a time, test after each               |
+| `go.work` issues with IDE/LSP                    | Low        | Low    | Use Go 1.26 workspace support, well-tested           |
+| Circular dependency appears during split         | Low        | High   | Verify DAG at each step with `go vet ./...`          |
+| Test-only deps leak into production go.mod       | Medium     | Medium | Run `go mod tidy` per module after each step         |
 
 ---
 
