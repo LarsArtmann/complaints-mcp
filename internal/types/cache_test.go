@@ -33,39 +33,39 @@ func runConstructorTests[T any](t *testing.T, tests []struct {
 
 func TestNewCacheSize(t *testing.T) {
 	tests := []struct {
+		expected    CacheSize
 		constructor func() (CacheSize, error)
 		name        string
-		expected    CacheSize
 		expectError bool
 	}{
 		{
-			expected:    1,
-			name:        "valid minimum size",
 			constructor: func() (CacheSize, error) { return NewCacheSize(1) },
+			name:        "valid minimum size",
+			expected:    1,
 			expectError: false,
 		},
 		{
-			expected:    1000,
-			name:        "valid medium size",
 			constructor: func() (CacheSize, error) { return NewCacheSize(1000) },
+			name:        "valid medium size",
+			expected:    1000,
 			expectError: false,
 		},
 		{
-			expected:    100000,
-			name:        "valid maximum size",
 			constructor: func() (CacheSize, error) { return NewCacheSize(100000) },
+			name:        "valid maximum size",
+			expected:    100000,
 			expectError: false,
 		},
 		{
-			expected:    MinCacheSize,
-			name:        "too small",
 			constructor: func() (CacheSize, error) { return NewCacheSize(0) },
+			name:        "too small",
+			expected:    MinCacheSize,
 			expectError: true,
 		},
 		{
-			expected:    MaxCacheSize,
-			name:        "too large",
 			constructor: func() (CacheSize, error) { return NewCacheSize(100001) },
+			name:        "too large",
+			expected:    MaxCacheSize,
 			expectError: true,
 		},
 	}
@@ -99,33 +99,33 @@ func TestNewEvictionPolicy(t *testing.T) {
 		expectError bool
 	}{
 		{
-			expected:    EvictionLRU,
-			name:        "valid LRU",
 			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("lru") },
+			name:        "valid LRU",
+			expected:    EvictionLRU,
 			expectError: false,
 		},
 		{
-			expected:    EvictionFIFO,
-			name:        "valid FIFO",
 			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("fifo") },
+			name:        "valid FIFO",
+			expected:    EvictionFIFO,
 			expectError: false,
 		},
 		{
-			expected:    EvictionNone,
-			name:        "valid none",
 			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("none") },
+			name:        "valid none",
+			expected:    EvictionNone,
 			expectError: false,
 		},
 		{
-			expected:    EvictionLRU,
-			name:        "empty defaults to LRU",
 			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("") },
+			name:        "empty defaults to LRU",
+			expected:    EvictionLRU,
 			expectError: false,
 		},
 		{
-			expected:    EvictionLRU,
-			name:        "invalid policy",
 			constructor: func() (CacheEvictionPolicy, error) { return NewEvictionPolicy("invalid") },
+			name:        "invalid policy",
+			expected:    EvictionLRU,
 			expectError: true,
 		},
 	}

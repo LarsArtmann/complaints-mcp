@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	v5 "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 )
 
@@ -38,7 +38,7 @@ func (d *GitDetector) Detect(ctx context.Context, workingDir string) (*ProjectIn
 	}
 
 	// Open the repository - go-git handles walking up to find .git
-	repo, err := v5.PlainOpenWithOptions(workingDir, &v5.PlainOpenOptions{
+	repo, err := git.PlainOpenWithOptions(workingDir, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
 	if err != nil {
@@ -85,7 +85,7 @@ func (d *GitDetector) Detect(ctx context.Context, workingDir string) (*ProjectIn
 }
 
 // getRemoteURL retrieves the origin remote URL or falls back to any available remote.
-func (d *GitDetector) getRemoteURL(repo *v5.Repository) (string, error) {
+func (d *GitDetector) getRemoteURL(repo *git.Repository) (string, error) {
 	// Try origin first
 	remote, err := repo.Remote("origin")
 	if err == nil && len(remote.Config().URLs) > 0 {
@@ -146,7 +146,7 @@ func DetectProject(ctx context.Context, workingDir string) (*ProjectInfo, error)
 
 // IsGitRepository checks if the given path is inside a git repository.
 func IsGitRepository(path string) bool {
-	_, err := v5.PlainOpenWithOptions(path, &v5.PlainOpenOptions{
+	_, err := git.PlainOpenWithOptions(path, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
 

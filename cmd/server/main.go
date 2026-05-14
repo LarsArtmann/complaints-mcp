@@ -102,7 +102,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintRepo := repo.NewRepositoryFromConfig(cfg, tracer)
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
-	mcpServer := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
+	// Initialize MCP server
+	server := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled
 	if cfg.Storage.CacheEnabled {
@@ -129,9 +130,9 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	go func() {
 		// Set config for MCP server
-		mcpServer.SetConfig(cfg)
+		server.SetConfig(cfg)
 
-		err := mcpServer.Start(ctx)
+		err := server.Start(ctx)
 		if err != nil {
 			serverErrChan <- fmt.Errorf("server error: %w", err)
 		}
@@ -153,7 +154,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	logger.Info("Initiating graceful shutdown")
 
 	// Shutdown MCP server first
-	if err := mcpServer.Shutdown(shutdownCtx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		logger.Error("Error during MCP server shutdown", "error", err)
 	} else {
 		logger.Info("MCP server stopped gracefully")

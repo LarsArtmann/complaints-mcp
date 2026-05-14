@@ -36,9 +36,9 @@ func NewRealTracer(serviceName string) *RealTracer {
 	}
 
 	// Create tracer provider
-	tp := trace.NewTracerProvider(
-		trace.WithBatcher(exp),
-		trace.WithResource(
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(
 			resource.NewWithAttributes(
 				semconv.SchemaURL,
 				semconv.ServiceName(serviceName),
@@ -65,7 +65,7 @@ func (t *RealTracer) Start(ctx context.Context, name string) (context.Context, S
 // Close shuts down tracer.
 func (t *RealTracer) Close() error {
 	// Shutdown tracer provider
-	if tp, ok := otel.GetTracerProvider().(*trace.TracerProvider); ok {
+	if tp, ok := otel.GetTracerProvider().(interface{ Shutdown(context.Context) error }); ok {
 		return tp.Shutdown(context.Background())
 	}
 
