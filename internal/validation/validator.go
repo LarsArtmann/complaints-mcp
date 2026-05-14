@@ -71,7 +71,7 @@ func (v *Validator) ValidateStruct(s any) error {
 	}
 
 	val := reflect.ValueOf(s)
-	if val.Kind() != reflect.Ptr {
+	if val.Kind() != reflect.Pointer {
 		return errors.New("must be a pointer")
 	}
 
@@ -290,7 +290,7 @@ func isEmpty(v reflect.Value) bool {
 		return v.String() == ""
 	case reflect.Slice, reflect.Map, reflect.Array, reflect.Chan:
 		return v.Len() == 0
-	case reflect.Ptr, reflect.Interface:
+	case reflect.Pointer, reflect.Interface:
 		if v.IsNil() {
 			return true
 		}
