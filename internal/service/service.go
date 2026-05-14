@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/projectdetect"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	v2 "charm.land/log/v2"
 )
 
 // ProjectDetector defines the interface for project detection.

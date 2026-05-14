@@ -3,7 +3,7 @@ package domain
 import (
 	"regexp"
 
-	id "github.com/larsartmann/go-branded-id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 type (
@@ -13,9 +13,9 @@ type (
 )
 
 type (
-	AgentID   = id.ID[AgentBrand, string]
-	ProjectID = id.ID[ProjectBrand, string]
-	SessionID = id.ID[SessionBrand, string]
+	AgentID   = go-branded-id.ID[AgentBrand, string]
+	ProjectID = go-branded-id.ID[ProjectBrand, string]
+	SessionID = go-branded-id.ID[SessionBrand, string]
 )
 
 type ComplaintIDField int
