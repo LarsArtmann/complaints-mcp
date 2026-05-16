@@ -3,20 +3,20 @@
 **Generated:** 2026-05-16 20:39 (CEST)  
 **Branch:** master (2 commits ahead of origin/master)  
 **Working Directory:** /home/lars/projects/complaints-mcp  
-**Last Session:** 2026-05-16 20:34 - Typecheck Fixes Complete  
+**Last Session:** 2026-05-16 20:34 - Typecheck Fixes Complete
 
 ---
 
 ## Executive Summary
 
-| Metric | Status |
-|--------|--------|
-| Build | ✅ PASSING |
-| Tests | ✅ ALL PASSING (7/7 packages) |
-| Working Tree | ✅ CLEAN |
-| Commits Ahead | 2 |
-| Critical Issues | 0 |
-| Open Warnings | 56 (non-blocking) |
+| Metric          | Status                        |
+| --------------- | ----------------------------- |
+| Build           | ✅ PASSING                    |
+| Tests           | ✅ ALL PASSING (7/7 packages) |
+| Working Tree    | ✅ CLEAN                      |
+| Commits Ahead   | 2                             |
+| Critical Issues | 0                             |
+| Open Warnings   | 56 (non-blocking)             |
 
 ---
 
@@ -58,11 +58,11 @@
 
 ### Non-Blocking Issues (56 Warnings)
 
-| Category | Count | Severity |
-|----------|-------|----------|
-| Jaeger deprecation | 1 | Low |
-| LSP cascading errors (stale) | ~48 | None |
-| Type mismatch warnings | ~7 | Low |
+| Category                     | Count | Severity |
+| ---------------------------- | ----- | -------- |
+| Jaeger deprecation           | 1     | Low      |
+| LSP cascading errors (stale) | ~48   | None     |
+| Type mismatch warnings       | ~7    | Low      |
 
 ### Jaeger Deprecation (Low Priority)
 
@@ -173,33 +173,33 @@ Use: otlptrace/otlptracehttp or otlptrace/otlptracegrpc
 
 ## f) TOP #25 THINGS TO GET DONE NEXT
 
-| # | Priority | Item | Effort | Impact |
-|---|----------|------|--------|--------|
-| 1 | HIGH | Jaeger → OTLP Migration | Low | Eliminate deprecation |
-| 2 | HIGH | Verify mcp.NewServer signature | Medium | Clean warnings |
-| 3 | HIGH | Add typecheck to pre-commit | Low | Prevention |
-| 4 | MED | Add golangci-lint to CI | Medium | Quality |
-| 5 | MED | Update AGENTS.md with aliases | Low | Documentation |
-| 6 | MED | Add CHANGELOG entry | Low | Documentation |
-| 7 | MED | Service layer tests | Medium | Coverage |
-| 8 | MED | Repository BDD tests | Medium | Coverage |
-| 9 | LOW | Connection pooling (tracing) | Medium | Performance |
-| 10 | LOW | Health check endpoint | Low | Observability |
-| 11 | LOW | Prometheus metrics | Medium | Observability |
-| 12 | LOW | Rate limiting (MCP) | Medium | Security |
-| 13 | LOW | Docker deployment | Medium | DevOps |
-| 14 | LOW | Docker-compose dev env | Low | Developer Experience |
-| 15 | LOW | API versioning strategy | Medium | Architecture |
-| 16 | LOW | Circuit breaker | Medium | Resilience |
-| 17 | LOW | Graceful shutdown improvements | Low | Reliability |
-| 18 | LOW | Structured logging improvements | Low | Observability |
-| 19 | LOW | E2E encryption | Medium | Security |
-| 20 | LOW | Benchmark tests | Medium | Performance |
-| 21 | LOW | OpenAPI spec for MCP | Medium | Documentation |
-| 22 | LOW | Migration guide v2 API | Medium | Documentation |
-| 23 | LOW | Audit transitive deps | Low | Security |
-| 24 | LOW | Project detection caching | Low | Performance |
-| 25 | LOW | Error message localization | Medium | UX |
+| #   | Priority | Item                            | Effort | Impact                |
+| --- | -------- | ------------------------------- | ------ | --------------------- |
+| 1   | HIGH     | Jaeger → OTLP Migration         | Low    | Eliminate deprecation |
+| 2   | HIGH     | Verify mcp.NewServer signature  | Medium | Clean warnings        |
+| 3   | HIGH     | Add typecheck to pre-commit     | Low    | Prevention            |
+| 4   | MED      | Add golangci-lint to CI         | Medium | Quality               |
+| 5   | MED      | Update AGENTS.md with aliases   | Low    | Documentation         |
+| 6   | MED      | Add CHANGELOG entry             | Low    | Documentation         |
+| 7   | MED      | Service layer tests             | Medium | Coverage              |
+| 8   | MED      | Repository BDD tests            | Medium | Coverage              |
+| 9   | LOW      | Connection pooling (tracing)    | Medium | Performance           |
+| 10  | LOW      | Health check endpoint           | Low    | Observability         |
+| 11  | LOW      | Prometheus metrics              | Medium | Observability         |
+| 12  | LOW      | Rate limiting (MCP)             | Medium | Security              |
+| 13  | LOW      | Docker deployment               | Medium | DevOps                |
+| 14  | LOW      | Docker-compose dev env          | Low    | Developer Experience  |
+| 15  | LOW      | API versioning strategy         | Medium | Architecture          |
+| 16  | LOW      | Circuit breaker                 | Medium | Resilience            |
+| 17  | LOW      | Graceful shutdown improvements  | Low    | Reliability           |
+| 18  | LOW      | Structured logging improvements | Low    | Observability         |
+| 19  | LOW      | E2E encryption                  | Medium | Security              |
+| 20  | LOW      | Benchmark tests                 | Medium | Performance           |
+| 21  | LOW      | OpenAPI spec for MCP            | Medium | Documentation         |
+| 22  | LOW      | Migration guide v2 API          | Medium | Documentation         |
+| 23  | LOW      | Audit transitive deps           | Low    | Security              |
+| 24  | LOW      | Project detection caching       | Low    | Performance           |
+| 25  | LOW      | Error message localization      | Medium | UX                    |
 
 ---
 
@@ -208,18 +208,21 @@ Use: otlptrace/otlptracehttp or otlptrace/otlptracegrpc
 ### Why did the MCP SDK import path issue go undetected until now?
 
 **The Mystery:**
+
 - Project builds and tests pass
 - But `mcp.NewServer` signature doesn't match the external SDK
 - This suggests the external SDK was never properly integrated
 - Yet the project was committed and reviewed
 
 **Possible Explanations:**
+
 1. The external SDK was a placeholder that was never fully integrated
 2. The internal implementation (`internal/delivery/mcp`) replaced it
 3. Version mismatch between development and committed state
 4. Missing `go mod replace` directive that expired
 
 **What I Need to Investigate:**
+
 ```bash
 git log --all --oneline --source --remotes
 go mod graph
@@ -227,6 +230,7 @@ git show e7511c2:go.mod | head -30
 ```
 
 **Risk Assessment:**
+
 - If external SDK is unused → Low risk, cleanup opportunity
 - If external SDK is needed but broken → Medium risk, needs fix
 - If external SDK is planned but not implemented → Project is incomplete
@@ -263,26 +267,28 @@ Origin: origin/master (not pushed)
 
 ### Unpushed Commits
 
-| Commit | Message |
-|--------|---------|
+| Commit    | Message                                                            |
+| --------- | ------------------------------------------------------------------ |
 | `2ad60ed` | fix(build): resolve 100+ typecheck errors from import alias issues |
-| `a7357ce` | docs(status): add comprehensive status report |
+| `a7357ce` | docs(status): add comprehensive status report                      |
 
 ---
 
 ## Files Modified This Session
 
-| File | Lines Added | Lines Removed |
-|------|-------------|---------------|
-| 16 files total | +58 | -37 |
+| File           | Lines Added | Lines Removed |
+| -------------- | ----------- | ------------- |
+| 16 files total | +58         | -37           |
 
 ### By Category
 
 **Build System (2):**
+
 - go.mod
 - go.sum
 
 **Core Packages (11):**
+
 - cmd/server/main.go
 - internal/config/config.go
 - internal/service/service.go
@@ -296,6 +302,7 @@ Origin: origin/master (not pushed)
 - internal/projectdetect/detector_test.go
 
 **Test Files (5):**
+
 - features/bdd/complaint_resolution_bdd_test.go
 - features/bdd/mcp_integration_bdd_test.go
 - internal/domain/complaint_id_flat_test.go
@@ -304,6 +311,7 @@ Origin: origin/master (not pushed)
 - internal/domain/simple_test.go
 
 **Documentation (1):**
+
 - docs/status/2026-05-16_20-34_Typecheck-Fixes.md
 
 ---
@@ -329,6 +337,7 @@ Origin: origin/master (not pushed)
 **Project Status: HEALTHY ✅**
 
 The complaints-mcp project is in good working condition:
+
 - Build passes
 - All tests pass
 - Working tree clean
@@ -340,4 +349,4 @@ The complaints-mcp project is in good working condition:
 
 ---
 
-*Generated: 2026-05-16 20:39 CEST*
+_Generated: 2026-05-16 20:39 CEST_

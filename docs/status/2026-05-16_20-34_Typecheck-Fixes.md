@@ -2,7 +2,7 @@
 
 **Generated:** 2026-05-16 20:34 (CEST)  
 **Branch:** master  
-**Working Directory:** /home/lars/projects/complaints-mcp  
+**Working Directory:** /home/lars/projects/complaints-mcp
 
 ---
 
@@ -162,18 +162,21 @@ All 7 test packages pass.
 **Why did the external MCP SDK (`github.com/modelcontextprotocol/go-sdk`) import work during the initial project setup but fail during this typecheck session?**
 
 The symptoms suggest:
+
 - `go build ./cmd/server` worked at one point
 - The import path `github.com/modelcontextprotocol/go-sdk/mcp` was being used
 - But the actual package structure may have been `internal/delivery/mcp` from the start
 - The `go mod tidy` failure suggests circular or misaligned dependencies
 
 **Possible causes:**
+
 1. Module replacement directive that was removed or expired
 2. Version mismatch between local development and committed state
 3. The external SDK was never properly integrated, and the internal implementation was always the actual code
 4. Go module cache inconsistency
 
 **I need:**
+
 - Access to git history before the last few commits to see when `internal/delivery/mcp` was introduced
 - The output of `go mod graph` to understand the actual dependency tree
 - The original `go.mod` from the initial project setup commit
@@ -182,23 +185,23 @@ The symptoms suggest:
 
 ## Files Changed (Summary)
 
-| File | Changes |
-|------|---------|
-| `cmd/server/main.go` | Import path fix, v2 alias |
-| `go.mod` | Added transitive deps |
-| `go.sum` | Updated checksums |
-| `internal/config/config.go` | v2 alias |
-| `internal/delivery/mcp/mcp_server.go` | v2 alias |
-| `internal/domain/complaint.go` | brandedid alias, formatting |
-| `internal/domain/complaint_id_flat_test.go` | brandedid alias, 5 usages |
-| `internal/domain/complaint_id_test.go` | brandedid alias, 10 usages |
-| `internal/domain/id_helpers.go` | brandedid alias, formatting |
-| `internal/domain/id_helpers_test.go` | brandedid alias, 3 usages |
-| `internal/domain/simple_test.go` | brandedid alias, 1 usage |
-| `internal/projectdetect/detector.go` | gigit alias |
-| `internal/projectdetect/detector_test.go` | gigit alias, 2 usages |
-| `internal/service/service.go` | v2 alias |
-| `features/bdd/complaint_resolution_bdd_test.go` | brandedid alias, 1 usage |
-| `features/bdd/mcp_integration_bdd_test.go` | Import path fix, v2 alias |
+| File                                            | Changes                     |
+| ----------------------------------------------- | --------------------------- |
+| `cmd/server/main.go`                            | Import path fix, v2 alias   |
+| `go.mod`                                        | Added transitive deps       |
+| `go.sum`                                        | Updated checksums           |
+| `internal/config/config.go`                     | v2 alias                    |
+| `internal/delivery/mcp/mcp_server.go`           | v2 alias                    |
+| `internal/domain/complaint.go`                  | brandedid alias, formatting |
+| `internal/domain/complaint_id_flat_test.go`     | brandedid alias, 5 usages   |
+| `internal/domain/complaint_id_test.go`          | brandedid alias, 10 usages  |
+| `internal/domain/id_helpers.go`                 | brandedid alias, formatting |
+| `internal/domain/id_helpers_test.go`            | brandedid alias, 3 usages   |
+| `internal/domain/simple_test.go`                | brandedid alias, 1 usage    |
+| `internal/projectdetect/detector.go`            | gigit alias                 |
+| `internal/projectdetect/detector_test.go`       | gigit alias, 2 usages       |
+| `internal/service/service.go`                   | v2 alias                    |
+| `features/bdd/complaint_resolution_bdd_test.go` | brandedid alias, 1 usage    |
+| `features/bdd/mcp_integration_bdd_test.go`      | Import path fix, v2 alias   |
 
 **Total: 16 files modified**
