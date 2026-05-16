@@ -145,6 +145,27 @@ docker_manifests:
       - "ghcr.io/larsartmann/complaints-mcp:{{ .Tag }}-amd64"
       - "ghcr.io/larsartmann/complaints-mcp:{{ .Tag }}-arm64"
 
+
+nfpms:
+  - id: default
+    package_name: complaints-mcp
+    file_name_template: "{"{"} .ConventionalFileName {"}"}"
+    homepage: https://github.com/LarsArtmann/complaints-mcp
+    description: "MCP server for AI Coding Agents to file complaint reports"
+    license: MIT
+    maintainer: "Lars Artmann <lars@larsartmann.com>"
+    formats:
+      - deb
+      - rpm
+      - apk
+    contents:
+      - src: LICENSE
+        dst: /usr/share/doc/complaints-mcp/LICENSE
+      - src: README.md
+        dst: /usr/share/doc/complaints-mcp/README.md
+    deb:
+      fields:
+        Bugs: https://github.com/LarsArtmann/complaints-mcp/issues
 nix:
   - name: complaints-mcp
     repository:
@@ -153,10 +174,25 @@ nix:
     homepage: https://github.com/LarsArtmann/complaints-mcp
     description: "MCP server for AI Coding Agents to file complaint reports"
     license: mit
+    formatter: nixfmt
     path: pkgs/complaints-mcp/default.nix
     install: |
       mkdir -p $out/bin
       cp -vr ./{binary} $out/bin/complaints-mcp
+
+
+scoops:
+  - name: complaints-mcp
+    repository:
+      owner: LarsArtmann
+      name: homebrew-tap
+    folder: Scoop
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@larsartmann.com
+    homepage: "https://github.com/LarsArtmann/complaints-mcp"
+    description: "MCP server for AI Coding Agents to file complaint reports"
+    license: MIT
 
 release:
   github:
