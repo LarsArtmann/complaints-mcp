@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	v2 "charm.land/log/v2"
 )
 
 // MCPServer represents MCP server implementation.

@@ -5,12 +5,14 @@ import (
 	"os"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/larsartmann/complaints-mcp/internal/delivery"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v2 "charm.land/log/v2"
 )
 
 func newTestConfig(
@@ -47,7 +49,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		tempDir          string
 		repository       repo.Repository
 		complaintService *service.ComplaintService
-		mcpServer        *mcp.MCPServer
+		mcpServer        *delivery.MCPServer
 		tracer           tracing.Tracer
 		testConfig       *config.Config
 	)
@@ -66,7 +68,7 @@ var _ = Describe("MCP Integration BDD Tests", func() {
 		logger := v2.NewWithOptions(os.Stderr, v2.Options{Level: level})
 
 		// Initialize MCP server
-		mcpServer = mcp.NewServer(
+		mcpServer = delivery.NewServer(
 			"test-server",
 			"1.0.0",
 			complaintService,

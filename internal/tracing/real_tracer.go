@@ -10,18 +10,18 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv/v1.26.0"
-	"go.opentelemetry.io/otel/trace"
+	semconv126 "go.opentelemetry.io/otel/semconv/v1.26.0"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
 // RealTracer implements production-ready tracing with OpenTelemetry.
 type RealTracer struct {
-	tracer trace.Tracer
+	tracer oteltrace.Tracer
 }
 
 // RealSpan adapts OpenTelemetry span to our Span interface.
 type RealSpan struct {
-	span trace.Span
+	span oteltrace.Span
 }
 
 // NewRealTracer creates a new production tracer with Jaeger export.
@@ -40,8 +40,8 @@ func NewRealTracer(serviceName string) *RealTracer {
 		trace.WithBatcher(exp),
 		trace.WithResource(
 			resource.NewWithAttributes(
-				v1.26.0.SchemaURL,
-				v1.26.0.ServiceName(serviceName),
+				semconv126.SchemaURL,
+				semconv126.ServiceName(serviceName),
 			),
 		),
 	)
@@ -84,7 +84,7 @@ func (rs *RealSpan) AddEvent(ctx context.Context, event string, attributes map[s
 		attrs = append(attrs, attribute.String(k, fmt.Sprintf("%v", v)))
 	}
 
-	rs.span.AddEvent(event, trace.WithAttributes(attrs...))
+	rs.span.AddEvent(event, oteltrace.WithAttributes(attrs...))
 }
 
 func (rs *RealSpan) SetAttribute(ctx context.Context, key string, value any) {

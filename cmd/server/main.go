@@ -9,11 +9,12 @@ import (
 	"time"
 
 	"github.com/larsartmann/complaints-mcp/internal/config"
+	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/spf13/cobra"
+	v2 "charm.land/log/v2"
 )
 
 var (
@@ -103,7 +104,8 @@ func runServer(cmd *cobra.Command, args []string) error {
 	complaintService := service.NewComplaintService(complaintRepo, tracer)
 
 	// Initialize MCP server
-	server := mcp.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
+	var server *delivery.MCPServer
+	server = delivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled
 	if cfg.Storage.CacheEnabled {
