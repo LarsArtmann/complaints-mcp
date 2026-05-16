@@ -33,9 +33,9 @@ func runConstructorTests[T any](t *testing.T, tests []struct {
 
 func TestNewCacheSize(t *testing.T) {
 	tests := []struct {
+		expected    CacheSize
 		constructor func() (CacheSize, error)
 		name        string
-		expected    CacheSize
 		expectError bool
 	}{
 		{
