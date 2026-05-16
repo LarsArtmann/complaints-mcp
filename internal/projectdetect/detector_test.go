@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	gigit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
@@ -33,7 +32,7 @@ func TestGitDetector_Detect_Success(t *testing.T) {
 
 	// Create a temporary git repository
 	tmpDir := t.TempDir()
-	repo, err := gigit.PlainInit(tmpDir, false)
+	repo, err := v5.PlainInit(tmpDir, false)
 	require.NoError(t, err)
 
 	// Create a remote
@@ -73,7 +72,7 @@ func TestGitDetector_Detect_FromSubdirectory(t *testing.T) {
 
 	// Create a temporary git repository
 	tmpDir := t.TempDir()
-	repo, err := gigit.PlainInit(tmpDir, false)
+	repo, err := v5.PlainInit(tmpDir, false)
 	require.NoError(t, err)
 
 	// Create a remote
@@ -160,7 +159,7 @@ func TestExtractProjectName(t *testing.T) {
 func TestIsGitRepository(t *testing.T) {
 	t.Run("returns true for git repo", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		_, err := gigit.PlainInit(tmpDir, false)
+		_, err := v5.PlainInit(tmpDir, false)
 		require.NoError(t, err)
 
 		assert.True(t, IsGitRepository(tmpDir))
@@ -178,7 +177,7 @@ func TestIsGitRepository(t *testing.T) {
 
 	t.Run("returns true for subdirectory of git repo", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		_, err := gigit.PlainInit(tmpDir, false)
+		_, err := v5.PlainInit(tmpDir, false)
 		require.NoError(t, err)
 
 		subDir := filepath.Join(tmpDir, "sub")
@@ -196,8 +195,8 @@ func TestGitDetector_EmptyWorkingDir(t *testing.T) {
 	assert.Contains(t, err.Error(), "working directory cannot be empty")
 }
 
-func commitAsTestUser(w *gigit.Worktree, message string) (plumbing.Hash, error) {
-	return w.Commit(message, &gigit.CommitOptions{
+func commitAsTestUser(w *v5.Worktree, message string) (plumbing.Hash, error) {
+	return w.Commit(message, &v5.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Test User",
 			Email: "test@example.com",

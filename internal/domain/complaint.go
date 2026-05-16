@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	brandedid "github.com/larsartmann/go-branded-id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 // ComplaintBrand is the phantom type brand for ComplaintID.
 type ComplaintBrand struct{}
 
 // ComplaintID represents a unique complaint identifier using branded ID type.
-type ComplaintID = brandedid.ID[ComplaintBrand, string]
+type ComplaintID = go-branded-id.ID[ComplaintBrand, string]
 
 // UUID v4 pattern for validation.
 var complaintIDPattern = regexp.MustCompile(
@@ -30,7 +30,7 @@ var complaintIDValidation = newIDValidation(
 func NewComplaintID() (ComplaintID, error) {
 	uuidValue, err := uuid.NewV4()
 	if err != nil {
-		return brandedid.NewID[ComplaintBrand](
+		return go-branded-id.NewID[ComplaintBrand](
 				"",
 			), fmt.Errorf(
 				"failed to generate ComplaintID: %w",
@@ -38,17 +38,17 @@ func NewComplaintID() (ComplaintID, error) {
 			)
 	}
 
-	return brandedid.NewID[ComplaintBrand](uuidValue.String()), nil
+	return go-branded-id.NewID[ComplaintBrand](uuidValue.String()), nil
 }
 
 // ParseComplaintID validates and creates a ComplaintID from string.
 func ParseComplaintID(s string) (ComplaintID, error) {
 	err := validateComplaintID(s)
 	if err != nil {
-		return brandedid.NewID[ComplaintBrand](""), fmt.Errorf("invalid ComplaintID: %w", err)
+		return go-branded-id.NewID[ComplaintBrand](""), fmt.Errorf("invalid ComplaintID: %w", err)
 	}
 
-	return brandedid.NewID[ComplaintBrand](s), nil
+	return go-branded-id.NewID[ComplaintBrand](s), nil
 }
 
 // MustParseComplaintID parses a ComplaintID from string, panicking on error.

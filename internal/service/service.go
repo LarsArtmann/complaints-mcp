@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	v2 "charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/projectdetect"
 	"github.com/larsartmann/complaints-mcp/internal/repo"

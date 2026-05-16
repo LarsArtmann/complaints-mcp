@@ -10,7 +10,7 @@ import (
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
-	brandedid "github.com/larsartmann/go-branded-id"
+	"github.com/larsartmann/go-branded-id"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -134,7 +134,7 @@ var _ = Describe("Complaint Resolution BDD Tests", func() {
 
 		It("should return specific error for empty complaint ID", func(ctx SpecContext) {
 			// Try to resolve with empty complaint ID
-			emptyID := brandedid.NewID[domain.ComplaintBrand]("")
+			emptyID := go-branded-id.NewID[domain.ComplaintBrand]("")
 			_, err := complaintService.ResolveComplaint(ctx, emptyID, "test-agent")
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("failed to find complaint"))

@@ -105,6 +105,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 
 	// Initialize MCP server
 	var server *delivery.MCPServer
+
 	server = delivery.NewServer(cfg.Server.Name, version, complaintService, logger, tracer)
 
 	// Warm cache with proper context and timeout if cache is enabled

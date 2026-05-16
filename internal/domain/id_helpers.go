@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	brandedid "github.com/larsartmann/go-branded-id"
+	"github.com/larsartmann/go-branded-id"
 )
 
 const maxIDLength = 100
@@ -39,35 +39,35 @@ func (v idValidation) validate(s string) error {
 func newBrandedID[Brand any](
 	name string,
 	validation idValidation,
-) (brandedid.ID[Brand, string], error) {
+) (go-branded-id.ID[Brand, string], error) {
 	trimmed := strings.TrimSpace(name)
 
 	err := validation.validate(trimmed)
 	if err != nil {
-		return brandedid.NewID[Brand](""), fmt.Errorf("invalid %s: %w", validation.typeName, err)
+		return go-branded-id.NewID[Brand](""), fmt.Errorf("invalid %s: %w", validation.typeName, err)
 	}
 
-	return brandedid.NewID[Brand](trimmed), nil
+	return go-branded-id.NewID[Brand](trimmed), nil
 }
 
 func parseBrandedID[Brand any](
 	s string,
 	validation idValidation,
-) (brandedid.ID[Brand, string], error) {
+) (go-branded-id.ID[Brand, string], error) {
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" {
-		return brandedid.NewID[Brand](""), nil
+		return go-branded-id.NewID[Brand](""), nil
 	}
 
 	err := validation.validate(trimmed)
 	if err != nil {
-		return brandedid.NewID[Brand](""), fmt.Errorf("invalid %s: %w", validation.typeName, err)
+		return go-branded-id.NewID[Brand](""), fmt.Errorf("invalid %s: %w", validation.typeName, err)
 	}
 
-	return brandedid.NewID[Brand](trimmed), nil
+	return go-branded-id.NewID[Brand](trimmed), nil
 }
 
-func mustParseBrandedID[Brand any](s string, validation idValidation) brandedid.ID[Brand, string] {
+func mustParseBrandedID[Brand any](s string, validation idValidation) go-branded-id.ID[Brand, string] {
 	brandedID, err := parseBrandedID[Brand](s, validation)
 	if err != nil {
 		panic(fmt.Sprintf("invalid %s: %s", validation.typeName, err))
@@ -89,7 +89,7 @@ func ValidateProjectID(s string) error {
 }
 
 func ValidateOptionalID[Brand any](
-	brandedID brandedid.ID[Brand, string],
+	brandedID go-branded-id.ID[Brand, string],
 	typeName string,
 	validateFn func(string) error,
 ) error {
