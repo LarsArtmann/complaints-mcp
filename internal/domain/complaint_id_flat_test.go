@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/larsartmann/go-branded-id"
+	brandedid "github.com/larsartmann/go-branded-id"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,13 +13,13 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("CRITICAL BUG FIX - flat JSON structure", func(t *testing.T) {
 		AssertFlatJSONMarshaling(
 			t,
-			go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			brandedid.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			"550e8400-e29b-41d4-a716-446655440000",
 		)
 	})
 
 	t.Run("marshal produces flat JSON string", func(t *testing.T) {
-		complaintID := go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := brandedid.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
 		data, err := json.Marshal(complaintID)
 		require.NoError(t, err)
@@ -34,7 +34,7 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("unmarshal from flat JSON string works", func(t *testing.T) {
 		AssertUnmarshalFromFlatJSON(
 			t,
-			go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			brandedid.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			`"550e8400-e29b-41d4-a716-446655440000"`,
 		)
 	})
@@ -42,7 +42,7 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	t.Run("unmarshal from JSON object with flat ID works", func(t *testing.T) {
 		AssertUnmarshalFromFlatJSON(
 			t,
-			go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
+			brandedid.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000"),
 			`"550e8400-e29b-41d4-a716-446655440000"`,
 		)
 	})
@@ -56,7 +56,7 @@ func TestComplaintID_FlatJSON_BUG_FIX(t *testing.T) {
 	})
 
 	t.Run("complete flat JSON structure test", func(t *testing.T) {
-		complaintID := go-branded-id.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
+		complaintID := brandedid.NewID[ComplaintBrand]("550e8400-e29b-41d4-a716-446655440000")
 
 		// Verify the complete JSON structure is flat
 		type ComplaintWrapper struct {

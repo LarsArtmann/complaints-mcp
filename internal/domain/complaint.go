@@ -30,7 +30,12 @@ var complaintIDValidation = newIDValidation(
 func NewComplaintID() (ComplaintID, error) {
 	uuidValue, err := uuid.NewV4()
 	if err != nil {
-		return brandedid.NewID[ComplaintBrand](""), fmt.Errorf("failed to generate ComplaintID: %w", err)
+		return brandedid.NewID[ComplaintBrand](
+				"",
+			), fmt.Errorf(
+				"failed to generate ComplaintID: %w",
+				err,
+			)
 	}
 
 	return brandedid.NewID[ComplaintBrand](uuidValue.String()), nil
@@ -53,8 +58,7 @@ func MustParseComplaintID(s string) ComplaintID {
 		panic("invalid ComplaintID: cannot be empty")
 	}
 
-	
-return id
+	return id
 }
 
 // validateComplaintID validates ComplaintID format.

@@ -8,13 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	v2 "charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	"github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
+	delivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	"github.com/spf13/cobra"
-	v2 "charm.land/log/v2"
 )
 
 var (

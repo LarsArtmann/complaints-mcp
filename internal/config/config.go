@@ -9,11 +9,11 @@ import (
 	"slices"
 	"strings"
 
+	v2 "charm.land/log/v2"
 	"github.com/adrg/xdg"
 	"github.com/larsartmann/complaints-mcp/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	v2 "charm.land/log/v2"
 )
 
 // Config represents the application configuration.

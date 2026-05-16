@@ -160,7 +160,7 @@ func TestExtractProjectName(t *testing.T) {
 func TestIsGitRepository(t *testing.T) {
 	t.Run("returns true for git repo", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		_, err := v5.PlainInit(tmpDir, false)
+		_, err := gigit.PlainInit(tmpDir, false)
 		require.NoError(t, err)
 
 		assert.True(t, IsGitRepository(tmpDir))
@@ -178,7 +178,7 @@ func TestIsGitRepository(t *testing.T) {
 
 	t.Run("returns true for subdirectory of git repo", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		_, err := v5.PlainInit(tmpDir, false)
+		_, err := gigit.PlainInit(tmpDir, false)
 		require.NoError(t, err)
 
 		subDir := filepath.Join(tmpDir, "sub")

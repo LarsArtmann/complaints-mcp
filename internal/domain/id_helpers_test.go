@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/larsartmann/go-branded-id"
+	brandedid "github.com/larsartmann/go-branded-id"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func AssertFlatJSONMarshaling[Brand any](
 	tb testing.TB,
-	brandedID go-branded-id.ID[Brand, string],
+	brandedID brandedid.ID[Brand, string],
 	expectedValue string,
 ) {
 	tb.Helper()
@@ -30,14 +30,14 @@ func AssertFlatJSONMarshaling[Brand any](
 
 func AssertUnmarshalFromFlatJSON[Brand any](
 	tb testing.TB,
-	brandedID go-branded-id.ID[Brand, string],
+	brandedID brandedid.ID[Brand, string],
 	jsonValue string,
 ) {
 	tb.Helper()
 
 	data := []byte(jsonValue)
 
-	var result go-branded-id.ID[Brand, string]
+	var result brandedid.ID[Brand, string]
 
 	err := json.Unmarshal(data, &result)
 	require.NoError(tb, err)
@@ -48,7 +48,7 @@ func AssertUnmarshalFromFlatJSON[Brand any](
 func AssertRejectNestedJSONFormat[Brand any](tb testing.TB, jsonData string) {
 	tb.Helper()
 
-	var result go-branded-id.ID[Brand, string]
+	var result brandedid.ID[Brand, string]
 
 	err := json.Unmarshal([]byte(jsonData), &result)
 	assert.Error(tb, err)

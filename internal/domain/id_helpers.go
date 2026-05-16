@@ -36,7 +36,10 @@ func (v idValidation) validate(s string) error {
 	return nil
 }
 
-func newBrandedID[Brand any](name string, validation idValidation) (brandedid.ID[Brand, string], error) {
+func newBrandedID[Brand any](
+	name string,
+	validation idValidation,
+) (brandedid.ID[Brand, string], error) {
 	trimmed := strings.TrimSpace(name)
 
 	err := validation.validate(trimmed)
@@ -47,7 +50,10 @@ func newBrandedID[Brand any](name string, validation idValidation) (brandedid.ID
 	return brandedid.NewID[Brand](trimmed), nil
 }
 
-func parseBrandedID[Brand any](s string, validation idValidation) (brandedid.ID[Brand, string], error) {
+func parseBrandedID[Brand any](
+	s string,
+	validation idValidation,
+) (brandedid.ID[Brand, string], error) {
 	trimmed := strings.TrimSpace(s)
 	if trimmed == "" {
 		return brandedid.NewID[Brand](""), nil

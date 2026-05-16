@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	v2 "charm.land/log/v2"
 	"github.com/larsartmann/complaints-mcp/internal/config"
-	"github.com/larsartmann/complaints-mcp/internal/delivery"
+	delivery "github.com/larsartmann/complaints-mcp/internal/delivery/mcp"
 	"github.com/larsartmann/complaints-mcp/internal/domain"
 	"github.com/larsartmann/complaints-mcp/internal/repo"
 	"github.com/larsartmann/complaints-mcp/internal/service"
 	"github.com/larsartmann/complaints-mcp/internal/tracing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v2 "charm.land/log/v2"
 )
 
 func newTestConfig(
