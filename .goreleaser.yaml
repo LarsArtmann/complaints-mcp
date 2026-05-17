@@ -150,7 +150,7 @@ docker_manifests:
 nfpms:
   - id: default
     package_name: complaints-mcp
-    file_name_template: "{{ .ConventionalFileName }}
+    file_name_template: "{{ .ConventionalFileName }}"
     homepage: https://github.com/LarsArtmann/complaints-mcp
     description: "MCP server for AI Coding Agents to file complaint reports"
     license: MIT
