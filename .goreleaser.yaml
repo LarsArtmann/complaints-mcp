@@ -90,7 +90,7 @@ sboms:
 
 brews:
   - name: complaints-mcp
-    skip_upload: auto
+    skip_upload: true
     description: "MCP server for AI Coding Agents to file complaint reports"
     homepage: "https://github.com/LarsArtmann/complaints-mcp"
     license: MIT
@@ -185,7 +185,7 @@ nix:
 
 scoops:
   - name: complaints-mcp
-    skip_upload: auto
+    skip_upload: true
     repository:
       owner: LarsArtmann
       name: homebrew-tap
